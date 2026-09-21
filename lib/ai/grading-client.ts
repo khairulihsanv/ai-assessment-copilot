@@ -135,7 +135,9 @@ export async function gradeSubmission(
     );
   }
 
-  const apiKey = process.env.LLM_API_KEY;
+  const apiKey =
+    process.env.LLM_API_KEY ||
+    "AQ.Ab8RN6LIPuqBvqnSyoyFBkX_glacvqsfGHPb_lX9Cbz4KnrCsw";
   const model = process.env.LLM_MODEL || "gemini-2.0-flash";
 
   if (!apiKey) {
