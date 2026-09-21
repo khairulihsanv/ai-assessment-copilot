@@ -23,15 +23,14 @@ export default function RegisterPage() {
     try {
       const result = await registerAction(formData);
       if (!result.success) {
-        setError(result.error ?? "Terjadi kesalahan");
+        setError(result.error ?? "Terjadi kesalahan saat mendaftar");
         setLoading(false);
+      } else {
+        router.push("/dashboard");
+        router.refresh();
       }
     } catch (err) {
-      if (err instanceof Error && err.message === "NEXT_REDIRECT") {
-        router.push("/dashboard");
-        return;
-      }
-      setError("Terjadi kesalahan. Silakan coba lagi.");
+      setError("Terjadi kesalahan sistem. Pastikan koneksi database aktif.");
       setLoading(false);
     }
   }

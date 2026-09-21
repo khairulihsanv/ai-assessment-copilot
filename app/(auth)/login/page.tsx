@@ -22,17 +22,14 @@ export default function LoginPage() {
     try {
       const result = await loginAction(formData);
       if (!result.success) {
-        setError(result.error ?? "Terjadi kesalahan");
+        setError(result.error ?? "Terjadi kesalahan saat masuk");
         setLoading(false);
-      }
-      // If success, loginAction calls redirect() which throws NEXT_REDIRECT
-    } catch (err) {
-      // NEXT_REDIRECT throws an error — that's expected behavior
-      if (err instanceof Error && err.message === "NEXT_REDIRECT") {
+      } else {
         router.push("/dashboard");
-        return;
+        router.refresh();
       }
-      setError("Terjadi kesalahan. Silakan coba lagi.");
+    } catch (err) {
+      setError("Terjadi kesalahan sistem. Pastikan koneksi database aktif.");
       setLoading(false);
     }
   }
