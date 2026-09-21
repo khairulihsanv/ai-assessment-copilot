@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+
+<html lang="id"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500;600&amp;family=Space+Grotesk:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "status-success": "#10B981", "on-tertiary-fixed-variant": "#5a00c6", "surface-dim": "#cbdbf5", "on-tertiary-container": "#f7edff", "tertiary-fixed-dim": "#d2bbff", "on-secondary": "#ffffff", "inverse-on-surface": "#eaf1ff", "surface-container-lowest": "#ffffff", "on-surface-variant": "#434655", "on-tertiary": "#ffffff", "ai-cyan-glow": "#38BDF8", "border-subtle": "#E2E8F0", "tertiary-container": "#8343f4", "surface-container": "#e5eeff", "ai-violet-glow": "#A855F7", "secondary": "#006398", "surface-container-low": "#eff4ff", "on-error-container": "#93000a", "on-primary-fixed": "#00174b", "surface-variant": "#d3e4fe", "primary-container": "#2563eb", "on-surface": "#0b1c30", "on-secondary-fixed": "#001d31", "tertiary-fixed": "#eaddff", "surface-container-highest": "#d3e4fe", "primary-fixed": "#dbe1ff", "primary-fixed-dim": "#b4c5ff", "on-primary-container": "#eeefff", "outline-variant": "#c3c6d7", "inverse-primary": "#b4c5ff", "secondary-fixed": "#cce5ff", "surface-white": "#FFFFFF", "on-secondary-fixed-variant": "#004b73", "primary": "#004ac6", "on-primary": "#ffffff", "outline": "#737686", "on-secondary-container": "#00476e", "tertiary": "#6a1edb", "error-container": "#ffdad6", "on-background": "#0b1c30", "on-tertiary-fixed": "#25005a", "surface": "#f8f9ff", "surface-bright": "#f8f9ff", "secondary-fixed-dim": "#93ccff", "surface-tint": "#0053db", "inverse-surface": "#213145", "canvas-light": "#F8FAFC", "surface-container-high": "#dce9ff", "background": "#f8f9ff", "secondary-container": "#5bb8fe", "on-error": "#ffffff", "error": "#ba1a1a", "text-slate-dark": "#0F172A", "on-primary-fixed-variant": "#003ea8" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "gutter": "1.5rem", "space-md": "1rem", "space-lg": "1.5rem", "margin": "2rem", "space-xl": "2rem", "gutter-mobile": "0.75rem", "space-sm": "0.5rem", "space-xs": "0.25rem", "margin-mobile": "1rem" }, "fontFamily": { "body-sm": [ "Inter" ], "headline-sm": [ "Space Grotesk" ], "code-data": [ "JetBrains Mono" ], "headline-lg": [ "Space Grotesk" ], "code-badge": [ "JetBrains Mono" ], "headline-lg-mobile": [ "Space Grotesk" ], "headline-xl": [ "Space Grotesk" ], "body-lg": [ "Inter" ], "label-lg": [ "Inter" ], "label-md": [ "Inter" ], "headline-md": [ "Space Grotesk" ], "headline-xl-mobile": [ "Space Grotesk" ], "body-md": [ "Inter" ] }, "fontSize": { "body-sm": [ "12px", { "lineHeight": "18px", "letterSpacing": "0em", "fontWeight": "400" } ], "headline-sm": [ "18px", { "lineHeight": "26px", "letterSpacing": "-0.005em", "fontWeight": "600" } ], "code-data": [ "12px", { "lineHeight": "16px", "letterSpacing": "-0.01em", "fontWeight": "500" } ], "headline-lg": [ "32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" } ], "code-badge": [ "11px", { "lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "600" } ], "headline-lg-mobile": [ "24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" } ], "headline-xl": [ "40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" } ], "body-lg": [ "16px", { "lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "400" } ], "label-lg": [ "14px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "500" } ], "label-md": [ "12px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "500" } ], "headline-md": [ "24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" } ], "headline-xl-mobile": [ "30px", { "lineHeight": "38px", "letterSpacing": "-0.015em", "fontWeight": "700" } ], "body-md": [ "14px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400" } ] } } } };</script></head><body class="bg-background font-body-md text-on-surface antialiased min-h-screen"><aside class="fixed left-0 top-0 h-full w-72 bg-surface-container-low/70 backdrop-blur-xl z-50 flex flex-col justify-between shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="flex flex-col"><div class="h-16 flex items-center px-space-lg gap-space-sm"><div class="w-9 h-9 rounded-lg bg-primary flex items-center justify-center text-on-primary shadow-sm"><span class="material-symbols-outlined text-[20px]">auto_awesome</span></div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-on-surface leading-tight tracking-tight">Copilot Asesmen</span><span class="font-code-badge text-code-badge text-on-surface-variant uppercase tracking-wider">SV UNS Portal</span></div></div><div class="px-space-md py-space-xs"><div class="px-space-sm py-1.5 rounded-lg bg-surface-container flex items-center justify-between"><span class="font-code-badge text-code-badge text-primary font-semibold uppercase tracking-wider">Role Mahasiswa</span><span class="w-2 h-2 rounded-full bg-status-success"></span></div></div><nav class="flex flex-col gap-space-xs px-space-md mt-space-sm" data-active-classes="bg-primary-container text-on-primary-container font-medium rounded-lg shadow-sm"><div class="px-space-sm pt-space-sm pb-space-xs font-code-badge text-code-badge uppercase text-outline tracking-wider">Utama</div><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="dashboard-overview" href="#"><span class="material-symbols-outlined text-[18px]">grid_view</span><span class="font-label-md text-label-md">Dashboard Overview</span></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="kelas-kuliah" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">menu_book</span><span class="font-label-md text-label-md">Kelas Kuliah Saya</span></div><span class="font-code-badge text-code-badge px-1.5 py-0.5 rounded-full bg-surface-container-highest text-on-surface-variant">3</span></a><a aria-current="page" class="flex items-center justify-between px-space-sm py-2 transition-colors bg-primary-container text-on-primary-container font-medium rounded-lg shadow-sm" data-path="tugas-dan-evaluasi" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">assignment_turned_in</span><span class="font-label-md text-label-md">Tugas &amp; Evaluasi</span></div><span class="font-code-badge text-code-badge px-1.5 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed font-semibold">2 Aktif</span></a><div class="px-space-sm pt-space-md pb-space-xs font-code-badge text-code-badge uppercase text-outline tracking-wider">Capaian &amp; Analitik</div><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="riwayat-nilai-transkrip" href="#"><span class="material-symbols-outlined text-[18px]">military_tech</span><span class="font-label-md text-label-md">Riwayat Nilai &amp; Transkrip</span></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="ai-study-copilot" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">psychology</span><span class="font-label-md text-label-md">AI Study Copilot</span></div><span class="font-code-badge text-code-badge px-1.5 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-semibold">Beta</span></a><div class="px-space-sm pt-space-md pb-space-xs font-code-badge text-code-badge uppercase text-outline tracking-wider">Pengaturan &amp; Bantuan</div><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="pengaturan-akun" href="#"><span class="material-symbols-outlined text-[18px]">tune</span><span class="font-label-md text-label-md">Pengaturan &amp; Notifikasi</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="panduan-etika-ai" href="#"><span class="material-symbols-outlined text-[18px]">verified_user</span><span class="font-label-md text-label-md">Panduan &amp; Etika AI</span></a></nav></div><div class="p-space-md flex flex-col gap-space-sm"><div class="p-space-sm rounded-xl bg-surface-container-lowest shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] flex flex-col gap-1.5"><div class="flex items-center gap-1.5"><span class="material-symbols-outlined text-status-success text-[16px]">verified</span><span class="font-label-md text-label-md text-on-surface font-semibold">Human-in-the-Loop</span></div><p class="font-body-sm text-body-sm text-on-surface-variant leading-tight">Setiap penilaian divalidasi langsung oleh Dosen Pengampu mata kuliah.</p></div><div class="flex items-center justify-between px-space-xs text-on-surface-variant"><div class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">cloud_done</span><span class="font-code-badge text-code-badge text-on-surface-variant">SV-UNS Academic Cloud</span></div><span class="material-symbols-outlined text-[14px] text-outline">lock</span></div></div></aside><div class="pl-72"><header class="fixed top-0 left-72 right-0 h-16 bg-surface/80 backdrop-blur-xl z-40 flex items-center justify-between px-gutter shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="flex items-center gap-space-md flex-1 max-w-xl"><div class="relative w-full"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span><input class="w-full pl-9 pr-4 py-2 bg-surface-container-low rounded-lg font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:bg-surface-container-lowest transition-colors" placeholder="Cari tugas, kelas kuliah, nilai, atau pengumuman..." type="search"/></div><div class="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container-lowest shadow-sm whitespace-nowrap"><span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-status-success opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-status-success"></span></span><span class="font-code-badge text-code-badge text-on-surface font-medium">AI Assistant: Ready</span></div></div><div class="flex items-center gap-space-md"><a class="hidden sm:flex items-center gap-1 text-on-surface-variant hover:text-on-surface transition-colors" data-path="panduan-etika-ai" href="#"><span class="material-symbols-outlined text-[18px]">help</span><span class="font-label-md text-label-md">Bantuan</span></a><button aria-label="Notifikasi" class="relative p-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1.5 right-1.5 flex items-center justify-center w-4 h-4 bg-error text-on-error rounded-full font-code-badge text-[10px] font-bold">2</span></button><div class="h-8 w-[1px] bg-surface-container-high"></div><div class="flex items-center gap-space-sm"><div class="flex flex-col text-right hidden sm:flex"><div class="flex items-center justify-end gap-1.5"><span class="font-label-md text-label-md text-on-surface font-semibold">Sarah Kirana</span><span class="px-1.5 py-0.2 rounded bg-surface-container-high text-primary font-code-badge text-[10px] font-medium">Sem 4</span></div><span class="font-code-data text-code-data text-on-surface-variant">2108561042 • D4 TI</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-16 bg-surface px-gutter min-h-screen"><div class="flex flex-col w-full">
+<!-- Top Progress & Dynamic Breadcrumb Header -->
+<div class="flex flex-col gap-space-sm pt-space-md pb-space-lg">
+<nav class="flex items-center gap-2 text-on-surface-variant font-label-md text-label-md">
+<a class="hover:text-primary transition-colors flex items-center gap-1" href="#">
+<span class="material-symbols-outlined text-[16px]">school</span>
+<span>Kelas Kuliah</span>
+</a>
+<span class="text-outline">/</span>
+<a class="hover:text-primary transition-colors font-code-badge text-code-badge" href="#">CS 304 - Struktur Data &amp; Algoritma</a>
+<span class="text-outline">/</span>
+<span class="text-on-surface font-semibold truncate max-w-xs md:max-w-md">Tugas 3: Red-Black Trees Balancing</span>
+</nav>
+<!-- Main Title & Metadata Flex Band -->
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md mt-space-xs">
+<div class="flex flex-col gap-1">
+<div class="flex flex-wrap items-center gap-space-sm">
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Tugas 3: Red-Black Trees Balancing</h1>
+<span class="px-2.5 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed font-code-badge text-code-badge flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[14px]">psychology</span>
+            AI Pre-Flight Active
+          </span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant flex items-center gap-2">
+<span>Dosen Pengampu: <strong class="text-on-surface font-semibold">Prof. Dr. Aris Thorne</strong></span>
+<span class="text-outline">•</span>
+<span>Semester 4 Genap TA 2024/2025</span>
+</p>
+</div>
+<!-- Quick Telemetry Chips -->
+<div class="flex flex-wrap items-center gap-2">
+<div class="px-3 py-1.5 rounded-xl bg-surface-container-low flex items-center gap-2 shadow-sm">
+<span class="material-symbols-outlined text-secondary text-[18px]">military_tech</span>
+<div class="flex flex-col">
+<span class="font-code-badge text-[10px] uppercase text-outline leading-none">Bobot Nilai</span>
+<span class="font-code-data text-code-data text-on-surface font-semibold leading-tight">100 Poin</span>
+</div>
+</div>
+<div class="px-3 py-1.5 rounded-xl bg-error-container/40 flex items-center gap-2 shadow-sm">
+<span class="material-symbols-outlined text-error text-[18px]">schedule</span>
+<div class="flex flex-col">
+<span class="font-code-badge text-[10px] uppercase text-error leading-none font-semibold">Tenggat Waktu</span>
+<span class="font-code-data text-code-data text-on-surface font-semibold leading-tight">Besok, 23:59 WIB <span class="text-error font-medium">(Sisa 18 Jam)</span></span>
+</div>
+</div>
+<div class="px-3 py-1.5 rounded-xl bg-surface-container-low flex items-center gap-2 shadow-sm">
+<span class="material-symbols-outlined text-outline text-[18px]">badge</span>
+<div class="flex flex-col">
+<span class="font-code-badge text-[10px] uppercase text-outline leading-none">Format / Sifat</span>
+<span class="font-code-data text-code-data text-on-surface font-semibold leading-tight">.py, .pdf • Individu</span>
+</div>
+</div>
+</div>
+</div>
+<!-- AI Pre-submission Assistant Informative Callout Banner -->
+<div class="mt-space-xs rounded-2xl bg-surface-container-low p-space-md flex flex-col md:flex-row md:items-center justify-between gap-space-md shadow-sm">
+<div class="flex items-start gap-3">
+<div class="w-10 h-10 rounded-xl bg-primary-container text-on-primary-container flex items-center justify-center shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-[22px]">auto_awesome</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-label-lg text-label-lg text-on-surface font-semibold">Sistem Validasi AI Pre-Submission Aktif</span>
+<span class="px-2 py-0.2 rounded-full bg-status-success/15 text-status-success font-code-badge text-[10px] font-bold">100% Client Protected</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5 max-w-3xl">
+            Sistem menggunakan AI Pre-submission Assistant untuk validasi otomatis sintaks kode, kepatuhan struktur pohon, dan completeness rubrik sebelum Anda submit resmi ke Prof. Dr. Aris Thorne.
+          </p>
+</div>
+</div>
+<div class="flex items-center gap-2 shrink-0 self-end md:self-center">
+<span class="font-code-badge text-code-badge text-on-surface-variant flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-status-success animate-pulse"></span>
+          Engine: SV-TreeLint v2.4
+        </span>
+</div>
+</div>
+</div>
+<!-- Primary Workspace: Split Grid (60% Submisi / 40% Rubrik) -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-space-lg pb-24">
+<!-- LEFT COLUMN (Approx 60% / 7 Cols) -->
+<div class="xl:col-span-7 flex flex-col gap-space-lg">
+<!-- SECTION 1: Deskripsi & Instruksi Dosen -->
+<section class="rounded-2xl bg-surface-container-lowest p-space-lg shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[18px]">terminal</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Instruksi &amp; Spesifikasi Teknis</h2>
+<span class="font-code-badge text-code-badge text-on-surface-variant">Diterbitkan 4 hari yang lalu oleh Dosen</span>
+</div>
+</div>
+<span class="px-2 py-1 rounded bg-secondary-fixed text-on-secondary-fixed font-code-badge text-code-badge font-semibold">
+            Modul 06 - Trees
+          </span>
+</div>
+<div class="rounded-xl bg-surface-container-low/60 p-space-md text-on-surface font-body-md text-body-md leading-relaxed flex flex-col gap-2">
+<p class="font-semibold text-text-slate-dark">
+            “Implementasikan struktur data Red-Black Tree lengkap dengan fungsi insert, delete fixup, dan visualisasi balancing. Sertakan laporan analisis kompleksitas O(log N) dan unit test dengan minimal 15 assertion.”
+          </p>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-2 pt-2">
+<div class="flex items-center gap-1.5 text-on-surface-variant font-code-data text-code-data">
+<span class="material-symbols-outlined text-primary text-[16px]">check_circle</span>
+<span>Self-balancing BST</span>
+</div>
+<div class="flex items-center gap-1.5 text-on-surface-variant font-code-data text-code-data">
+<span class="material-symbols-outlined text-primary text-[16px]">check_circle</span>
+<span>4 Kasus Rotasi Fixup</span>
+</div>
+<div class="flex items-center gap-1.5 text-on-surface-variant font-code-data text-code-data">
+<span class="material-symbols-outlined text-primary text-[16px]">check_circle</span>
+<span>Min. 15 Assertions</span>
+</div>
+</div>
+</div>
+<!-- Download Resources -->
+<div class="flex flex-wrap items-center gap-space-sm pt-space-xs">
+<a class="px-4 py-2 rounded-xl bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-label-md text-label-md flex items-center gap-2 transition-colors shadow-sm" href="#">
+<span class="material-symbols-outlined text-[18px] text-primary">folder_zip</span>
+<span>Unduh Starter Code (.ZIP)</span>
+<span class="font-code-badge text-code-badge text-outline">320 KB</span>
+</a>
+<a class="px-4 py-2 rounded-xl bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-label-md text-label-md flex items-center gap-2 transition-colors shadow-sm" href="#">
+<span class="material-symbols-outlined text-[18px] text-error">picture_as_pdf</span>
+<span>Unduh Panduan &amp; Rubrik (.PDF)</span>
+<span class="font-code-badge text-code-badge text-outline">1.2 MB</span>
+</a>
+</div>
+</section>
+<!-- SECTION 2: Unggah Berkas Submisi -->
+<section class="rounded-2xl bg-surface-container-lowest p-space-lg shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[18px]">cloud_upload</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Unggah Berkas Submisi</h2>
+<span class="font-code-badge text-code-badge text-on-surface-variant">Pastikan ekstensi berkas sesuai format penamaan</span>
+</div>
+</div>
+<span class="font-code-badge text-code-badge text-on-surface-variant">2 Berkas Terlampir</span>
+</div>
+<!-- Drag & Drop Zone -->
+<div class="group relative rounded-2xl bg-surface-container-low/50 hover:bg-surface-container-low transition-all duration-200 p-8 flex flex-col items-center justify-center text-center cursor-pointer" id="dropZone">
+<div class="w-14 h-14 rounded-2xl bg-surface-container-highest group-hover:scale-105 transition-transform duration-200 flex items-center justify-center text-primary mb-3 shadow-sm">
+<span class="material-symbols-outlined text-[28px]">upload_file</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">
+            Seret berkas ke sini atau <span class="text-primary underline cursor-pointer">telusuri dari komputer Anda</span>
+</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1.5 max-w-md">
+            Format yang didukung: <strong class="text-on-surface font-code-badge text-code-badge font-semibold">.py, .ipynb, .pdf, .zip</strong> — Maksimal ukuran berkas per pengiriman 25MB.
+          </p>
+<input accept=".py,.ipynb,.pdf,.zip" class="hidden" id="fileInput" multiple="" type="file"/>
+</div>
+<!-- File List Stack -->
+<div class="flex flex-col gap-2.5 mt-space-xs">
+<!-- File 1: Python Source -->
+<div class="p-3.5 rounded-xl bg-surface-container-low hover:bg-surface-container transition-colors flex items-center justify-between gap-3 shadow-sm">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[22px]">code</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2 truncate">
+<span class="font-code-data text-code-data text-on-surface font-semibold truncate">cs304_sarah_rb_tree.py</span>
+<span class="px-1.5 py-0.2 rounded bg-surface-container text-on-surface-variant font-code-badge text-[10px]">14.2 KB</span>
+</div>
+<div class="flex items-center gap-2 mt-0.5">
+<span class="flex items-center gap-1 font-code-badge text-code-badge text-status-success font-medium">
+<span class="material-symbols-outlined text-[14px]">verified</span>
+                    Sintaks Valid (Python 3.11.8)
+                  </span>
+<span class="text-outline text-[10px]">•</span>
+<span class="font-code-badge text-code-badge text-on-surface-variant">342 baris kode</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-1 shrink-0">
+<button class="p-2 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-colors" title="Lihat Pratinjau Kode">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+<button class="p-2 rounded-lg text-on-surface-variant hover:text-error hover:bg-error-container/40 transition-colors" title="Hapus Berkas">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</div>
+<!-- File 2: PDF Report -->
+<div class="p-3.5 rounded-xl bg-surface-container-low hover:bg-surface-container transition-colors flex items-center justify-between gap-3 shadow-sm">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-10 h-10 rounded-lg bg-error-container/60 text-error flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[22px]">description</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2 truncate">
+<span class="font-code-data text-code-data text-on-surface font-semibold truncate">Laporan_Tugas3_Sarah.pdf</span>
+<span class="px-1.5 py-0.2 rounded bg-surface-container text-on-surface-variant font-code-badge text-[10px]">1.8 MB</span>
+</div>
+<div class="flex items-center gap-2 mt-0.5">
+<span class="flex items-center gap-1 font-code-badge text-code-badge text-status-success font-medium">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+                    Dokumen Terbaca (6 Halaman Terindeks)
+                  </span>
+<span class="text-outline text-[10px]">•</span>
+<span class="font-code-badge text-code-badge text-on-surface-variant">Grafik Benchmarking Tersedia</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-1 shrink-0">
+<button class="p-2 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-colors" title="Lihat PDF">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+<button class="p-2 rounded-lg text-on-surface-variant hover:text-error hover:bg-error-container/40 transition-colors" title="Hapus Berkas">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION 3: Catatan Pengantar untuk Dosen -->
+<section class="rounded-2xl bg-surface-container-lowest p-space-lg shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">sticky_note_2</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Catatan Pengantar untuk Dosen</h2>
+</div>
+<span class="font-code-badge text-code-badge text-on-surface-variant" id="charCount">218 / 600 Karakter</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+          Berikan ringkasan asumsi teknis, library yang digunakan, atau catatan arsitektur khusus untuk mempermudah reviewer Dosen.
+        </p>
+<textarea class="w-full p-3 rounded-xl bg-surface-container-low font-body-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:bg-surface-container transition-colors resize-none" id="noteTextarea" rows="3">Saya telah menyelesaikan implementasi insert, delete fixup, dan visualisasi berbasis CLI. Saya menambahkan penanganan khusus untuk leaf sentinel NIL node agar tidak terjadi NoneType AttributeError pada saat pengecekan grandparent.</textarea>
+</section>
+<!-- SECTION 4: Pemeriksaan Integritas & AI Pre-Flight Checker -->
+<section class="rounded-2xl bg-gradient-to-br from-surface-container-lowest via-surface-container-low/40 to-surface-container-lowest p-space-lg shadow-sm flex flex-col gap-space-md">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+<div class="flex items-center gap-2.5">
+<div class="w-9 h-9 rounded-xl bg-status-success text-on-primary flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-[20px]">task_alt</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">AI Pre-Flight Checker: Status Lolos</h2>
+<span class="px-2 py-0.5 rounded-full bg-status-success/20 text-status-success font-code-badge text-[10px] font-bold">3/3 Checks Clean</span>
+</div>
+<p class="font-code-badge text-code-badge text-on-surface-variant">Analisis prediktif terhadap kepatuhan kriteria tugas sebelum finalisasi</p>
+</div>
+</div>
+<button class="px-3 py-1.5 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-label-md text-label-md flex items-center gap-1.5 transition-colors self-start sm:self-auto shadow-sm" id="recheckBtn">
+<span class="material-symbols-outlined text-[16px] text-primary" id="refreshIcon">refresh</span>
+<span>Jalankan Ulang Audit</span>
+</button>
+</div>
+<!-- 3 Pre-Flight Detailed Cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-sm">
+<!-- Check 1: Turnitin / Similarity -->
+<div class="p-space-sm rounded-xl bg-surface-container-low/80 flex flex-col justify-between gap-3 shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-code-badge text-code-badge uppercase text-outline">Turnitin &amp; Integrity</span>
+<span class="material-symbols-outlined text-status-success text-[18px]">verified</span>
+</div>
+<div>
+<div class="flex items-baseline gap-1.5">
+<span class="font-headline-lg text-headline-lg text-on-surface font-bold">98%</span>
+<span class="font-code-data text-code-data text-status-success font-semibold">Orisinal</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1 leading-snug">
+                Kemiripan teks laporan 2% (Hanya kutipan rumus Big-O terstandar).
+              </p>
+</div>
+<div class="w-full bg-surface-container-highest rounded-full h-1.5 overflow-hidden">
+<div class="bg-status-success h-1.5 rounded-full" style="width: 98%;"></div>
+</div>
+</div>
+<!-- Check 2: Automated Unit Tests -->
+<div class="p-space-sm rounded-xl bg-surface-container-low/80 flex flex-col justify-between gap-3 shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-code-badge text-code-badge uppercase text-outline">Unit Tests Runner</span>
+<span class="material-symbols-outlined text-status-success text-[18px]">done_all</span>
+</div>
+<div>
+<div class="flex items-baseline gap-1.5">
+<span class="font-headline-lg text-headline-lg text-on-surface font-bold">24 / 24</span>
+<span class="font-code-data text-code-data text-status-success font-semibold">Passed</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1 leading-snug">
+                Waktu eksekusi total <span class="font-code-data text-code-data font-semibold">0.142 detik</span> pada suite Python pytest runner.
+              </p>
+</div>
+<div class="w-full bg-surface-container-highest rounded-full h-1.5 overflow-hidden">
+<div class="bg-status-success h-1.5 rounded-full" style="width: 100%;"></div>
+</div>
+</div>
+<!-- Check 3: Tree Invariant Validation -->
+<div class="p-space-sm rounded-xl bg-surface-container-low/80 flex flex-col justify-between gap-3 shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-code-badge text-code-badge uppercase text-outline">Struktur Invariant</span>
+<span class="material-symbols-outlined text-status-success text-[18px]">account_tree</span>
+</div>
+<div>
+<div class="flex items-baseline gap-1.5">
+<span class="font-headline-md text-headline-md text-on-surface font-bold">Valid RB</span>
+<span class="font-code-badge text-code-badge px-1.5 py-0.5 rounded bg-status-success/20 text-status-success font-semibold">100%</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1 leading-snug">
+                Properti Black Height konsisten. Tidak ada node merah berurutan yang ditemukan.
+              </p>
+</div>
+<div class="w-full bg-surface-container-highest rounded-full h-1.5 overflow-hidden">
+<div class="bg-primary h-1.5 rounded-full" style="width: 100%;"></div>
+</div>
+</div>
+</div>
+<!-- Mini Visual Verification Chart Card -->
+<div class="p-space-sm rounded-xl bg-surface-container-highest/40 flex flex-col sm:flex-row items-center justify-between gap-space-sm">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-[18px]">query_stats</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Benchmark Empiris: Operasi 10,000 Node</span>
+<span class="font-code-data text-code-data text-on-surface-variant">Rata-rata tinggi pohon: 14 levels (Maksimal teoritis 2*log2(10001) = 28)</span>
+</div>
+</div>
+<span class="font-code-badge text-code-badge px-2 py-1 rounded bg-surface-container-lowest text-primary font-bold shadow-sm whitespace-nowrap">
+            O(log N) Terkonfirmasi
+          </span>
+</div>
+</section>
+</div>
+<!-- RIGHT COLUMN (Approx 40% / 5 Cols - Matriks Rubrik Transparan) -->
+<div class="xl:col-span-5 flex flex-col gap-space-lg">
+<!-- RUBRIC CONTAINER CARD -->
+<div class="rounded-2xl bg-surface-container-lowest p-space-lg shadow-sm flex flex-col gap-space-md">
+<div class="flex items-start justify-between gap-3">
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[22px]">fact_check</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-semibold">Rubrik Penilaian Transparan</h2>
+</div>
+<span class="font-code-badge text-code-badge text-on-surface-variant mt-0.5">Pedoman Evaluasi Resmi Prof. Dr. Aris Thorne</span>
+</div>
+<div class="flex flex-col items-end">
+<span class="font-code-badge text-code-badge uppercase text-outline">Estimasi AI</span>
+<span class="font-headline-md text-headline-md text-primary font-bold">96-100<span class="text-label-md font-normal text-on-surface-variant">/100</span></span>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+          Nilai Anda akan dievaluasi langsung oleh Dosen berdasarkan 4 kriteria terstandarisasi di bawah ini. Status hijau mengindikasikan berkas Anda telah memenuhi parameter rubrik.
+        </p>
+<!-- Rubrik Breakdown List -->
+<div class="flex flex-col gap-space-sm" id="rubricAccordion">
+<!-- Kriteria 1: 40% Bobot -->
+<div class="rounded-xl bg-surface-container-low p-space-md flex flex-col gap-2.5 transition-all">
+<div class="flex items-center justify-between cursor-pointer" onclick="toggleRubricDetails('rubric-1')">
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 rounded-md bg-primary-container text-on-primary-container font-code-badge text-[11px] font-bold flex items-center justify-center">1</span>
+<span class="font-label-lg text-label-lg font-semibold text-on-surface">Ketepatan Struktur &amp; Invariant</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded-full bg-surface-container-highest text-primary font-code-badge text-code-badge font-bold">Bobot 40%</span>
+<span class="material-symbols-outlined text-outline text-[18px] transition-transform duration-200" id="rubric-icon-1">expand_more</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-status-success"></span>
+<span class="font-code-badge text-code-badge text-status-success font-semibold">Prediksi: Sangat Baik (38-40 Pts)</span>
+</div>
+<span class="font-code-data text-code-data text-on-surface-variant">Target Dosen: ≥ 36 Pts</span>
+</div>
+<!-- Expandable Details -->
+<div class="hidden flex flex-col gap-2 pt-2 border-t-0 bg-surface-container-lowest/60 p-3 rounded-lg mt-1" id="rubric-1">
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+<strong>Deskripsi Level:</strong> Rotasi kiri/kanan, recoloring, dan penanganan kasus double-black diimplementasikan secara komprehensif tanpa cacat invariant.
+              </p>
+<div class="flex items-center gap-2 font-code-data text-code-data text-on-surface">
+<span class="material-symbols-outlined text-[14px] text-status-success">done</span>
+<span>File matched: cs304_sarah_rb_tree.py (Fungsi delete_fixup lengkap)</span>
+</div>
+</div>
+</div>
+<!-- Kriteria 2: 30% Bobot -->
+<div class="rounded-xl bg-surface-container-low p-space-md flex flex-col gap-2.5 transition-all">
+<div class="flex items-center justify-between cursor-pointer" onclick="toggleRubricDetails('rubric-2')">
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 rounded-md bg-surface-container-highest text-on-surface font-code-badge text-[11px] font-bold flex items-center justify-center">2</span>
+<span class="font-label-lg text-label-lg font-semibold text-on-surface">Kompleksitas &amp; Efisiensi Algoritma</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded-full bg-surface-container-highest text-primary font-code-badge text-code-badge font-bold">Bobot 30%</span>
+<span class="material-symbols-outlined text-outline text-[18px] transition-transform duration-200" id="rubric-icon-2">expand_more</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-status-success"></span>
+<span class="font-code-badge text-code-badge text-status-success font-semibold">Prediksi: Optimal (28-30 Pts)</span>
+</div>
+<span class="font-code-data text-code-data text-on-surface-variant">Target Dosen: ≥ 26 Pts</span>
+</div>
+<!-- Expandable Details -->
+<div class="hidden flex flex-col gap-2 pt-2 bg-surface-container-lowest/60 p-3 rounded-lg mt-1" id="rubric-2">
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+<strong>Deskripsi Level:</strong> Operasi insert dan delete terbukti berjalan dalam kompleksitas ketat O(log N) pada simulasi benchmark 10.000 nodes acak.
+              </p>
+<div class="flex items-center gap-2 font-code-data text-code-data text-on-surface">
+<span class="material-symbols-outlined text-[14px] text-status-success">done</span>
+<span>Analisis empiris terdokumentasi pada halaman 4 Laporan PDF.</span>
+</div>
+</div>
+</div>
+<!-- Kriteria 3: 20% Bobot -->
+<div class="rounded-xl bg-surface-container-low p-space-md flex flex-col gap-2.5 transition-all">
+<div class="flex items-center justify-between cursor-pointer" onclick="toggleRubricDetails('rubric-3')">
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 rounded-md bg-surface-container-highest text-on-surface font-code-badge text-[11px] font-bold flex items-center justify-center">3</span>
+<span class="font-label-lg text-label-lg font-semibold text-on-surface">Kualitas &amp; Keterbacaan Kode</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded-full bg-surface-container-highest text-primary font-code-badge text-code-badge font-bold">Bobot 20%</span>
+<span class="material-symbols-outlined text-outline text-[18px] transition-transform duration-200" id="rubric-icon-3">expand_more</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-status-success"></span>
+<span class="font-code-badge text-code-badge text-status-success font-semibold">Prediksi: Maksimal (19-20 Pts)</span>
+</div>
+<span class="font-code-data text-code-data text-on-surface-variant">Target Dosen: ≥ 18 Pts</span>
+</div>
+<!-- Expandable Details -->
+<div class="hidden flex flex-col gap-2 pt-2 bg-surface-container-lowest/60 p-3 rounded-lg mt-1" id="rubric-3">
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+<strong>Deskripsi Level:</strong> Mematuhi konvensi PEP 8, penamaan variabel representatif, docstring tipe data lengkap, serta pemisahan modul representasi CLI bersih.
+              </p>
+<div class="flex items-center gap-2 font-code-data text-code-data text-on-surface">
+<span class="material-symbols-outlined text-[14px] text-status-success">done</span>
+<span>Flake8 linter score: 9.9/10</span>
+</div>
+</div>
+</div>
+<!-- Kriteria 4: 10% Bobot -->
+<div class="rounded-xl bg-surface-container-low p-space-md flex flex-col gap-2.5 transition-all">
+<div class="flex items-center justify-between cursor-pointer" onclick="toggleRubricDetails('rubric-4')">
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 rounded-md bg-surface-container-highest text-on-surface font-code-badge text-[11px] font-bold flex items-center justify-center">4</span>
+<span class="font-label-lg text-label-lg font-semibold text-on-surface">Dokumentasi &amp; Test Cases</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded-full bg-surface-container-highest text-primary font-code-badge text-code-badge font-bold">Bobot 10%</span>
+<span class="material-symbols-outlined text-outline text-[18px] transition-transform duration-200" id="rubric-icon-4">expand_more</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-status-success"></span>
+<span class="font-code-badge text-code-badge text-status-success font-semibold">Prediksi: Lengkap (9-10 Pts)</span>
+</div>
+<span class="font-code-data text-code-data text-on-surface-variant">Target Dosen: ≥ 8 Pts</span>
+</div>
+<!-- Expandable Details -->
+<div class="hidden flex flex-col gap-2 pt-2 bg-surface-container-lowest/60 p-3 rounded-lg mt-1" id="rubric-4">
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+<strong>Deskripsi Level:</strong> Menyertakan minimal 15 unit test assertions (ditemukan 24 test cases), dokumen penjelasan alur rotasi, dan instruksi replikasi.
+              </p>
+<div class="flex items-center gap-2 font-code-data text-code-data text-on-surface">
+<span class="material-symbols-outlined text-[14px] text-status-success">done</span>
+<span>Code coverage: 94%</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Academic Integrity & Pre-Submission Checklist -->
+<div class="mt-space-xs rounded-xl bg-surface-container-high/40 p-space-md flex flex-col gap-3">
+<span class="font-label-lg text-label-lg font-semibold text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]">verified_user</span>
+            Checklist Pra-Pengumpulan
+          </span>
+<label class="flex items-start gap-2.5 cursor-pointer select-none">
+<input checked="" class="mt-1 w-4 h-4 rounded text-primary focus:ring-primary accent-primary cursor-pointer" type="checkbox"/>
+<span class="font-body-sm text-body-sm text-on-surface leading-tight">
+              Kode program telah lolos kompilasi &amp; verifikasi eksekusi tanpa dependency eksternal tak terdokumentasi.
+            </span>
+</label>
+<label class="flex items-start gap-2.5 cursor-pointer select-none">
+<input checked="" class="mt-1 w-4 h-4 rounded text-primary focus:ring-primary accent-primary cursor-pointer" type="checkbox"/>
+<span class="font-body-sm text-body-sm text-on-surface leading-tight">
+              Laporan teknis telah memuat pembuktian grafik empiris serta analisis kompleksitas ruang dan waktu Big-O.
+            </span>
+</label>
+<label class="flex items-start gap-2.5 cursor-pointer select-none">
+<input checked="" class="mt-1 w-4 h-4 rounded text-primary focus:ring-primary accent-primary cursor-pointer" type="checkbox"/>
+<span class="font-body-sm text-body-sm text-on-surface leading-tight">
+              Menyetujui <strong>Pakta Integritas Akademik SV UNS</strong> (Bebas dari fabrikasi data, kecurangan kode, &amp; pelanggaran etika AI generatif).
+            </span>
+</label>
+</div>
+</div>
+<!-- Human-in-the-Loop Dosen Reassurance Card -->
+<div class="rounded-2xl bg-surface-container-lowest p-space-md shadow-sm flex items-center gap-3.5">
+<div class="w-12 h-12 rounded-xl bg-secondary-container/40 text-secondary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[24px]">verified</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Validasi Langsung oleh Dosen</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-snug">
+            Skor AI Pre-Flight Checker hanya berfungsi sebagai panduan draf mahasiswa. Nilai transkrip akhir ditentukan sepenuhnya oleh Prof. Dr. Aris Thorne.
+          </p>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Sticky Action Bar (Persistent Control Dock) -->
+<div class="fixed bottom-0 left-72 right-0 bg-surface-container-lowest/90 backdrop-blur-xl z-40 px-gutter py-3.5 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] flex items-center justify-between">
+<!-- Left Autosave Status -->
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="w-2 h-2 rounded-full bg-status-success"></span>
+<span class="font-code-badge text-code-badge text-on-surface-variant" id="autosaveStatus">Status: Draf Tersimpan Otomatis (10 menit lalu)</span>
+<span class="hidden md:inline text-outline text-[12px]">•</span>
+<span class="hidden md:inline font-code-badge text-code-badge text-outline">Versi Submisi #2.1</span>
+</div>
+<!-- Right Action Buttons -->
+<div class="flex items-center gap-space-sm">
+<button class="px-4 py-2.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md transition-colors flex items-center gap-1.5 shadow-sm" id="saveDraftBtn">
+<span class="material-symbols-outlined text-[18px]">save</span>
+<span>Simpan Sebagai Draf</span>
+</button>
+<button class="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-container text-on-primary font-label-md text-label-md font-semibold transition-all duration-200 flex items-center gap-2 shadow-md hover:shadow-lg active:scale-98" id="finalSubmitBtn">
+<span class="material-symbols-outlined text-[18px]">send</span>
+<span>Kumpulkan Tugas Sekarang (Submit Final)</span>
+</button>
+</div>
+</div>
+<!-- Submission Confirmation Modal / Notification Toast (Interactivity element) -->
+<div class="fixed inset-0 bg-inverse-surface/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4" id="submitModal">
+<div class="w-full max-w-md bg-surface-container-lowest rounded-2xl p-space-lg shadow-2xl flex flex-col gap-space-md">
+<div class="w-12 h-12 rounded-2xl bg-primary-fixed text-on-primary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-[26px]">forward_to_inbox</span>
+</div>
+<div class="flex flex-col gap-1">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Konfirmasi Pengumpulan Akhir</h3>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+          Apakah Anda yakin ingin mengirimkan berkas tugas ini ke Prof. Dr. Aris Thorne? Anda masih memiliki waktu hingga besok pukul 23:59 WIB jika ingin memperbarui berkas.
+        </p>
+</div>
+<div class="p-3 rounded-xl bg-surface-container-low flex items-center gap-2 font-code-badge text-code-badge text-on-surface-variant">
+<span class="material-symbols-outlined text-status-success text-[16px]">check_circle</span>
+<span>2 berkas terverifikasi &amp; telah lolos seluruh pre-check integritas.</span>
+</div>
+<div class="flex items-center justify-end gap-2 pt-2">
+<button class="px-4 py-2 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md transition-colors" id="cancelModalBtn">
+          Batal &amp; Periksa Lagi
+        </button>
+<button class="px-4 py-2 rounded-xl bg-primary text-on-primary font-label-md text-label-md font-semibold shadow-md flex items-center gap-1.5" id="confirmSubmitBtn">
+<span class="material-symbols-outlined text-[16px]">done</span>
+<span>Ya, Kumpulkan</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Inlined Interactive Logic -->
+<script>
+    // Accordion Toggle for Rubric items
+    function toggleRubricDetails(id) {
+      const el = document.getElementById(id);
+      const iconId = id.replace('rubric-', 'rubric-icon-');
+      const icon = document.getElementById(iconId);
+      if (el) {
+        if (el.classList.contains('hidden')) {
+          el.classList.remove('hidden');
+          if (icon) icon.innerText = 'expand_less';
+        } else {
+          el.classList.add('hidden');
+          if (icon) icon.innerText = 'expand_more';
+        }
+      }
+    }
+
+    // Modal Interaction
+    const finalSubmitBtn = document.getElementById('finalSubmitBtn');
+    const submitModal = document.getElementById('submitModal');
+    const cancelModalBtn = document.getElementById('cancelModalBtn');
+    const confirmSubmitBtn = document.getElementById('confirmSubmitBtn');
+    const autosaveStatus = document.getElementById('autosaveStatus');
+    const saveDraftBtn = document.getElementById('saveDraftBtn');
+    const noteTextarea = document.getElementById('noteTextarea');
+    const charCount = document.getElementById('charCount');
+    const recheckBtn = document.getElementById('recheckBtn');
+    const refreshIcon = document.getElementById('refreshIcon');
+
+    if (finalSubmitBtn && submitModal) {
+      finalSubmitBtn.addEventListener('click', () => {
+        submitModal.classList.remove('hidden');
+      });
+    }
+
+    if (cancelModalBtn && submitModal) {
+      cancelModalBtn.addEventListener('click', () => {
+        submitModal.classList.add('hidden');
+      });
+    }
+
+    if (confirmSubmitBtn && submitModal) {
+      confirmSubmitBtn.addEventListener('click', () => {
+        confirmSubmitBtn.innerHTML = '<span class="material-symbols-outlined text-[16px] animate-spin">progress_activity</span> Mengirim...';
+        setTimeout(() => {
+          submitModal.classList.add('hidden');
+          confirmSubmitBtn.innerHTML = '<span class="material-symbols-outlined text-[16px]">done</span> Ya, Kumpulkan';
+          if (autosaveStatus) {
+            autosaveStatus.innerHTML = '<span class="text-status-success font-semibold">Tugas Berhasil Dikumpulkan Resmi!</span>';
+          }
+          finalSubmitBtn.disabled = true;
+          finalSubmitBtn.classList.remove('bg-primary');
+          finalSubmitBtn.classList.add('bg-status-success', 'cursor-not-allowed');
+          finalSubmitBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">done_all</span> Berhasil Dikumpulkan';
+        }, 900);
+      });
+    }
+
+    // Save Draft click handler
+    if (saveDraftBtn && autosaveStatus) {
+      saveDraftBtn.addEventListener('click', () => {
+        saveDraftBtn.disabled = true;
+        const originalHtml = saveDraftBtn.innerHTML;
+        saveDraftBtn.innerHTML = '<span class="material-symbols-outlined text-[16px] animate-spin">sync</span> Menyimpan...';
+        setTimeout(() => {
+          const now = new Date();
+          const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+          autosaveStatus.textContent = 'Status: Draf Tersimpan Baru Saja (' + timeStr + ' WIB)';
+          saveDraftBtn.disabled = false;
+          saveDraftBtn.innerHTML = originalHtml;
+        }, 600);
+      });
+    }
+
+    // Dynamic Character Counter
+    if (noteTextarea && charCount) {
+      noteTextarea.addEventListener('input', () => {
+        const len = noteTextarea.value.length;
+        charCount.textContent = len + ' / 600 Karakter';
+        if (len > 600) {
+          charCount.classList.add('text-error');
+        } else {
+          charCount.classList.remove('text-error');
+        }
+      });
+    }
+
+    // Recheck button animation
+    if (recheckBtn && refreshIcon) {
+      recheckBtn.addEventListener('click', () => {
+        refreshIcon.classList.add('animate-spin');
+        recheckBtn.disabled = true;
+        setTimeout(() => {
+          refreshIcon.classList.remove('animate-spin');
+          recheckBtn.disabled = false;
+        }, 1000);
+      });
+    }
+
+    // File Input Drag and Drop triggers
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    if (dropZone && fileInput) {
+      dropZone.addEventListener('click', () => fileInput.click());
+      dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('bg-surface-container');
+      });
+      dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('bg-surface-container');
+      });
+      dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('bg-surface-container');
+      });
+    }
+  </script>
+</div></main></div></body></html>

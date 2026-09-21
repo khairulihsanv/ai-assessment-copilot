@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+
+<html lang="id"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Space+Grotesk:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"inverse-on-surface":"#eaf1ff","surface":"#f8f9ff","on-error":"#ffffff","canvas-light":"#F8FAFC","inverse-primary":"#b4c5ff","on-error-container":"#93000a","outline":"#737686","background":"#f8f9ff","primary-container":"#2563eb","surface-container-highest":"#d3e4fe","on-primary":"#ffffff","error-container":"#ffdad6","inverse-surface":"#213145","on-secondary-fixed":"#001d31","surface-container-low":"#eff4ff","primary-fixed":"#dbe1ff","on-tertiary-container":"#f7edff","on-tertiary":"#ffffff","on-background":"#0b1c30","on-surface":"#0b1c30","outline-variant":"#c3c6d7","surface-container":"#e5eeff","secondary-fixed":"#cce5ff","tertiary-container":"#8343f4","on-secondary-fixed-variant":"#004b73","text-slate-dark":"#0F172A","tertiary-fixed":"#eaddff","ai-cyan-glow":"#38BDF8","secondary":"#006398","error":"#ba1a1a","surface-container-lowest":"#ffffff","on-surface-variant":"#434655","border-subtle":"#E2E8F0","on-tertiary-fixed-variant":"#5a00c6","surface-white":"#FFFFFF","surface-dim":"#cbdbf5","surface-container-high":"#dce9ff","secondary-fixed-dim":"#93ccff","on-secondary-container":"#00476e","on-secondary":"#ffffff","on-primary-container":"#eeefff","on-tertiary-fixed":"#25005a","on-primary-fixed-variant":"#003ea8","surface-tint":"#0053db","surface-variant":"#d3e4fe","tertiary-fixed-dim":"#d2bbff","primary-fixed-dim":"#b4c5ff","primary":"#004ac6","surface-bright":"#f8f9ff","ai-violet-glow":"#A855F7","tertiary":"#6a1edb","secondary-container":"#5bb8fe","on-primary-fixed":"#00174b","status-success":"#10B981"},borderRadius:{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},spacing:{"margin":"2rem","space-lg":"1.5rem","space-xs":"0.25rem","space-sm":"0.5rem","gutter":"1.5rem","margin-mobile":"1rem","space-md":"1rem","gutter-mobile":"0.75rem","space-xl":"2rem"},fontFamily:{"label-lg":["Inter"],"body-lg":["Inter"],"headline-lg-mobile":["Space Grotesk"],"headline-sm":["Space Grotesk"],"headline-lg":["Space Grotesk"],"headline-md":["Space Grotesk"],"code-data":["JetBrains Mono"],"headline-xl":["Space Grotesk"],"label-md":["Inter"],"body-md":["Inter"],"headline-xl-mobile":["Space Grotesk"],"body-sm":["Inter"],"code-badge":["JetBrains Mono"]},fontSize:{"label-lg":["14px",{lineHeight:"20px",letterSpacing:"0em",fontWeight:"500"}],"body-lg":["16px",{lineHeight:"24px",letterSpacing:"-0.005em",fontWeight:"400"}],"headline-lg-mobile":["24px",{lineHeight:"32px",letterSpacing:"-0.01em",fontWeight:"600"}],"headline-sm":["18px",{lineHeight:"26px",letterSpacing:"-0.005em",fontWeight:"600"}],"headline-lg":["32px",{lineHeight:"40px",letterSpacing:"-0.02em",fontWeight:"600"}],"headline-md":["24px",{lineHeight:"32px",letterSpacing:"-0.01em",fontWeight:"600"}],"code-data":["12px",{lineHeight:"16px",letterSpacing:"-0.01em",fontWeight:"500"}],"headline-xl":["40px",{lineHeight:"48px",letterSpacing:"-0.02em",fontWeight:"700"}],"label-md":["12px",{lineHeight:"16px",letterSpacing:"0.01em",fontWeight:"500"}],"body-md":["14px",{lineHeight:"20px",letterSpacing:"0em",fontWeight:"400"}],"headline-xl-mobile":["30px",{lineHeight:"38px",letterSpacing:"-0.015em",fontWeight:"700"}],"body-sm":["12px",{lineHeight:"18px",letterSpacing:"0em",fontWeight:"400"}],"code-badge":["11px",{lineHeight:"14px",letterSpacing:"0.02em",fontWeight:"600"}]}}}};</script></head><body class="bg-surface font-body-md text-body-md text-on-surface"><aside class="fixed left-0 top-0 h-full w-72 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between"><div class="flex flex-col h-full"><div class="h-16 px-space-md flex items-center gap-space-sm"><img alt="Brand logo. - Primary color: #1a73e8
+- Font: inter
+- Mode: light
+- Roundness: rounded-md
+" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1UtiRTrkE7S8XIi8j6LLitAM-C7YW7aod2tgfaMH37Vfw0o8umDaRtBj5NTqCcxZTjLGvRpbH4Tek1IahJVm7KLeNH7cDJqPZmf7AJ8TczPwsOjpiPqWGAR9AzJYD4d0KAygvB7oHEYIsIoUVuSyf64901xNSrmvo4jf3UYeafPgVA5KTwDDBNOfP09uRSSAYL3NO16QIEEgHh9XbHhl9zAyzqC9ijaWvBFa8sMVY631oZU_E7AuoZlgk0f"/><div class="flex flex-col min-w-0"><span class="font-headline-sm text-headline-sm text-on-surface truncate">Copilot Asesmen</span><span class="font-code-badge text-code-badge text-on-surface-variant truncate">Sekolah Vokasi UNS</span></div></div><div class="px-space-md py-space-sm"><div class="p-space-sm rounded-lg bg-surface-container-low flex items-center justify-between"><div class="flex items-center gap-space-xs"><span class="w-2 h-2 rounded-full bg-status-success"></span><span class="font-code-badge text-code-badge text-on-surface">AI Engine: Active</span></div><span class="font-code-badge text-code-badge text-primary bg-primary-fixed px-1.5 py-0.5 rounded">v2.4-Turbo</span></div></div><div class="flex-1 overflow-y-auto px-space-md py-space-xs flex flex-col gap-space-md"><div class="flex flex-col gap-1"><span class="px-space-sm font-label-md text-label-md text-outline uppercase tracking-wider">Utama</span><nav class="flex flex-col gap-1" data-active-classes="bg-primary text-on-primary font-semibold rounded-lg shadow-sm"><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="overview-dashboard" href="#"><span class="material-symbols-outlined text-[20px]">space_dashboard</span><span class="font-label-lg text-label-lg">Dashboard Overview</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="classes" href="#"><span class="material-symbols-outlined text-[20px]">school</span><span class="font-label-lg text-label-lg">Kelas Kuliah</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="assignments" href="#"><span class="material-symbols-outlined text-[20px]">assignment</span><span class="font-label-lg text-label-lg">Manajemen Tugas</span></a></nav></div><div class="flex flex-col gap-1"><span class="px-space-sm font-label-md text-label-md text-outline uppercase tracking-wider">Evaluasi &amp; AI</span><nav class="flex flex-col gap-1" data-active-classes="bg-primary text-on-primary font-semibold rounded-lg shadow-sm"><a aria-current="page" class="flex items-center gap-space-sm px-space-sm py-2 transition-colors bg-primary text-on-primary font-semibold rounded-lg shadow-sm" data-path="grading-studio" href="#"><span class="material-symbols-outlined text-[20px]">auto_awesome</span><span class="font-label-lg text-label-lg">Koreksi &amp; Asesmen</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="rubrics-builder" href="#"><span class="material-symbols-outlined text-[20px]">checklist_rtl</span><span class="font-label-lg text-label-lg">Rubrik Interaktif</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="analytics" href="#"><span class="material-symbols-outlined text-[20px]">insights</span><span class="font-label-lg text-label-lg">Laporan &amp; Analitik</span></a></nav></div><div class="flex flex-col gap-1"><span class="px-space-sm font-label-md text-label-md text-outline uppercase tracking-wider">Pengaturan &amp; Bantuan</span><nav class="flex flex-col gap-1" data-active-classes="bg-primary text-on-primary font-semibold rounded-lg shadow-sm"><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="account-settings" href="#"><span class="material-symbols-outlined text-[20px]">settings</span><span class="font-label-lg text-label-lg">Pengaturan Akun</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" data-path="documentation-api" href="#"><span class="material-symbols-outlined text-[20px]">menu_book</span><span class="font-label-lg text-label-lg">Dokumentasi &amp; API</span></a></nav></div></div><div class="p-space-md flex flex-col gap-space-sm"><button class="w-full flex items-center justify-center gap-space-xs py-2.5 px-space-sm rounded-lg bg-primary text-on-primary font-label-lg text-label-lg hover:bg-on-primary-fixed-variant transition-colors shadow-sm" type="button"><span class="material-symbols-outlined text-[18px]">add_circle</span><span>+ Buat Tugas / Rubrik</span></button><div class="p-space-xs flex items-center justify-between text-on-surface-variant"><span class="font-code-badge text-code-badge">SV-UNS Academic Cloud</span><span class="material-symbols-outlined text-[16px]">verified</span></div></div></div></aside><div class="pl-72"><header class="fixed top-0 left-72 right-0 h-16 bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-space-lg"><div class="flex items-center gap-space-md"><div class="flex items-center gap-space-xs"><span class="font-headline-sm text-headline-sm text-on-surface">AI Assessment Copilot</span><span class="text-outline-variant">/</span><span class="font-label-md text-label-md text-on-surface-variant bg-surface-container-high px-2 py-0.5 rounded-full">Faculty Suite</span></div><div class="relative flex items-center w-80"><span class="material-symbols-outlined absolute left-3 text-outline text-[18px]">search</span><input class="w-full pl-9 pr-space-md py-1.5 bg-surface rounded-lg font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:bg-surface-container-lowest" placeholder="Cari berkas tugas, rubrik, mahasiswa..." type="text"/></div></div><div class="flex items-center gap-space-md"><div class="flex items-center gap-space-xs bg-surface-container-low px-2.5 py-1 rounded-full"><span class="w-2 h-2 rounded-full bg-ai-cyan-glow animate-pulse"></span><span class="font-code-badge text-code-badge text-on-surface">AI Engine: Active</span></div><button class="relative p-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" type="button"><span class="material-symbols-outlined text-[22px]">notifications</span><span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-error"></span></button><div class="h-6 w-[1px] bg-border-subtle"></div><div class="flex items-center gap-space-sm cursor-pointer"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1V0cjw_ZMTunKI9zG8tmI78M3anua1YLbVGIwM3dGSlgtkUyeZ0fdK80sClFGHAxJ51sgcKIkCQd54R92aI4Nsx34EsRnMxBv6s1UEgKffPW97MTLbEbzXbuX17tf-bKBh-vs4Y5rbnSww5lTE0vDBXV16LsKoB6NFYZ3oSKv3Kxdh_kpslMPLcCJFIbEdTvwtozBqYlkLwrIw5Fn5LjuDcvEq12JCiR7DnBLM9nGM968eNI6dukSf3UCtn"/><div class="flex flex-col text-left"><span class="font-label-md text-label-md text-on-surface leading-none">Dr. Hendra Kusuma</span><span class="font-code-badge text-code-badge text-secondary leading-tight mt-0.5">Dosen Pengampu</span></div><span class="material-symbols-outlined text-outline text-[18px]">expand_more</span></div></div></header><main class="relative pt-16 w-full px-space-lg min-h-screen bg-surface"><div class="flex flex-col w-full pb-24">
+<!-- Top Assessment Context Bar -->
+<section class="w-full bg-surface-container-lowest rounded-xl shadow-sm p-space-md mb-space-md">
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md">
+<!-- Assignment & Class Breadcrumb Metadata -->
+<div class="flex flex-col gap-1 min-w-0">
+<div class="flex items-center gap-space-xs flex-wrap">
+<span class="font-code-badge text-code-badge text-secondary bg-secondary-fixed px-2 py-0.5 rounded">CS 304 • Semester Ganjil 2024</span>
+<span class="text-outline-variant">•</span>
+<span class="font-label-md text-label-md text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">domain</span>
+            Sekolah Vokasi UNS
+          </span>
+<span class="text-outline-variant">•</span>
+<span class="font-label-md text-label-md text-status-success flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">verified</span>
+            Turnitin Synchronized
+          </span>
+</div>
+<div class="flex items-baseline gap-space-sm flex-wrap">
+<h1 class="font-headline-md text-headline-md text-on-surface tracking-tight">Tugas 3: Red-Black Trees Balancing</h1>
+<span class="font-body-md text-body-md text-on-surface-variant font-medium">/ Kelas CS 304 - Struktur Data (Kelas A)</span>
+</div>
+</div>
+<!-- Student Navigation Carousel & State Pill -->
+<div class="flex items-center gap-space-md flex-wrap self-end lg:self-center">
+<!-- Human-in-the-Loop Status Badge -->
+<div class="flex items-center gap-space-xs bg-surface-container px-3 py-1.5 rounded-lg shadow-sm">
+<span class="w-2.5 h-2.5 rounded-full bg-ai-cyan-glow animate-pulse"></span>
+<span class="font-label-md text-label-md font-semibold text-primary">Draft AI Siap Direview</span>
+<span class="font-code-badge text-code-badge text-on-surface-variant bg-surface-container-lowest px-1.5 py-0.5 rounded">Conf. 94%</span>
+</div>
+<!-- Student Carousel -->
+<div class="flex items-center gap-space-xs bg-surface-container-low p-1 rounded-xl">
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container text-on-surface transition-colors" title="Mahasiswa Sebelumnya" type="button">
+<span class="material-symbols-outlined text-[20px]">chevron_left</span>
+</button>
+<div class="flex items-center gap-2 px-space-sm">
+<img class="w-7 h-7 rounded-full object-cover" data-alt="Portrait photography of Sarah Kirana, an Indonesian university computer science student smiling confidently in a modern tech lab setting, professional academic lighting with subtle blue undertones, sharp focus." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCjWRi4lf3y7PRPGmgMht3sw_QR9WTJa89IBhIqQTz-1u0UV6iFyUH3G-aeHrEVCw8HwUC2utcnh3x8lyFmX_jYyGQ3jK8SR7Y_iDY_kvffUvN1qoEklsE35PuATpRjTvJv89I6fHdRe0IIFvHTMd-7nHRubvH4On96AwKmrBT0GezwsIVwJiZ6oDkni9kY_BbwPGZNpEhC016RVGxJwOozM4DKuG_EWolhBTRt3Ogr"/>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md text-on-surface font-semibold truncate">Sarah Kirana (NIM: 2108561042)</span>
+<span class="font-code-badge text-code-badge text-outline">Mahasiswa 14 dari 42</span>
+</div>
+</div>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-surface-container-lowest text-primary shadow-sm hover:bg-primary hover:text-on-primary transition-colors" title="Mahasiswa Berikutnya" type="button">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Two-Column Studio Assessment Workspace -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-space-lg w-full items-start">
+<!-- LEFT COLUMN: Student Submission Viewer (Span 7) -->
+<div class="xl:col-span-7 flex flex-col gap-space-md min-w-0">
+<!-- Submission Container -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden flex flex-col">
+<!-- Viewer Header with Tab Selection & Plagiarism Badge -->
+<div class="bg-surface-container-low p-space-sm flex flex-wrap items-center justify-between gap-space-sm">
+<!-- View Tabs -->
+<div class="flex items-center gap-1 bg-surface-container-lowest p-1 rounded-lg">
+<button class="px-3 py-1.5 rounded-md font-label-md text-label-md bg-primary text-on-primary font-medium shadow-sm flex items-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-[16px]">terminal</span>
+<span>cs304_sarah_rb_tree.py</span>
+</button>
+<button class="px-3 py-1.5 rounded-md font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors flex items-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-[16px]">picture_as_pdf</span>
+<span>Laporan_Tugas3.pdf</span>
+</button>
+<button class="px-3 py-1.5 rounded-md font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors flex items-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-[16px]">play_circle</span>
+<span>Output Test &amp; Terminal</span>
+</button>
+</div>
+<!-- Turnitin / Integrity Shield -->
+<div class="flex items-center gap-2 bg-surface-container-lowest px-3 py-1.5 rounded-lg shadow-sm">
+<span class="material-symbols-outlined text-status-success text-[18px]">verified_user</span>
+<div class="flex flex-col">
+<span class="font-code-badge text-code-badge text-status-success">98% Asli</span>
+<span class="font-code-data text-code-data text-outline">Copilot Guard Pass</span>
+</div>
+</div>
+</div>
+<!-- Submission Meta Header bar -->
+<div class="px-space-md py-2 bg-surface-container flex items-center justify-between font-code-data text-code-data text-on-surface-variant">
+<div class="flex items-center gap-space-sm">
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-status-success"></span> Python 3.11</span>
+<span>•</span>
+<span>284 lines</span>
+<span>•</span>
+<span>Diunggah: 18 Okt 2024, 23:14 WIB</span>
+</div>
+<div class="flex items-center gap-space-xs">
+<button class="hover:text-primary transition-colors flex items-center gap-1 text-label-md font-label-md" type="button">
+<span class="material-symbols-outlined text-[16px]">content_copy</span> Salin
+            </button>
+<button class="hover:text-primary transition-colors flex items-center gap-1 text-label-md font-label-md ml-2" type="button">
+<span class="material-symbols-outlined text-[16px]">fullscreen</span> Layar Penuh
+            </button>
+</div>
+</div>
+<!-- Syntax Code Display Area -->
+<div class="bg-text-slate-dark text-slate-100 p-space-md overflow-x-auto font-code-data text-code-data leading-relaxed select-text">
+<div class="table w-full border-collapse">
+<div class="table-row">
+<span class="table-cell pr-4 text-slate-500 select-none text-right w-8">72</span>
+<span class="table-cell text-slate-400">    def _insert_fixup(self, z):</span>
+</div>
+<div class="table-row">
+<span class="table-cell pr-4 text-slate-500 select-none text-right w-8">73</span>
+<span class="table-cell text-slate-500 italic">        """Menjaga invariant Red-Black Tree setelah penyisipan node standar BST."""</span>
+</div>
+<div class="table-row">
+<span class="table-cell pr-4 text-slate-500 select-none text-right w-8">74</span>
+<span class="table-cell text-ai-cyan-glow">        while z.parent.color == RED:</span>
+</div>
+<div class="table-row">
+<span class="table-cell pr-4 text-slate-500 select-none text-right w-8">75</span>
+<span class="table-cell text-slate-200">            if z.parent == z.parent.parent.left:</span>
+</div>
+<div class="table-row">
+<span class="table-cell pr-4 text-slate-500 select-none text-right w-8">76</span>
+<span class="table-cell text-slate-200">                y = z.parent.parent.right  <span class="text-slate-500"># Paman node (uncle)</span></span>
+</div>
+<div class="table-row">
+<span class="table-cell pr-4 text-slate-500 select-none text-right w-8">77</span>
+<span class="table-cell text-amber-300">                if y.color == RED:</span>
+</div>
+<div class="table-row">
+<span class="table-cell pr-4 text-slate-500 select-none text-right w-8">78</span>
+<span class="table-cell text-slate-400">                    # Kasus 1: Paman merah -&gt; Cukup recoloring</span>
+</div>
+<div class="table-row">
+<span class="table-cell pr-4 text-slate-500 select-none text-right w-8">79</span>
+<span class="table-cell text-slate-200">                    z.parent.color = BLACK</span>
+</div>
+<div class="table-row">
+<span class="table-cell pr-4 text-slate-500 select-none text-right w-8">80</span>
+<span class="table-cell text-slate-200">                    y.color = BLACK</span>
+</div>
+<div class="table-row">
+<span class="table-cell pr-4 text-slate-500 select-none text-right w-8">81</span>
+<span class="table-cell text-slate-200">                    z.parent.parent.color = RED</span>
+</div>
+<div class="table-row">
+<span class="table-cell pr-4 text-slate-500 select-none text-right w-8">82</span>
+<span class="table-cell text-slate-200">                    z = z.parent.parent</span>
+</div>
+<div class="table-row">
+<span class="table-cell pr-4 text-slate-500 select-none text-right w-8">83</span>
+<span class="table-cell text-slate-200">                else:</span>
+</div>
+<div class="table-row bg-primary/20">
+<span class="table-cell pr-4 text-primary-fixed select-none text-right w-8">84</span>
+<span class="table-cell text-primary-fixed">                    if z == z.parent.right:</span>
+</div>
+<div class="table-row bg-primary/20">
+<span class="table-cell pr-4 text-primary-fixed select-none text-right w-8">85</span>
+<span class="table-cell text-slate-300">                        # Kasus 2: Node anak kanan -&gt; Putar Kiri</span>
+</div>
+<div class="table-row bg-primary/20">
+<span class="table-cell pr-4 text-primary-fixed select-none text-right w-8">86</span>
+<span class="table-cell text-slate-200">                        z = z.parent</span>
+</div>
+<div class="table-row bg-primary/20">
+<span class="table-cell pr-4 text-primary-fixed select-none text-right w-8">87</span>
+<span class="table-cell text-secondary-container">                        self._left_rotate(z)</span>
+</div>
+<div class="table-row">
+<span class="table-cell pr-4 text-slate-500 select-none text-right w-8">88</span>
+<span class="table-cell text-slate-400">                    # Kasus 3: Node anak kiri -&gt; Putar Kanan &amp; Recolor</span>
+</div>
+<div class="table-row">
+<span class="table-cell pr-4 text-slate-500 select-none text-right w-8">89</span>
+<span class="table-cell text-slate-200">                    z.parent.color = BLACK</span>
+</div>
+<div class="table-row">
+<span class="table-cell pr-4 text-slate-500 select-none text-right w-8">90</span>
+<span class="table-cell text-slate-200">                    z.parent.parent.color = RED</span>
+</div>
+<div class="table-row">
+<span class="table-cell pr-4 text-slate-500 select-none text-right w-8">91</span>
+<span class="table-cell text-secondary-container">                    self._right_rotate(z.parent.parent)</span>
+</div>
+<div class="table-row">
+<span class="table-cell pr-4 text-slate-500 select-none text-right w-8">92</span>
+<span class="table-cell text-slate-200">            else:</span>
+</div>
+<div class="table-row">
+<span class="table-cell pr-4 text-slate-500 select-none text-right w-8">93</span>
+<span class="table-cell text-slate-400">                # Kasus simetris (z.parent adalah right child)</span>
+</div>
+<div class="table-row">
+<span class="table-cell pr-4 text-slate-500 select-none text-right w-8">94</span>
+<span class="table-cell text-slate-200">                y = z.parent.parent.left</span>
+</div>
+<div class="table-row">
+<span class="table-cell pr-4 text-slate-500 select-none text-right w-8">95</span>
+<span class="table-cell text-amber-300">                if y.color == RED:</span>
+</div>
+<div class="table-row">
+<span class="table-cell pr-4 text-slate-500 select-none text-right w-8">96</span>
+<span class="table-cell text-slate-200">                    z.parent.color = BLACK</span>
+</div>
+<div class="table-row">
+<span class="table-cell pr-4 text-slate-500 select-none text-right w-8">97</span>
+<span class="table-cell text-slate-200">                    y.color = BLACK</span>
+</div>
+<div class="table-row">
+<span class="table-cell pr-4 text-slate-500 select-none text-right w-8">98</span>
+<span class="table-cell text-slate-200">                    z.parent.parent.color = RED</span>
+</div>
+<div class="table-row">
+<span class="table-cell pr-4 text-slate-500 select-none text-right w-8">99</span>
+<span class="table-cell text-slate-200">                    z = z.parent.parent</span>
+</div>
+<div class="table-row">
+<span class="table-cell pr-4 text-slate-500 select-none text-right w-8">100</span>
+<span class="table-cell text-slate-200">                else:</span>
+</div>
+<div class="table-row">
+<span class="table-cell pr-4 text-slate-500 select-none text-right w-8">101</span>
+<span class="table-cell text-slate-200">                    if z == z.parent.left:</span>
+</div>
+<div class="table-row">
+<span class="table-cell pr-4 text-slate-500 select-none text-right w-8">102</span>
+<span class="table-cell text-slate-200">                        z = z.parent</span>
+</div>
+<div class="table-row">
+<span class="table-cell pr-4 text-slate-500 select-none text-right w-8">103</span>
+<span class="table-cell text-secondary-container">                        self._right_rotate(z)</span>
+</div>
+<div class="table-row">
+<span class="table-cell pr-4 text-slate-500 select-none text-right w-8">104</span>
+<span class="table-cell text-slate-200">                    z.parent.color = BLACK</span>
+</div>
+<div class="table-row">
+<span class="table-cell pr-4 text-slate-500 select-none text-right w-8">105</span>
+<span class="table-cell text-slate-200">                    z.parent.parent.color = RED</span>
+</div>
+<div class="table-row">
+<span class="table-cell pr-4 text-slate-500 select-none text-right w-8">106</span>
+<span class="table-cell text-secondary-container">                    self._left_rotate(z.parent.parent)</span>
+</div>
+<div class="table-row">
+<span class="table-cell pr-4 text-slate-500 select-none text-right w-8">107</span>
+<span class="table-cell text-primary-fixed font-semibold">        self.root.color = BLACK</span>
+</div>
+</div>
+</div>
+<!-- Terminal Execution Quick Result -->
+<div class="bg-slate-900 text-slate-300 p-space-sm flex items-center justify-between font-code-data text-code-data">
+<div class="flex items-center gap-2">
+<span class="text-status-success font-bold">✓ 24/24 Test Cases Passed</span>
+<span class="text-slate-600">|</span>
+<span class="text-slate-400">Execution time: 0.142s</span>
+<span class="text-slate-600">|</span>
+<span class="text-slate-400">Memory: 14.2 MB</span>
+</div>
+<span class="text-ai-cyan-glow">Autograder: 100/100</span>
+</div>
+</div>
+<!-- Student Submission Note Card -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">sticky_note_2</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Catatan &amp; Pengantar Mahasiswa</span>
+</div>
+<span class="font-code-badge text-code-badge text-outline">Versi 1 (Final)</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant bg-surface-container-low p-space-sm rounded-lg">
+          “Saya telah menyelesaikan implementasi insert, delete fixup, dan visualisasi pohon berbasis CLI. Saya menambahkan penanganan khusus untuk leaf sentinel NIL node agar tidak terjadi <code class="bg-surface-container px-1 py-0.5 rounded text-primary font-code-data">NoneType Attribute Error</code> pada saat pengecekan grandparent.”
+        </p>
+</div>
+<!-- Historical Assessment Analytics Micro-Chart -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-outline uppercase tracking-wider">Performa Sarah di 3 Tugas Terakhir</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Rata-rata: 93.3 (Top 5% Angkatan)</span>
+</div>
+<!-- Inline Progress Sparkline SVG -->
+<div class="flex items-center gap-3">
+<svg class="w-32 h-10 text-primary" fill="none" viewbox="0 0 120 40">
+<path d="M5 30 L40 22 L80 12 L115 8" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"></path>
+<circle cx="5" cy="30" fill="currentColor" r="4"></circle>
+<circle cx="40" cy="22" fill="currentColor" r="4"></circle>
+<circle cx="80" cy="12" fill="currentColor" r="4"></circle>
+<circle class="animate-pulse" cx="115" cy="8" fill="#38BDF8" r="5"></circle>
+</svg>
+<span class="font-code-data text-code-data text-status-success font-bold">+4.2%</span>
+</div>
+</div>
+</div>
+<!-- RIGHT COLUMN: AI Copilot Rubric Assessment & Teacher Override (Span 5) -->
+<div class="xl:col-span-5 flex flex-col gap-space-md min-w-0">
+<!-- AI Copilot Inspector Card -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-md flex flex-col gap-space-md relative overflow-hidden">
+<!-- Soft decorative gradient glow -->
+<div class="absolute -top-12 -right-12 w-48 h-48 bg-primary-container/10 rounded-full blur-2xl pointer-events-none"></div>
+<!-- AI Studio Assistant Header -->
+<div class="flex items-center justify-between pb-space-sm bg-surface-container-low -mx-space-md -mt-space-md px-space-md pt-space-md">
+<div class="flex items-center gap-space-xs">
+<div class="w-7 h-7 rounded-lg bg-primary flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-[18px]">auto_awesome</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-1.5">
+<span class="font-headline-sm text-headline-sm text-on-surface">Analisis AI Copilot</span>
+<span class="font-code-badge text-code-badge bg-primary-fixed text-primary px-1.5 py-0.5 rounded">Draft</span>
+</div>
+<span class="font-code-data text-code-data text-on-surface-variant">Model Evaluasi Rubrik v2.4-Turbo</span>
+</div>
+</div>
+<div class="flex items-center gap-1 text-primary bg-surface-container px-2 py-1 rounded-lg">
+<span class="material-symbols-outlined text-[16px] text-ai-cyan-glow">psychology</span>
+<span class="font-code-badge text-code-badge">Confidence: 94%</span>
+</div>
+</div>
+<!-- Interactive Rubric Breakdown (4 Criteria) -->
+<div class="flex flex-col gap-space-sm" id="rubricContainer">
+<!-- Criterion 1: Ketepatan Struktur Data (Weight 40%) -->
+<div class="bg-surface-container-low rounded-lg p-space-sm flex flex-col gap-space-xs transition-all">
+<div class="flex items-center justify-between gap-2">
+<div class="flex items-center gap-2 min-w-0">
+<span class="w-6 h-6 rounded-full bg-primary-fixed text-primary font-code-badge text-code-badge flex items-center justify-center font-bold">1</span>
+<div class="flex flex-col min-w-0">
+<span class="font-label-lg text-label-lg text-on-surface font-semibold truncate">Ketepatan Struktur Data &amp; Tree Invariant</span>
+<span class="font-code-badge text-code-badge text-outline">Bobot Rubrik: 40%</span>
+</div>
+</div>
+<!-- Editable Score Input & Stepper -->
+<div class="flex items-center gap-1 bg-surface-container-lowest px-2 py-1 rounded-lg shadow-sm">
+<input class="w-8 text-center font-headline-sm text-headline-sm font-bold text-primary bg-transparent focus:outline-none" id="score-1" max="40" min="0" type="number" value="38"/>
+<span class="font-label-md text-label-md text-outline">/ 40</span>
+<span class="material-symbols-outlined text-outline text-[16px] cursor-pointer hover:text-primary">edit</span>
+</div>
+</div>
+<!-- AI Reasoning Note Box -->
+<div class="bg-surface-container-lowest p-2 rounded-md flex items-start gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-ai-cyan-glow text-[16px] mt-0.5">auto_awesome</span>
+<p class="font-body-sm text-body-sm leading-snug">
+<strong class="text-on-surface">AI Reasoning:</strong> Implementasi rotasi dan recoloring sesuai aturan node merah/hitam. Menangani kasus 1-3 simetris dengan tepat. Sedikit redudansi assignment warna root pada baris 107.
+              </p>
+</div>
+</div>
+<!-- Criterion 2: Kompleksitas Waktu & Efisiensi (Weight 30%) -->
+<div class="bg-surface-container-low rounded-lg p-space-sm flex flex-col gap-space-xs transition-all">
+<div class="flex items-center justify-between gap-2">
+<div class="flex items-center gap-2 min-w-0">
+<span class="w-6 h-6 rounded-full bg-primary-fixed text-primary font-code-badge text-code-badge flex items-center justify-center font-bold">2</span>
+<div class="flex flex-col min-w-0">
+<span class="font-label-lg text-label-lg text-on-surface font-semibold truncate">Kompleksitas Waktu &amp; Efisiensi Algoritma</span>
+<span class="font-code-badge text-code-badge text-outline">Bobot Rubrik: 30%</span>
+</div>
+</div>
+<div class="flex items-center gap-1 bg-surface-container-lowest px-2 py-1 rounded-lg shadow-sm">
+<input class="w-8 text-center font-headline-sm text-headline-sm font-bold text-primary bg-transparent focus:outline-none" id="score-2" max="30" min="0" type="number" value="28"/>
+<span class="font-label-md text-label-md text-outline">/ 30</span>
+<span class="material-symbols-outlined text-outline text-[16px] cursor-pointer hover:text-primary">edit</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-2 rounded-md flex items-start gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-ai-cyan-glow text-[16px] mt-0.5">auto_awesome</span>
+<p class="font-body-sm text-body-sm leading-snug">
+<strong class="text-on-surface">AI Reasoning:</strong> Kompleksitas penyeimbangan terjamin O(log n). Rotasi pointer dilakukan in-place tanpa alokasi memori berlebih.
+              </p>
+</div>
+</div>
+<!-- Criterion 3: Kualitas & Keterbacaan Kode (Weight 20%) -->
+<div class="bg-surface-container-low rounded-lg p-space-sm flex flex-col gap-space-xs transition-all">
+<div class="flex items-center justify-between gap-2">
+<div class="flex items-center gap-2 min-w-0">
+<span class="w-6 h-6 rounded-full bg-primary-fixed text-primary font-code-badge text-code-badge flex items-center justify-center font-bold">3</span>
+<div class="flex flex-col min-w-0">
+<span class="font-label-lg text-label-lg text-on-surface font-semibold truncate">Kualitas &amp; Keterbacaan Kode</span>
+<span class="font-code-badge text-code-badge text-outline">Bobot Rubrik: 20%</span>
+</div>
+</div>
+<div class="flex items-center gap-1 bg-surface-container-lowest px-2 py-1 rounded-lg shadow-sm">
+<input class="w-8 text-center font-headline-sm text-headline-sm font-bold text-primary bg-transparent focus:outline-none" id="score-3" max="20" min="0" type="number" value="18"/>
+<span class="font-label-md text-label-md text-outline">/ 20</span>
+<span class="material-symbols-outlined text-outline text-[16px] cursor-pointer hover:text-primary">edit</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-2 rounded-md flex items-start gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-ai-cyan-glow text-[16px] mt-0.5">auto_awesome</span>
+<p class="font-body-sm text-body-sm leading-snug">
+<strong class="text-on-surface">AI Reasoning:</strong> Penamaan variabel jelas (`parent`, `uncle`, `grandparent`). Memenuhi standar PEP8, modularisasi helper function rapi.
+              </p>
+</div>
+</div>
+<!-- Criterion 4: Dokumentasi & Test Cases (Weight 10%) -->
+<div class="bg-surface-container-low rounded-lg p-space-sm flex flex-col gap-space-xs transition-all">
+<div class="flex items-center justify-between gap-2">
+<div class="flex items-center gap-2 min-w-0">
+<span class="w-6 h-6 rounded-full bg-primary-fixed text-primary font-code-badge text-code-badge flex items-center justify-center font-bold">4</span>
+<div class="flex flex-col min-w-0">
+<span class="font-label-lg text-label-lg text-on-surface font-semibold truncate">Dokumentasi &amp; Test Cases Mandiri</span>
+<span class="font-code-badge text-code-badge text-outline">Bobot Rubrik: 10%</span>
+</div>
+</div>
+<div class="flex items-center gap-1 bg-surface-container-lowest px-2 py-1 rounded-lg shadow-sm">
+<input class="w-8 text-center font-headline-sm text-headline-sm font-bold text-primary bg-transparent focus:outline-none" id="score-4" max="10" min="0" type="number" value="8"/>
+<span class="font-label-md text-label-md text-outline">/ 10</span>
+<span class="material-symbols-outlined text-outline text-[16px] cursor-pointer hover:text-primary">edit</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-2 rounded-md flex items-start gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-ai-cyan-glow text-[16px] mt-0.5">auto_awesome</span>
+<p class="font-body-sm text-body-sm leading-snug">
+<strong class="text-on-surface">AI Reasoning:</strong> Melampirkan skenario pengujian 1.000 elemen acak. Docstrings lengkap di setiap method utama.
+              </p>
+</div>
+</div>
+</div>
+<!-- Total Score Summary Box (Asymmetric Split) -->
+<div class="bg-gradient-to-br from-surface-container to-surface-container-high rounded-xl p-space-md flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-code-badge text-code-badge text-outline uppercase tracking-wider">Skor Draf AI Copilot</span>
+<div class="flex items-baseline gap-1">
+<span class="font-headline-lg text-headline-lg font-bold text-on-surface">92</span>
+<span class="font-label-md text-label-md text-outline">/ 100</span>
+</div>
+</div>
+<div class="h-10 w-[1px] bg-outline-variant/50"></div>
+<div class="flex flex-col text-right">
+<span class="font-code-badge text-code-badge text-primary uppercase tracking-wider font-semibold">Final Dosen Override</span>
+<div class="flex items-baseline justify-end gap-1.5">
+<span class="font-headline-xl text-headline-xl font-bold text-primary" id="finalScoreDisplay">92</span>
+<span class="font-headline-sm text-headline-sm font-semibold text-status-success">(A)</span>
+</div>
+<span class="font-code-badge text-code-badge text-status-success font-medium">Predikat: Sangat Baik</span>
+</div>
+</div>
+<!-- Feedback Generator & Narrative Section -->
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center justify-between">
+<label class="font-label-lg text-label-lg text-on-surface font-semibold flex items-center gap-1.5" for="feedbackNarrative">
+<span class="material-symbols-outlined text-primary text-[18px]">chat_bubble_outline</span>
+              Umpan Balik &amp; Evaluasi Naratif Dosen
+            </label>
+<button class="text-primary font-label-md text-label-md flex items-center gap-1 hover:underline" type="button">
+<span class="material-symbols-outlined text-[16px]">refresh</span>
+              Regenerate AI
+            </button>
+</div>
+<textarea class="w-full bg-surface-container-low text-on-surface p-space-sm rounded-lg font-body-sm text-body-sm focus:outline-none focus:bg-surface-container-lowest shadow-sm leading-relaxed" id="feedbackNarrative" placeholder="Tuliskan umpan balik evaluasi atau sesuaikan teks dari AI Copilot..." rows="4">Kerja bagus Sarah! Implementasi Red-Black Tree Anda sangat kokoh dan modular. Penanganan invariant pada fungsi _insert_fixup sangat presisi terutama dalam mengisolasi kasus paman merah dan recoloring. Pertahankan pemahaman struktur algoritma seperti ini!</textarea>
+<!-- Quick Response Prompt Chips -->
+<div class="flex items-center gap-2 flex-wrap pt-1">
+<span class="font-code-badge text-code-badge text-outline">Quick Chips:</span>
+<button class="px-2.5 py-1 rounded-full bg-surface-container hover:bg-primary-fixed hover:text-primary transition-colors font-label-md text-label-md text-on-surface-variant shadow-sm" onclick="appendFeedback(' Kerja Bagus!')" type="button">
+              + Kerja Bagus!
+            </button>
+<button class="px-2.5 py-1 rounded-full bg-surface-container hover:bg-primary-fixed hover:text-primary transition-colors font-label-md text-label-md text-on-surface-variant shadow-sm" onclick="appendFeedback(' Perhatikan edge case pembagian node NIL.')" type="button">
+              + Perhatikan Edge Cases
+            </button>
+<button class="px-2.5 py-1 rounded-full bg-surface-container hover:bg-primary-fixed hover:text-primary transition-colors font-label-md text-label-md text-on-surface-variant shadow-sm" onclick="appendFeedback(' Optimalkan rekursi pada visualisasi graf.')" type="button">
+              + Optimalkan Rekursi
+            </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Sticky Action Bar for Lecturer Verification -->
+<aside aria-label="Aksi Evaluasi" class="fixed bottom-0 left-72 right-0 bg-surface-container-lowest/95 backdrop-blur-md shadow-[0_-4px_16px_rgba(0,0,0,0.06)] px-space-lg py-space-sm z-30 flex flex-col sm:flex-row items-center justify-between gap-space-md">
+<!-- Checkbox option -->
+<label class="flex items-center gap-2 cursor-pointer select-none">
+<input checked="" class="w-4 h-4 rounded text-primary focus:ring-0 bg-surface-container" type="checkbox"/>
+<span class="font-label-lg text-label-lg text-on-surface">Kirim notifikasi email dan rilis ke portal mahasiswa langsung</span>
+</label>
+<!-- Action Action Group -->
+<div class="flex items-center gap-space-sm">
+<button class="px-4 py-2.5 rounded-lg bg-surface-container font-label-lg text-label-lg text-on-surface hover:bg-surface-container-high transition-colors shadow-sm flex items-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-[18px]">save</span>
+<span>Simpan Draf</span>
+</button>
+<button class="px-4 py-2.5 rounded-lg bg-surface-container-low font-label-lg text-label-lg text-outline hover:text-on-surface hover:bg-surface-container transition-colors shadow-sm flex items-center gap-1.5" onclick="resetToAI()" type="button">
+<span class="material-symbols-outlined text-[18px]">restart_alt</span>
+<span>Reset ke AI (92)</span>
+</button>
+<button class="px-6 py-2.5 rounded-lg bg-primary text-on-primary font-label-lg text-label-lg font-semibold hover:bg-on-primary-fixed-variant transition-colors shadow-md flex items-center gap-2" type="button">
+<span class="material-symbols-outlined text-[20px]">check_circle</span>
+<span>Validasi &amp; Rilis Nilai (Berikutnya →)</span>
+</button>
+</div>
+</aside>
+<script>
+    // Inline Micro-interactions for Assessment Studio
+    function appendFeedback(text) {
+      const textarea = document.getElementById('feedbackNarrative');
+      textarea.value += text;
+      textarea.focus();
+    }
+
+    function updateTotal() {
+      const s1 = parseInt(document.getElementById('score-1').value) || 0;
+      const s2 = parseInt(document.getElementById('score-2').value) || 0;
+      const s3 = parseInt(document.getElementById('score-3').value) || 0;
+      const s4 = parseInt(document.getElementById('score-4').value) || 0;
+      const total = s1 + s2 + s3 + s4;
+      const display = document.getElementById('finalScoreDisplay');
+      if (display) {
+        display.innerText = total;
+      }
+    }
+
+    ['score-1', 'score-2', 'score-3', 'score-4'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('input', updateTotal);
+      }
+    });
+
+    function resetToAI() {
+      document.getElementById('score-1').value = 38;
+      document.getElementById('score-2').value = 28;
+      document.getElementById('score-3').value = 18;
+      document.getElementById('score-4').value = 8;
+      updateTotal();
+    }
+  </script>
+</div></main></div></body></html>

@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+
+<html lang="id"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500;600&amp;family=Space+Grotesk:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "status-success": "#10B981", "on-tertiary-fixed-variant": "#5a00c6", "surface-dim": "#cbdbf5", "on-tertiary-container": "#f7edff", "tertiary-fixed-dim": "#d2bbff", "on-secondary": "#ffffff", "inverse-on-surface": "#eaf1ff", "surface-container-lowest": "#ffffff", "on-surface-variant": "#434655", "on-tertiary": "#ffffff", "ai-cyan-glow": "#38BDF8", "border-subtle": "#E2E8F0", "tertiary-container": "#8343f4", "surface-container": "#e5eeff", "ai-violet-glow": "#A855F7", "secondary": "#006398", "surface-container-low": "#eff4ff", "on-error-container": "#93000a", "on-primary-fixed": "#00174b", "surface-variant": "#d3e4fe", "primary-container": "#2563eb", "on-surface": "#0b1c30", "on-secondary-fixed": "#001d31", "tertiary-fixed": "#eaddff", "surface-container-highest": "#d3e4fe", "primary-fixed": "#dbe1ff", "primary-fixed-dim": "#b4c5ff", "on-primary-container": "#eeefff", "outline-variant": "#c3c6d7", "inverse-primary": "#b4c5ff", "secondary-fixed": "#cce5ff", "surface-white": "#FFFFFF", "on-secondary-fixed-variant": "#004b73", "primary": "#004ac6", "on-primary": "#ffffff", "outline": "#737686", "on-secondary-container": "#00476e", "tertiary": "#6a1edb", "error-container": "#ffdad6", "on-background": "#0b1c30", "on-tertiary-fixed": "#25005a", "surface": "#f8f9ff", "surface-bright": "#f8f9ff", "secondary-fixed-dim": "#93ccff", "surface-tint": "#0053db", "inverse-surface": "#213145", "canvas-light": "#F8FAFC", "surface-container-high": "#dce9ff", "background": "#f8f9ff", "secondary-container": "#5bb8fe", "on-error": "#ffffff", "error": "#ba1a1a", "text-slate-dark": "#0F172A", "on-primary-fixed-variant": "#003ea8" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "gutter": "1.5rem", "space-md": "1rem", "space-lg": "1.5rem", "margin": "2rem", "space-xl": "2rem", "gutter-mobile": "0.75rem", "space-sm": "0.5rem", "space-xs": "0.25rem", "margin-mobile": "1rem" }, "fontFamily": { "body-sm": [ "Inter" ], "headline-sm": [ "Space Grotesk" ], "code-data": [ "JetBrains Mono" ], "headline-lg": [ "Space Grotesk" ], "code-badge": [ "JetBrains Mono" ], "headline-lg-mobile": [ "Space Grotesk" ], "headline-xl": [ "Space Grotesk" ], "body-lg": [ "Inter" ], "label-lg": [ "Inter" ], "label-md": [ "Inter" ], "headline-md": [ "Space Grotesk" ], "headline-xl-mobile": [ "Space Grotesk" ], "body-md": [ "Inter" ] }, "fontSize": { "body-sm": [ "12px", { "lineHeight": "18px", "letterSpacing": "0em", "fontWeight": "400" } ], "headline-sm": [ "18px", { "lineHeight": "26px", "letterSpacing": "-0.005em", "fontWeight": "600" } ], "code-data": [ "12px", { "lineHeight": "16px", "letterSpacing": "-0.01em", "fontWeight": "500" } ], "headline-lg": [ "32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" } ], "code-badge": [ "11px", { "lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "600" } ], "headline-lg-mobile": [ "24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" } ], "headline-xl": [ "40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" } ], "body-lg": [ "16px", { "lineHeight": "24px", "letterSpacing": "-0.005em", "fontWeight": "400" } ], "label-lg": [ "14px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "500" } ], "label-md": [ "12px", { "lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "500" } ], "headline-md": [ "24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" } ], "headline-xl-mobile": [ "30px", { "lineHeight": "38px", "letterSpacing": "-0.015em", "fontWeight": "700" } ], "body-md": [ "14px", { "lineHeight": "20px", "letterSpacing": "0em", "fontWeight": "400" } ] } } } };</script></head><body class="bg-background font-body-md text-on-surface antialiased min-h-screen"><aside class="fixed left-0 top-0 h-full w-72 bg-surface-container-low/70 backdrop-blur-xl z-50 flex flex-col justify-between shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="flex flex-col"><div class="h-16 flex items-center px-space-lg gap-space-sm"><div class="w-9 h-9 rounded-lg bg-primary flex items-center justify-center text-on-primary shadow-sm"><span class="material-symbols-outlined text-[20px]">auto_awesome</span></div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-on-surface leading-tight tracking-tight">Copilot Asesmen</span><span class="font-code-badge text-code-badge text-on-surface-variant uppercase tracking-wider">SV UNS Portal</span></div></div><div class="px-space-md py-space-xs"><div class="px-space-sm py-1.5 rounded-lg bg-surface-container flex items-center justify-between"><span class="font-code-badge text-code-badge text-primary font-semibold uppercase tracking-wider">Role Mahasiswa</span><span class="w-2 h-2 rounded-full bg-status-success"></span></div></div><nav class="flex flex-col gap-space-xs px-space-md mt-space-sm" data-active-classes="bg-primary-container text-on-primary-container font-medium rounded-lg shadow-sm"><div class="px-space-sm pt-space-sm pb-space-xs font-code-badge text-code-badge uppercase text-outline tracking-wider">Utama</div><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="dashboard-overview" href="#"><span class="material-symbols-outlined text-[18px]">grid_view</span><span class="font-label-md text-label-md">Dashboard Overview</span></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="kelas-kuliah" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">menu_book</span><span class="font-label-md text-label-md">Kelas Kuliah Saya</span></div><span class="font-code-badge text-code-badge px-1.5 py-0.5 rounded-full bg-surface-container-highest text-on-surface-variant">3</span></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="tugas-dan-evaluasi" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">assignment_turned_in</span><span class="font-label-md text-label-md">Tugas &amp; Evaluasi</span></div><span class="font-code-badge text-code-badge px-1.5 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed font-semibold">2 Aktif</span></a><div class="px-space-sm pt-space-md pb-space-xs font-code-badge text-code-badge uppercase text-outline tracking-wider">Capaian &amp; Analitik</div><a aria-current="page" class="flex items-center gap-space-sm px-space-sm py-2 transition-colors bg-primary-container text-on-primary-container font-medium rounded-lg shadow-sm" data-path="riwayat-nilai-transkrip" href="#"><span class="material-symbols-outlined text-[18px]">military_tech</span><span class="font-label-md text-label-md">Riwayat Nilai &amp; Transkrip</span></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="ai-study-copilot" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">psychology</span><span class="font-label-md text-label-md">AI Study Copilot</span></div><span class="font-code-badge text-code-badge px-1.5 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-semibold">Beta</span></a><div class="px-space-sm pt-space-md pb-space-xs font-code-badge text-code-badge uppercase text-outline tracking-wider">Pengaturan &amp; Bantuan</div><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="pengaturan-akun" href="#"><span class="material-symbols-outlined text-[18px]">tune</span><span class="font-label-md text-label-md">Pengaturan &amp; Notifikasi</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="panduan-etika-ai" href="#"><span class="material-symbols-outlined text-[18px]">verified_user</span><span class="font-label-md text-label-md">Panduan &amp; Etika AI</span></a></nav></div><div class="p-space-md flex flex-col gap-space-sm"><div class="p-space-sm rounded-xl bg-surface-container-lowest shadow-[0_1px_2px_0_rgba(15,23,42,0.04)] flex flex-col gap-1.5"><div class="flex items-center gap-1.5"><span class="material-symbols-outlined text-status-success text-[16px]">verified</span><span class="font-label-md text-label-md text-on-surface font-semibold">Human-in-the-Loop</span></div><p class="font-body-sm text-body-sm text-on-surface-variant leading-tight">Setiap penilaian divalidasi langsung oleh Dosen Pengampu mata kuliah.</p></div><div class="flex items-center justify-between px-space-xs text-on-surface-variant"><div class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">cloud_done</span><span class="font-code-badge text-code-badge text-on-surface-variant">SV-UNS Academic Cloud</span></div><span class="material-symbols-outlined text-[14px] text-outline">lock</span></div></div></aside><div class="pl-72"><header class="fixed top-0 left-72 right-0 h-16 bg-surface/80 backdrop-blur-xl z-40 flex items-center justify-between px-gutter shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="flex items-center gap-space-md flex-1 max-w-xl"><div class="relative w-full"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span><input class="w-full pl-9 pr-4 py-2 bg-surface-container-low rounded-lg font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:bg-surface-container-lowest transition-colors" placeholder="Cari tugas, kelas kuliah, nilai, atau pengumuman..." type="search"/></div><div class="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container-lowest shadow-sm whitespace-nowrap"><span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-status-success opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-status-success"></span></span><span class="font-code-badge text-code-badge text-on-surface font-medium">AI Assistant: Ready</span></div></div><div class="flex items-center gap-space-md"><a class="hidden sm:flex items-center gap-1 text-on-surface-variant hover:text-on-surface transition-colors" data-path="panduan-etika-ai" href="#"><span class="material-symbols-outlined text-[18px]">help</span><span class="font-label-md text-label-md">Bantuan</span></a><button aria-label="Notifikasi" class="relative p-2 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1.5 right-1.5 flex items-center justify-center w-4 h-4 bg-error text-on-error rounded-full font-code-badge text-[10px] font-bold">2</span></button><div class="h-8 w-[1px] bg-surface-container-high"></div><div class="flex items-center gap-space-sm"><div class="flex flex-col text-right hidden sm:flex"><div class="flex items-center justify-end gap-1.5"><span class="font-label-md text-label-md text-on-surface font-semibold">Sarah Kirana</span><span class="px-1.5 py-0.2 rounded bg-surface-container-high text-primary font-code-badge text-[10px] font-medium">Sem 4</span></div><span class="font-code-data text-code-data text-on-surface-variant">2108561042 • D4 TI</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-16 bg-surface px-gutter min-h-screen"><div class="flex flex-col w-full pb-16 space-y-8">
+<!-- Breadcrumb Navigation & Top Verification Banner -->
+<div class="flex flex-col gap-4">
+<nav class="flex items-center gap-2 text-on-surface-variant font-label-md text-label-md">
+<a class="hover:text-primary transition-colors flex items-center gap-1" href="#">
+<span class="material-symbols-outlined text-[16px]">military_tech</span>
+        Riwayat Nilai
+      </a>
+<span class="text-outline-variant font-code-badge">/</span>
+<a class="hover:text-primary transition-colors" href="#">CS 304 - Struktur Data &amp; Algoritma</a>
+<span class="text-outline-variant font-code-badge">/</span>
+<span class="text-on-surface font-semibold">Evaluasi Tugas 3: Red-Black Trees Balancing</span>
+</nav>
+<!-- Top Verified Assurance Ribbon -->
+<div class="flex flex-wrap items-center justify-between gap-4 px-space-md py-3 rounded-xl bg-gradient-to-r from-status-success/15 via-status-success/5 to-transparent text-on-surface shadow-sm">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-status-success flex items-center justify-center text-on-secondary shadow-sm">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-label-lg text-label-lg font-semibold text-text-slate-dark">Hasil Penilaian Telah Resmi Diverifikasi Dosen</span>
+<span class="px-2 py-0.5 rounded-full bg-status-success/20 text-status-success font-code-badge text-code-badge font-bold uppercase tracking-wider">Final &amp; Tervalidasi</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Penilaian draf otomatis AI telah melalui telaah manual penuh dan ditandatangani digital oleh Pengajar Mata Kuliah.</p>
+</div>
+</div>
+<div class="flex items-center gap-2 font-code-data text-code-data text-on-surface-variant bg-surface-container-lowest px-3 py-1.5 rounded-lg shadow-sm">
+<span class="material-symbols-outlined text-[15px] text-primary">fingerprint</span>
+        ID Hash: <span class="font-semibold text-text-slate-dark">SV-UNS-2024-T3-0948F</span>
+</div>
+</div>
+</div>
+<!-- Primary Grade Showcase Hero Card -->
+<div class="relative overflow-hidden rounded-xl bg-surface-container-lowest shadow-sm p-space-lg">
+<div class="absolute -right-16 -top-16 w-80 h-80 bg-gradient-to-br from-primary-fixed/40 via-surface-variant/20 to-transparent rounded-full blur-3xl pointer-events-none"></div>
+<div class="relative grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+<!-- Left: Big Score & Predicate -->
+<div class="lg:col-span-4 flex flex-col justify-center space-y-3">
+<div class="flex items-center gap-2 font-code-badge text-code-badge text-primary uppercase tracking-widest font-semibold">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+          Skor Capaian Tugas 3
+        </div>
+<div class="flex items-baseline gap-3">
+<span class="font-headline-xl text-headline-xl font-bold tracking-tight text-text-slate-dark">92</span>
+<span class="font-headline-md text-headline-md text-outline font-semibold">/ 100</span>
+<span class="ml-2 px-3 py-1 rounded-lg bg-surface-container-high text-primary font-headline-sm text-headline-sm font-bold shadow-sm">
+            Grade A
+          </span>
+</div>
+<div class="flex flex-col gap-1.5 pt-1">
+<div class="flex items-center gap-1.5 font-label-md text-label-md font-semibold text-status-success">
+<span class="material-symbols-outlined text-[18px]">trending_up</span>
+            Predikat: Sangat Baik (Outstanding)
+          </div>
+<div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-surface-container-low text-on-surface-variant font-code-data text-code-data">
+<span class="material-symbols-outlined text-[15px] text-secondary">workspace_premium</span>
+            Top 5% Angkatan (Peringkat 2 dari 42 Mahasiswa)
+          </div>
+</div>
+</div>
+<!-- Center: Academic Metadata Ledger -->
+<div class="lg:col-span-5 flex flex-col justify-center space-y-3 lg:px-6">
+<div class="flex flex-col gap-2 bg-surface-container-low/70 p-4 rounded-xl">
+<div class="flex items-center justify-between text-body-sm font-body-sm">
+<span class="text-on-surface-variant flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-primary">person_check</span>
+              Dosen Penilai
+            </span>
+<span class="font-medium text-text-slate-dark">Prof. Dr. Aris Thorne</span>
+</div>
+<div class="flex items-center justify-between text-body-sm font-body-sm">
+<span class="text-on-surface-variant flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-secondary">calendar_clock</span>
+              Tanggal Rilis
+            </span>
+<span class="font-medium text-text-slate-dark">Hari ini, 09:30 WIB</span>
+</div>
+<div class="flex items-center justify-between text-body-sm font-body-sm">
+<span class="text-on-surface-variant flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-status-success">security</span>
+              Turnitin Similarity
+            </span>
+<span class="px-2 py-0.5 rounded bg-status-success/15 font-code-badge text-code-badge font-bold text-status-success">
+              2% (Original)
+            </span>
+</div>
+<div class="flex items-center justify-between text-body-sm font-body-sm">
+<span class="text-on-surface-variant flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-tertiary">balance</span>
+              Bobot Nilai Akhir
+            </span>
+<span class="font-medium text-text-slate-dark">15% dari Total SKS Kuliah</span>
+</div>
+</div>
+</div>
+<!-- Right: Audit Trail Stamp & Actions -->
+<div class="lg:col-span-3 flex flex-col justify-between space-y-4">
+<div class="p-3.5 rounded-xl bg-gradient-to-br from-surface-container-high/60 to-surface-container-low flex flex-col gap-2">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-status-success"></span>
+<span class="font-code-badge text-code-badge uppercase font-semibold text-text-slate-dark">Human-in-the-Loop Verified</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+            100% Keputusan Nilai Akhir ditetapkan manual oleh Dosen Pengampu setelah audit sistem evaluasi.
+          </p>
+<div class="flex items-center gap-1 text-[11px] font-code-data text-primary font-medium mt-1">
+<span class="material-symbols-outlined text-[14px]">lock_clock</span>
+            Digital Ledger Timestamp: Verified
+          </div>
+</div>
+<div class="flex flex-col gap-2">
+<button class="w-full py-2.5 px-3 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-label-md text-label-md flex items-center justify-center gap-2 shadow-sm transition-all">
+<span class="material-symbols-outlined text-[18px]">download</span>
+            Unduh Rekap Nilai Resmi (PDF)
+          </button>
+<button class="w-full py-2 px-3 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md flex items-center justify-center gap-2 transition-all">
+<span class="material-symbols-outlined text-[18px]">contact_support</span>
+            Minta Klarifikasi Dosen
+          </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Detailed Dual-Column Layout: 65% Left (Rubrics & Feedback) vs 35% Right (Transparency, Analytics, Submission) -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+<!-- LEFT COLUMN: Rubric Criteria & Instructor Feedback (65%) -->
+<div class="lg:col-span-8 flex flex-col space-y-8">
+<!-- Card: Rubric Assessment Details -->
+<div class="rounded-xl bg-surface-container-lowest shadow-sm p-space-lg flex flex-col space-y-6">
+<div class="flex flex-wrap items-center justify-between gap-3">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-primary-fixed flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">checklist_rtl</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm font-bold text-text-slate-dark">Rincian Nilai Berdasarkan Rubrik Capaian</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Kesesuaian luaran tugas terhadap capaian pembelajaran mata kuliah (CPL-03)</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-code-badge text-code-badge px-2.5 py-1 rounded-md bg-surface-container-low text-on-surface-variant">
+              4 Sub-Kriteria Dinilai
+            </span>
+</div>
+</div>
+<!-- Rubric Items List -->
+<div class="space-y-4">
+<!-- Kriteria 1 -->
+<div class="p-space-md rounded-xl bg-surface-container-low/60 hover:bg-surface-container-low transition-colors flex flex-col space-y-3">
+<div class="flex flex-wrap items-start justify-between gap-2">
+<div class="space-y-1 max-w-xl">
+<div class="flex items-center gap-2">
+<span class="font-code-badge text-code-badge px-2 py-0.5 rounded bg-surface-container text-text-slate-dark font-semibold">Kriteria 1</span>
+<h3 class="font-label-lg text-label-lg font-bold text-text-slate-dark">Ketepatan Struktur Data &amp; Tree Invariant</h3>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                  Validasi properti node merah-hitam, rotasi kiri/kanan, recoloring, dan pencegahan pelanggaran invariant saat penambahan simpul.
+                </p>
+</div>
+<div class="text-right flex flex-col items-end">
+<div class="flex items-baseline gap-1">
+<span class="font-headline-sm text-headline-sm font-bold text-primary">38</span>
+<span class="font-code-data text-code-data text-outline">/ 40 pts</span>
+</div>
+<span class="font-code-badge text-code-badge text-on-surface-variant font-medium">Bobot 40%</span>
+</div>
+</div>
+<!-- Progress Meter -->
+<div class="w-full bg-surface-container-highest rounded-full h-2 overflow-hidden">
+<div class="bg-primary h-2 rounded-full" style="width: 95%"></div>
+</div>
+<!-- Verification Annotation Box -->
+<div class="p-3 rounded-lg bg-surface-container-lowest text-body-sm font-body-sm flex flex-col gap-1.5 shadow-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5 text-text-slate-dark font-medium">
+<span class="material-symbols-outlined text-[16px] text-primary">rate_review</span>
+                  Catatan Verifikasi Dosen:
+                </div>
+<div class="flex items-center gap-1 text-status-success font-code-badge text-code-badge">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+                  Disetujui Dosen tanpa perubahan draf AI
+                </div>
+</div>
+<p class="text-on-surface-variant font-body-sm pl-5">
+                "Implementasi rotasi dan recoloring sesuai aturan node merah/hitam. Menangani kasus 1-3 simetris dengan tepat. Terdapat sedikit redundansi assignment warna root pada baris 107 yang sebenarnya sudah ter-cover di baris 89, namun logika penyeimbangan keseluruhan tetap valid."
+              </p>
+</div>
+</div>
+<!-- Kriteria 2 -->
+<div class="p-space-md rounded-xl bg-surface-container-low/60 hover:bg-surface-container-low transition-colors flex flex-col space-y-3">
+<div class="flex flex-wrap items-start justify-between gap-2">
+<div class="space-y-1 max-w-xl">
+<div class="flex items-center gap-2">
+<span class="font-code-badge text-code-badge px-2 py-0.5 rounded bg-surface-container text-text-slate-dark font-semibold">Kriteria 2</span>
+<h3 class="font-label-lg text-label-lg font-bold text-text-slate-dark">Kompleksitas Waktu &amp; Efisiensi Algoritma</h3>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                  Jaminan O(log n) untuk operasi insert &amp; search, manipulasi pointer in-place tanpa alokasi memori tambahan yang tidak perlu.
+                </p>
+</div>
+<div class="text-right flex flex-col items-end">
+<div class="flex items-baseline gap-1">
+<span class="font-headline-sm text-headline-sm font-bold text-primary">28</span>
+<span class="font-code-data text-code-data text-outline">/ 30 pts</span>
+</div>
+<span class="font-code-badge text-code-badge text-on-surface-variant font-medium">Bobot 30%</span>
+</div>
+</div>
+<!-- Progress Meter -->
+<div class="w-full bg-surface-container-highest rounded-full h-2 overflow-hidden">
+<div class="bg-secondary h-2 rounded-full" style="width: 93.3%"></div>
+</div>
+<div class="p-3 rounded-lg bg-surface-container-lowest text-body-sm font-body-sm flex flex-col gap-1.5 shadow-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5 text-text-slate-dark font-medium">
+<span class="material-symbols-outlined text-[16px] text-primary">rate_review</span>
+                  Catatan Verifikasi Dosen:
+                </div>
+<div class="flex items-center gap-1 text-status-success font-code-badge text-code-badge">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+                  Optimal • O(log n) Validated
+                </div>
+</div>
+<p class="text-on-surface-variant font-body-sm pl-5">
+                "Kompensasi penyeimbangan terjamin O(log n). Rotasi pointer dilakukan in-place tanpa alokasi memori berlebih. Eksekusi pengujian dengan 50.000 entri berjalan konsisten di bawah batas waktu 120ms."
+              </p>
+</div>
+</div>
+<!-- Kriteria 3 -->
+<div class="p-space-md rounded-xl bg-surface-container-low/60 hover:bg-surface-container-low transition-colors flex flex-col space-y-3">
+<div class="flex flex-wrap items-start justify-between gap-2">
+<div class="space-y-1 max-w-xl">
+<div class="flex items-center gap-2">
+<span class="font-code-badge text-code-badge px-2 py-0.5 rounded bg-surface-container text-text-slate-dark font-semibold">Kriteria 3</span>
+<h3 class="font-label-lg text-label-lg font-bold text-text-slate-dark">Kualitas &amp; Keterbacaan Kode</h3>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                  Kepatuhan terhadap standar PEP8, konvensi penamaan identifier, pembagian fungsi modular, dan kerapian struktur class.
+                </p>
+</div>
+<div class="text-right flex flex-col items-end">
+<div class="flex items-baseline gap-1">
+<span class="font-headline-sm text-headline-sm font-bold text-primary">18</span>
+<span class="font-code-data text-code-data text-outline">/ 20 pts</span>
+</div>
+<span class="font-code-badge text-code-badge text-on-surface-variant font-medium">Bobot 20%</span>
+</div>
+</div>
+<!-- Progress Meter -->
+<div class="w-full bg-surface-container-highest rounded-full h-2 overflow-hidden">
+<div class="bg-primary-container h-2 rounded-full" style="width: 90%"></div>
+</div>
+<div class="p-3 rounded-lg bg-surface-container-lowest text-body-sm font-body-sm flex flex-col gap-1.5 shadow-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5 text-text-slate-dark font-medium">
+<span class="material-symbols-outlined text-[16px] text-primary">rate_review</span>
+                  Catatan Verifikasi Dosen:
+                </div>
+<div class="flex items-center gap-1 text-status-success font-code-badge text-code-badge">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+                  Sesuai Standar Industri
+                </div>
+</div>
+<p class="text-on-surface-variant font-body-sm pl-5">
+                "Penamaan variabel sangat jelas dan mudah dipahami (`parent`, `uncle`, `grandparent`). Memenuhi standar PEP8 secara konsisten, modularisasi helper function rapi dan tidak ada nested logic yang melampaui 3 tingkat kedalaman."
+              </p>
+</div>
+</div>
+<!-- Kriteria 4 -->
+<div class="p-space-md rounded-xl bg-surface-container-low/60 hover:bg-surface-container-low transition-colors flex flex-col space-y-3">
+<div class="flex flex-wrap items-start justify-between gap-2">
+<div class="space-y-1 max-w-xl">
+<div class="flex items-center gap-2">
+<span class="font-code-badge text-code-badge px-2 py-0.5 rounded bg-surface-container text-text-slate-dark font-semibold">Kriteria 4</span>
+<h3 class="font-label-lg text-label-lg font-bold text-text-slate-dark">Dokumentasi &amp; Test Cases</h3>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                  Kelengkapan unit test terotomasi, skenario pengujian nilai acak, serta kejelasan docstrings pada modul implementasi.
+                </p>
+</div>
+<div class="text-right flex flex-col items-end">
+<div class="flex items-baseline gap-1">
+<span class="font-headline-sm text-headline-sm font-bold text-primary">8</span>
+<span class="font-code-data text-code-data text-outline">/ 10 pts</span>
+</div>
+<span class="font-code-badge text-code-badge text-on-surface-variant font-medium">Bobot 10%</span>
+</div>
+</div>
+<!-- Progress Meter -->
+<div class="w-full bg-surface-container-highest rounded-full h-2 overflow-hidden">
+<div class="bg-tertiary h-2 rounded-full" style="width: 80%"></div>
+</div>
+<div class="p-3 rounded-lg bg-surface-container-lowest text-body-sm font-body-sm flex flex-col gap-1.5 shadow-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5 text-text-slate-dark font-medium">
+<span class="material-symbols-outlined text-[16px] text-primary">rate_review</span>
+                  Catatan Verifikasi Dosen:
+                </div>
+<div class="flex items-center gap-1 text-on-surface-variant font-code-badge text-code-badge">
+<span class="material-symbols-outlined text-[14px] text-status-success">done_all</span>
+                  Docstrings Lengkap
+                </div>
+</div>
+<p class="text-on-surface-variant font-body-sm pl-5">
+                "Melampirkan skenario pengujian 1.000 elemen acak dengan assertion property check otomatis. Docstrings lengkap di setiap method utama. Dapat ditingkatkan dengan menambahkan edge-case duplikasi kunci pada test suite."
+              </p>
+</div>
+</div>
+</div>
+</div>
+<!-- Card: Narrative Personal Feedback from Professor -->
+<div class="rounded-xl bg-surface-container-lowest shadow-sm p-space-lg flex flex-col space-y-5">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-12 h-12 rounded-full bg-primary-fixed flex items-center justify-center text-primary font-headline-sm font-bold shadow-sm">
+              AT
+            </div>
+<div>
+<div class="flex items-center gap-2">
+<h3 class="font-headline-sm text-headline-sm font-bold text-text-slate-dark">Prof. Dr. Aris Thorne</h3>
+<span class="material-symbols-outlined text-primary text-[18px]">verified</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Dosen Pengampu Utama CS 304 • Lab Algoritma &amp; Komputasi SV UNS</p>
+</div>
+</div>
+<span class="px-2.5 py-1 rounded-full bg-surface-container text-on-surface-variant font-code-data text-code-data">
+            Catatan Resmi Dosen
+          </span>
+</div>
+<!-- Instructor Quotation Block -->
+<div class="relative p-space-md rounded-xl bg-surface-container-low/50">
+<span class="material-symbols-outlined absolute right-4 top-3 text-surface-container-highest text-5xl select-none opacity-40">format_quote</span>
+<p class="font-body-lg text-body-lg text-text-slate-dark leading-relaxed relative z-10 italic">
+            “Kerja bagus Sarah! Implementasi Red-Black Tree Anda sangat kokoh dan modular. Penanganan invariant pada fungsi <code class="font-code-data text-code-data bg-surface-container px-1.5 py-0.5 rounded text-primary font-semibold">_insert_fixup</code> sangat presisi terutama dalam mengisolasi kasus paman merah dan recoloring. Pemahaman Anda mengenai rotasi lokal tanpa merusak black-height patut diapresiasi. Pertahankan kedisiplinan perancangan algoritma seperti ini untuk materi pohon berimbang selanjutnya!”
+          </p>
+</div>
+<!-- Feedback Tags / Commendations -->
+<div class="flex flex-wrap items-center gap-2 pt-1">
+<span class="px-3 py-1 rounded-full bg-status-success/15 text-status-success font-code-badge text-code-badge font-bold flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[15px]">thumb_up</span>
+            Kerja Bagus!
+          </span>
+<span class="px-3 py-1 rounded-full bg-primary-fixed text-primary font-code-badge text-code-badge font-bold flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[15px]">psychology</span>
+            Penanganan Invariant Presisi
+          </span>
+<span class="px-3 py-1 rounded-full bg-surface-container-high text-on-surface font-code-badge text-code-badge font-medium flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[15px]">code_blocks</span>
+            PEP8 Rapi &amp; Modular
+          </span>
+<span class="px-3 py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed-variant font-code-badge text-code-badge font-medium flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[15px]">memory</span>
+            Memori Efisien O(log n)
+          </span>
+</div>
+</div>
+</div>
+<!-- RIGHT COLUMN: Human-in-the-Loop Transparency, Class Histogram, Files, Follow-up (35%) -->
+<div class="lg:col-span-4 flex flex-col space-y-6">
+<!-- Card 1: Human-in-the-Loop Transparency Audit Trail -->
+<div class="rounded-xl bg-surface-container-lowest shadow-sm p-space-md flex flex-col space-y-4">
+<div class="flex items-center gap-2 pb-2">
+<div class="w-7 h-7 rounded-lg bg-tertiary-fixed flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-[18px]">psychology_alt</span>
+</div>
+<div>
+<h3 class="font-label-lg text-label-lg font-bold text-text-slate-dark">Transparansi Penilaian AI &amp; Dosen</h3>
+<p class="font-code-badge text-code-badge text-on-surface-variant">Sistem Human-in-the-Loop Level 3</p>
+</div>
+</div>
+<!-- Audit Stages Stepper -->
+<div class="space-y-3 relative pl-3">
+<!-- Continuous Timeline Indicator line -->
+<div class="absolute left-5 top-3 bottom-3 w-0.5 bg-surface-container-high"></div>
+<!-- Step 1: AI Initial Draft -->
+<div class="relative flex items-start gap-3">
+<div class="w-4 h-4 mt-1 rounded-full bg-ai-cyan-glow flex items-center justify-center ring-4 ring-surface-container-lowest z-10">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+</div>
+<div class="flex flex-col p-2.5 rounded-lg bg-surface-container-low flex-1">
+<div class="flex items-center justify-between">
+<span class="font-code-badge text-code-badge font-semibold text-text-slate-dark">Draf Analisis AI Awal</span>
+<span class="font-code-data text-code-data font-bold text-primary">92 / 100</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">AI Confidence Index: 94% (High Reliability)</span>
+</div>
+</div>
+<!-- Step 2: Human Professor Review -->
+<div class="relative flex items-start gap-3">
+<div class="w-4 h-4 mt-1 rounded-full bg-secondary flex items-center justify-center ring-4 ring-surface-container-lowest z-10">
+<span class="w-1.5 h-1.5 rounded-full bg-surface-white"></span>
+</div>
+<div class="flex flex-col p-2.5 rounded-lg bg-surface-container-low flex-1">
+<div class="flex items-center justify-between">
+<span class="font-code-badge text-code-badge font-semibold text-text-slate-dark">Peninjauan Manual Dosen</span>
+<span class="font-code-badge text-code-badge text-status-success font-semibold">Tervalidasi</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Dosen menelaah kode baris 72-108, alur re-balancing, &amp; log testing.</span>
+</div>
+</div>
+<!-- Step 3: Final Certified Score -->
+<div class="relative flex items-start gap-3">
+<div class="w-4 h-4 mt-1 rounded-full bg-status-success flex items-center justify-center ring-4 ring-surface-container-lowest z-10">
+<span class="material-symbols-outlined text-surface-white text-[12px]">check</span>
+</div>
+<div class="flex flex-col p-2.5 rounded-lg bg-status-success/10 flex-1">
+<div class="flex items-center justify-between">
+<span class="font-code-badge text-code-badge font-bold text-status-success">Skor Akhir Dosen</span>
+<span class="font-code-data text-code-data font-bold text-status-success">92 / 100</span>
+</div>
+<span class="font-body-sm text-body-sm text-text-slate-dark mt-0.5">Disetujui Penuh &amp; Ditandatangani Digital oleh Pengampu.</span>
+</div>
+</div>
+</div>
+<div class="p-2.5 rounded-lg bg-surface-container-high/40 text-[11px] font-body-sm text-on-surface-variant flex items-start gap-2">
+<span class="material-symbols-outlined text-[15px] text-primary mt-0.5">shield</span>
+<span>Status Integritas: Tidak ada intervensi otomatis langsung; seluruh nilai resmi diverifikasi pengajar sebelum publikasi.</span>
+</div>
+</div>
+<!-- Card 2: Class Distribution Histogram (Anonymous Benchmark) -->
+<div class="rounded-xl bg-surface-container-lowest shadow-sm p-space-md flex flex-col space-y-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded-lg bg-surface-variant flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[18px]">bar_chart</span>
+</div>
+<div>
+<h3 class="font-label-lg text-label-lg font-bold text-text-slate-dark">Distribusi Nilai Kelas</h3>
+<p class="font-code-badge text-code-badge text-on-surface-variant">Komparasi Anonim (42 Mahasiswa)</p>
+</div>
+</div>
+<span class="font-code-data text-code-data font-semibold text-primary">Kuartil 4 (Q4)</span>
+</div>
+<!-- Inline Visual Histogram SVG -->
+<div class="bg-surface-container-low p-3 rounded-xl flex flex-col space-y-2">
+<div class="flex items-end justify-between h-28 pt-4 px-2 gap-2">
+<!-- Bin 50-60 -->
+<div class="flex-1 flex flex-col items-center gap-1 h-full justify-end group">
+<span class="font-code-data text-[10px] text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">2</span>
+<div class="w-full bg-surface-container-highest rounded-t transition-all" style="height: 12%"></div>
+<span class="font-code-badge text-[10px] text-outline">50-60</span>
+</div>
+<!-- Bin 61-70 -->
+<div class="flex-1 flex flex-col items-center gap-1 h-full justify-end group">
+<span class="font-code-data text-[10px] text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">5</span>
+<div class="w-full bg-surface-container-highest rounded-t transition-all" style="height: 25%"></div>
+<span class="font-code-badge text-[10px] text-outline">61-70</span>
+</div>
+<!-- Bin 71-80 -->
+<div class="flex-1 flex flex-col items-center gap-1 h-full justify-end group">
+<span class="font-code-data text-[10px] text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity">11</span>
+<div class="w-full bg-surface-container-highest rounded-t transition-all" style="height: 52%"></div>
+<span class="font-code-badge text-[10px] text-outline">71-80</span>
+</div>
+<!-- Bin 81-90 (Average Range) -->
+<div class="flex-1 flex flex-col items-center gap-1 h-full justify-end group">
+<span class="font-code-data text-[10px] text-secondary font-bold opacity-100">18</span>
+<div class="w-full bg-secondary-container rounded-t transition-all" style="height: 85%"></div>
+<span class="font-code-badge text-[10px] text-text-slate-dark font-medium">81-90</span>
+</div>
+<!-- Bin 91-100 (Sarah's bucket) -->
+<div class="flex-1 flex flex-col items-center gap-1 h-full justify-end group relative">
+<span class="absolute -top-3 font-code-badge text-[9px] bg-primary text-on-primary px-1 rounded shadow-sm">Sarah</span>
+<span class="font-code-data text-[10px] text-primary font-bold opacity-100">6</span>
+<div class="w-full bg-primary rounded-t shadow-sm transition-all" style="height: 38%"></div>
+<span class="font-code-badge text-[10px] text-primary font-bold">91-100</span>
+</div>
+</div>
+<!-- Metric Summary Ribbon -->
+<div class="grid grid-cols-3 gap-2 pt-2 text-center text-body-sm font-body-sm">
+<div class="p-2 rounded-lg bg-surface-container-lowest">
+<span class="block font-code-badge text-code-badge text-on-surface-variant">Rata-rata</span>
+<span class="font-code-data text-code-data font-bold text-text-slate-dark">84.5</span>
+</div>
+<div class="p-2 rounded-lg bg-surface-container-lowest">
+<span class="block font-code-badge text-code-badge text-on-surface-variant">Tertinggi</span>
+<span class="font-code-data text-code-data font-bold text-text-slate-dark">95.0</span>
+</div>
+<div class="p-2 rounded-lg bg-primary-fixed">
+<span class="block font-code-badge text-code-badge text-primary font-semibold">Skor Anda</span>
+<span class="font-code-data text-code-data font-bold text-primary">92.0</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Card 3: Evaluated Submission Files -->
+<div class="rounded-xl bg-surface-container-lowest shadow-sm p-space-md flex flex-col space-y-4">
+<div class="flex items-center justify-between pb-1">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded-lg bg-surface-container flex items-center justify-center text-text-slate-dark">
+<span class="material-symbols-outlined text-[18px]">folder_zip</span>
+</div>
+<h3 class="font-label-lg text-label-lg font-bold text-text-slate-dark">Berkas Submisi yang Dinilai</h3>
+</div>
+<span class="font-code-badge text-code-badge text-on-surface-variant">2 Berkas</span>
+</div>
+<div class="space-y-2.5">
+<!-- File 1: Python Code -->
+<div class="p-2.5 rounded-lg bg-surface-container-low/70 hover:bg-surface-container-low flex items-center justify-between transition-colors">
+<div class="flex items-center gap-2.5 min-w-0">
+<span class="material-symbols-outlined text-primary text-[20px] flex-shrink-0">terminal</span>
+<div class="truncate">
+<span class="block font-code-data text-code-data font-semibold text-text-slate-dark truncate">cs304_sarah_rb_tree.py</span>
+<span class="block font-body-sm text-[11px] text-on-surface-variant">Dikumpulkan 18 Okt, 23:14 WIB • 14.2 KB</span>
+</div>
+</div>
+<div class="flex items-center gap-1 flex-shrink-0">
+<button class="p-1.5 rounded hover:bg-surface-container text-on-surface-variant hover:text-primary transition-colors" title="Lihat Berkas">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+<button class="p-1.5 rounded hover:bg-surface-container text-on-surface-variant hover:text-primary transition-colors" title="Unduh dengan Anotasi Dosen">
+<span class="material-symbols-outlined text-[18px]">download_for_offline</span>
+</button>
+</div>
+</div>
+<!-- File 2: PDF Report -->
+<div class="p-2.5 rounded-lg bg-surface-container-low/70 hover:bg-surface-container-low flex items-center justify-between transition-colors">
+<div class="flex items-center gap-2.5 min-w-0">
+<span class="material-symbols-outlined text-error text-[20px] flex-shrink-0">picture_as_pdf</span>
+<div class="truncate">
+<span class="block font-code-data text-code-data font-semibold text-text-slate-dark truncate">Laporan_Tugas3_Sarah.pdf</span>
+<span class="block font-body-sm text-[11px] text-on-surface-variant">Versi Final • 1.8 MB • 8 Halaman</span>
+</div>
+</div>
+<div class="flex items-center gap-1 flex-shrink-0">
+<button class="p-1.5 rounded hover:bg-surface-container text-on-surface-variant hover:text-primary transition-colors" title="Lihat PDF">
+<span class="material-symbols-outlined text-[18px]">open_in_new</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Card 4: Learning Follow-Up Recommendation -->
+<div class="rounded-xl bg-gradient-to-br from-surface-container-low to-surface-container p-space-md shadow-sm flex flex-col space-y-3">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded-lg bg-primary-container text-on-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">forward</span>
+</div>
+<h3 class="font-label-lg text-label-lg font-bold text-text-slate-dark">Rekomendasi Tindak Lanjut</h3>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+          Berdasarkan penguasaan Red-Black Tree Anda yang sangat solid, Anda direkomendasikan langsung mempelajari ekstensi struktur pohon multivariabel untuk disk storage:
+        </p>
+<div class="p-3 rounded-lg bg-surface-container-lowest flex items-center gap-3">
+<span class="material-symbols-outlined text-tertiary text-[22px]">hub</span>
+<div class="flex-1 min-w-0">
+<span class="block font-label-md text-label-md font-bold text-text-slate-dark truncate">Tugas 4: B-Trees &amp; Disk Storage Optimization</span>
+<span class="block font-code-badge text-code-badge text-on-surface-variant">Materi Minggu Ke-9 • Advanced Topic</span>
+</div>
+</div>
+<a class="w-full py-2 px-3 rounded-lg bg-surface-container-lowest hover:bg-surface-container-high text-primary font-label-md text-label-md font-semibold flex items-center justify-center gap-1.5 shadow-sm transition-all" href="#">
+<span>Akses Materi Pengayaan</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+</div></main></div></body></html>
