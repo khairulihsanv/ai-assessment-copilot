@@ -1,0 +1,193 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  DOSEN
+  MAHASISWA
+}
+
+enum SubmissionType {
+  TEXT
+  PDF
+  DOCX
+  ANY
+}
+
+enum AssignmentStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+}
+
+enum SubmissionStatus {
+  SUBMITTED
+  AI_PROCESSING
+  AI_REVIEWED
+  GRADED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role
+  avatarUrl    String?
+  createdAt    DateTime @default(now())
+
+  // Relations
+  ownedClasses  Class[]      @relation("DosenClasses")
+  enrollments   Enrollment[]
+  submissions   Submission[]
+  gradedGrades  Grade[]      @relation("GradedByDosen")
+  createdRubrics Rubric[]
+
+  @@map("users")
+}
+
+model Class {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  subject       String?
+  enrollmentKey String   @unique
+  isArchived    Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  // Relations
+  dosenId     String
+  dosen       User         @relation("DosenClasses", fields: [dosenId], references: [id], onDelete: Cascade)
+  enrollments Enrollment[]
+  rubrics     Rubric[]
+  assignments Assignment[]
+
+  @@map("classes")
+}
+
+model Enrollment {
+  id       String   @id @default(cuid())
+  joinedAt DateTime @default(now())
+
+  // Relations
+  classId     String
+  class       Class  @relation(fields: [classId], references: [id], onDelete: Cascade)
+  mahasiswaId String
+  mahasiswa   User   @relation(fields: [mahasiswaId], references: [id], onDelete: Cascade)
+
+  @@unique([classId, mahasiswaId])
+  @@map("enrollments")
+}
+
+model Rubric {
+  id        String   @id @default(cuid())
+  title     String
+  createdAt DateTime @default(now())
+
+  // Relations
+  classId    String
+  class      Class            @relation(fields: [classId], references: [id], onDelete: Cascade)
+  createdById String
+  createdBy  User             @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  criteria   RubricCriterion[]
+  assignments Assignment[]
+
+  @@map("rubrics")
+}
+
+model RubricCriterion {
+  id          String @id @default(cuid())
+  label       String
+  description String?
+  maxScore    Float
+  weight      Float  // percentage, all criteria in a rubric should sum to 100
+
+  // Relations
+  rubricId String
+  rubric   Rubric @relation(fields: [rubricId], references: [id], onDelete: Cascade)
+
+  @@map("rubric_criteria")
+}
+
+model Assignment {
+  id               String           @id @default(cuid())
+  title            String
+  instructions     String
+  submissionType   SubmissionType   @default(ANY)
+  dueDate          DateTime
+  maxScore         Float            @default(100)
+  allowLateSubmission Boolean       @default(false)
+  status           AssignmentStatus @default(DRAFT)
+  createdAt        DateTime         @default(now())
+
+  // Relations
+  classId    String
+  class      Class       @relation(fields: [classId], references: [id], onDelete: Cascade)
+  rubricId   String?
+  rubric     Rubric?     @relation(fields: [rubricId], references: [id], onDelete: SetNull)
+  submissions Submission[]
+
+  @@map("assignments")
+}
+
+model Submission {
+  id          String           @id @default(cuid())
+  type        SubmissionType
+  content     String?          // text content if TEXT submission
+  fileUrl     String?          // file path/URL if PDF/DOCX
+  fileName    String?
+  submittedAt DateTime         @default(now())
+  status      SubmissionStatus @default(SUBMITTED)
+
+  // Relations
+  assignmentId String
+  assignment   Assignment    @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  mahasiswaId  String
+  mahasiswa    User          @relation(fields: [mahasiswaId], references: [id], onDelete: Cascade)
+  aiEvaluation AIEvaluation?
+  grade        Grade?
+
+  @@unique([assignmentId, mahasiswaId])
+  @@map("submissions")
+}
+
+model AIEvaluation {
+  id                  String   @id @default(cuid())
+  rawModelOutput      Json     // full raw JSON from LLM
+  perCriterionScore   Json     // [{criterionId, score, reasoning}]
+  suggestedTotalScore Float
+  suggestedFeedback   String
+  tokenUsage          Json?    // {promptTokens, completionTokens, totalTokens}
+  createdAt           DateTime @default(now())
+
+  // Relations
+  submissionId String     @unique
+  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@map("ai_evaluations")
+}
+
+model Grade {
+  id            String   @id @default(cuid())
+  finalScore    Float
+  finalFeedback String
+  isAIAssisted  Boolean  @default(false)
+  editedFromAI  Boolean  @default(false) // true if dosen modified AI suggestion
+  gradedAt      DateTime @default(now())
+
+  // Relations
+  submissionId String     @unique
+  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  gradedById   String
+  gradedBy     User       @relation("GradedByDosen", fields: [gradedById], references: [id], onDelete: Cascade)
+
+  @@map("grades")
+}

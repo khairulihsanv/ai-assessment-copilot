@@ -1,0 +1,31 @@
+import { z } from "zod";
+
+const rubricCriterionSchema = z.object({
+  id: z.string().optional(), // existing criterion ID for updates
+  label: z.string().min(1, "Label kriteria wajib diisi").max(100),
+  description: z.string().max(500).optional(),
+  maxScore: z.number().min(0, "Skor maksimal tidak boleh negatif").max(1000),
+  weight: z.number().min(0, "Bobot tidak boleh negatif").max(100, "Bobot maksimal 100%"),
+});
+
+export const createRubricSchema = z.object({
+  title: z.string().min(3, "Judul rubrik minimal 3 karakter").max(100),
+  criteria: z
+    .array(rubricCriterionSchema)
+    .min(1, "Rubrik harus memiliki minimal 1 kriteria")
+    .refine(
+      (criteria) => {
+        const totalWeight = criteria.reduce((sum, c) => sum + c.weight, 0);
+        return Math.abs(totalWeight - 100) < 0.01;
+      },
+      {
+        message: "Total bobot semua kriteria harus = 100%",
+      }
+    ),
+});
+
+export const updateRubricSchema = createRubricSchema.partial();
+
+export type RubricCriterionInput = z.infer<typeof rubricCriterionSchema>;
+export type CreateRubricInput = z.infer<typeof createRubricSchema>;
+export type UpdateRubricInput = z.infer<typeof updateRubricSchema>;
