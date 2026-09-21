@@ -46,7 +46,7 @@ export default function RegisterPage() {
             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
           </svg>
         </div>
-        <span className="font-display text-xl font-bold" style={{ color: "var(--text-primary)" }}>AI Assessment Copilot</span>
+        <span className="font-display text-xl font-bold" style={{ color: "var(--text-primary)" }}>Dexa Assessment</span>
       </div>
 
       <h2 className="font-display text-3xl font-bold mb-2" style={{ color: "var(--text-primary)" }}>

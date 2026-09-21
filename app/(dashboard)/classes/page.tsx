@@ -7,7 +7,7 @@ import { CreateClassModal } from "@/components/features/create-class-modal";
 import { JoinClassModal } from "@/components/features/join-class-modal";
 
 export const metadata = {
-  title: "Daftar Kelas — AI Assessment Copilot",
+  title: "Daftar Kelas — Dexa Assessment",
 };
 
 export default async function ClassesPage() {

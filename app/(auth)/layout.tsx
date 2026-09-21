@@ -18,7 +18,7 @@ export default function AuthLayout({
                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
               </svg>
             </div>
-            <span className="font-display text-2xl font-bold">AI Assessment Copilot</span>
+            <span className="font-display text-2xl font-bold">Dexa Assessment</span>
           </div>
           <h1 className="font-display text-4xl font-bold leading-tight mb-4">
             Penilaian Cerdas,<br />Keputusan Tetap di Tangan Dosen

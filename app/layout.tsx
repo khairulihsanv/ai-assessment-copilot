@@ -23,11 +23,11 @@ const dmSans = DM_Sans({
 
 export const metadata: Metadata = {
   title: {
-    default: "AI Assessment Copilot",
-    template: "%s | AI Assessment Copilot",
+    default: "Dexa Assessment",
+    template: "%s | Dexa Assessment",
   },
   description:
-    "Platform manajemen tugas & penilaian berbasis AI dengan pendekatan Human-in-the-Loop. Asisten AI membantu koreksi, keputusan akhir tetap di tangan dosen.",
+    "Dexa Assessment — Platform manajemen tugas dan evaluasi cerdas dengan AI Copilot berlandaskan Human-in-the-Loop untuk pendidikan tinggi.",
   keywords: [
     "AI",
     "Assessment",

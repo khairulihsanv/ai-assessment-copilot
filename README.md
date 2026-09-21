@@ -1,6 +1,7 @@
-# 🎓 AI Assessment Copilot
+# 🎓 Dexa Assessment
+### Modern LMS Collaboration Hub & Intelligent Evaluation Platform
 
-> Platform manajemen penugasan & penilaian akademik cerdas berbasis Next.js 15, Auth.js v5, Prisma ORM, PostgreSQL, dan Google Gemini AI dengan prinsip **Human-in-the-Loop (HITL)** — AI bertindak sebagai asisten pemeriksa objektif, keputusan dan nilai final tetap 100% di tangan dosen.
+> Platform manajemen penugasan & penilaian akademik cerdas berbasis Next.js 15, Auth.js v5, Prisma ORM, Neon PostgreSQL, dan Google Gemini AI dengan prinsip **Human-in-the-Loop (HITL)** — AI bertindak sebagai asisten pemeriksa objektif, keputusan dan nilai final tetap 100% di tangan dosen.
 
 ---
 

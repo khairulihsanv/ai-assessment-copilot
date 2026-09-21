@@ -27,7 +27,7 @@ interface AssignmentDetailPageProps {
 }
 
 export const metadata = {
-  title: "Detail Tugas — AI Assessment Copilot",
+  title: "Detail Tugas — Dexa Assessment",
 };
 
 export default async function AssignmentDetailPage({ params }: AssignmentDetailPageProps) {

@@ -8,7 +8,7 @@ interface RubricsPageProps {
 }
 
 export const metadata = {
-  title: "Manajemen Rubrik Penilaian — AI Assessment Copilot",
+  title: "Manajemen Rubrik Penilaian — Dexa Assessment",
 };
 
 export default async function RubricsPage({ params }: RubricsPageProps) {

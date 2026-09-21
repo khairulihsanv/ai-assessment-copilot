@@ -57,7 +57,7 @@ export function DashboardSidebar({ user }: SidebarProps) {
         </div>
         {sidebarOpen && (
           <span className="font-display text-sm font-bold truncate" style={{ color: "var(--text-primary)" }}>
-            AI Assessment
+            Dexa Assessment
           </span>
         )}
       </div>

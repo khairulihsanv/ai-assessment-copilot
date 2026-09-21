@@ -15,9 +15,9 @@ import {
 } from "lucide-react";
 
 export const metadata = {
-  title: "AI Assessment Copilot — Penilaian Cerdas untuk Pendidikan Tinggi",
+  title: "Dexa Assessment — Modern LMS Collaboration Hub & Evaluasi Cerdas",
   description:
-    "Platform manajemen tugas & penilaian berbasis AI yang membantu dosen mengoreksi tugas lebih efisien dengan pendekatan Human-in-the-Loop.",
+    "Dexa Assessment — Platform manajemen tugas & penilaian berbasis AI yang membantu dosen mengoreksi tugas lebih efisien dengan pendekatan Human-in-the-Loop.",
 };
 
 export default function LandingPage() {
@@ -33,7 +33,7 @@ export default function LandingPage() {
               </svg>
             </div>
             <span className="font-display text-lg font-bold" style={{ color: "var(--text-primary)" }}>
-              AI Assessment Copilot
+              Dexa Assessment
             </span>
           </div>
           <div className="flex items-center gap-3">
@@ -170,7 +170,7 @@ export default function LandingPage() {
           <div className="max-w-7xl mx-auto px-6">
             <div className="max-w-3xl mx-auto text-center mb-16">
               <h2 className="font-display text-3xl sm:text-4xl font-bold mb-4" style={{ color: "var(--text-primary)" }}>
-                Mengapa AI Assessment Copilot?
+                Mengapa Dexa Assessment?
               </h2>
               <p className="text-lg" style={{ color: "var(--text-secondary)" }}>
                 Dosen menghabiskan berjam-jam untuk mengoreksi tugas secara manual. Kami hadir untuk membantu — bukan menggantikan.
@@ -375,7 +375,7 @@ export default function LandingPage() {
               Siap Mempercepat Proses Penilaian?
             </h2>
             <p className="text-lg mb-10" style={{ color: "var(--text-secondary)" }}>
-              Daftar gratis dan mulai gunakan AI Assessment Copilot untuk kelas Anda.
+              Daftar gratis dan mulai gunakan Dexa Assessment untuk kelas Anda.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
@@ -406,7 +406,7 @@ export default function LandingPage() {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
             </svg>
-            <span>AI Assessment Copilot — Capstone Project, Sekolah Vokasi UNS</span>
+            <span>Dexa Assessment — Modern LMS Collaboration Hub</span>
           </div>
           <div className="text-sm" style={{ color: "var(--text-muted)" }}>
             © {new Date().getFullYear()}. Human-in-the-Loop AI Assessment.
