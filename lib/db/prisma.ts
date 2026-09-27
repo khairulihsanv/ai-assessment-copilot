@@ -6,7 +6,7 @@ const globalForPrisma = globalThis as unknown as {
 
 const databaseUrl =
   process.env.DATABASE_URL ||
-  "postgresql://neondb_owner:npg_HCFvQ49hqIoc@ep-raspy-base-b3xtlvc1-pooler.c-4.ap-southeast-1.aws.neon.tech/neondb?sslmode=require";
+  "postgresql://neondb_owner:npg_HCFvQ49hqIoc@ep-raspy-base-b3xtlvc1-pooler.c-4.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&pgbouncer=true";
 
 export const prisma =
   globalForPrisma.prisma ??
