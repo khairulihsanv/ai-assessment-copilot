@@ -108,6 +108,7 @@ async function runTests() {
 
   for (let i = 0; i < TEST_CASES.length; i++) {
     const tc = TEST_CASES[i];
+    if (!tc) continue;
     console.log(`\n▶️ Menjalankan ${tc.name}...`);
     console.log(`📝 Jawaban Mahasiswa: "${tc.studentAnswer}"`);
     
@@ -115,7 +116,6 @@ async function runTests() {
       const startTime = performance.now();
       const result = await gradeSubmission(
         {
-          assignmentId: "test_assignment",
           assignmentTitle: "Uji Coba AI Grading",
           assignmentInstructions: "Jawablah dengan tepat sesuai instruksi.",
           studentAnswer: tc.studentAnswer,
