@@ -15,7 +15,7 @@ interface SubmissionReviewPageProps {
 }
 
 export const metadata = {
-  title: "Studio Penilaian AI & Validasi Dosen — Dexa Assessment",
+  title: "Studio Penilaian AI & Validasi Dosen — AI Assessment Copilot • SV UNS",
 };
 
 export default async function SubmissionReviewPage({ params }: SubmissionReviewPageProps) {

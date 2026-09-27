@@ -6,8 +6,6 @@ import { Plus, Trash2, Loader2, Sparkles, CheckCircle2, AlertCircle, Wand2, Laye
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 
 interface CriterionItem {
   id?: string;
@@ -15,6 +13,7 @@ interface CriterionItem {
   description: string;
   maxScore: number;
   weight: number;
+  expectedAnswer?: string;
 }
 
 interface RubricEditorProps {
@@ -75,7 +74,7 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
   const addCriterion = () => {
     setCriteria([
       ...criteria,
-      { label: "", description: "", maxScore: 100, weight: 0 },
+      { label: "", description: "", maxScore: 100, weight: 0, expectedAnswer: "" },
     ]);
   };
 
@@ -94,7 +93,7 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
 
     if (field === "weight" || field === "maxScore") {
       item[field] = Number(value) || 0;
-    } else if (field === "label" || field === "description") {
+    } else if (field === "label" || field === "description" || field === "expectedAnswer") {
       item[field] = String(value);
     }
 
@@ -158,6 +157,7 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
           criteria: criteria.map((c) => ({
             label: c.label.trim(),
             description: c.description?.trim() || undefined,
+            expectedAnswer: c.expectedAnswer?.trim() || undefined,
             maxScore: Number(c.maxScore),
             weight: Number(c.weight),
           })),
@@ -179,49 +179,52 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 bg-card border border-border p-6 rounded-2xl shadow-sm">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/50 pb-4">
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-6 bg-white border border-[#E5E7EB] p-7 rounded-3xl shadow-sm animate-in fade-in-50 duration-300"
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#F3F4F6] pb-4">
         <div>
-          <h3 className="text-xl font-bold font-display text-foreground flex items-center gap-2">
-            <Layers className="w-5 h-5 text-primary" />
-            {initialData?.id ? "Edit Rubrik Penilaian" : "Buat Rubrik Penilaian Baru"}
+          <h3 className="text-xl font-extrabold font-display text-[#111827] flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-[#1E4D3B] text-white flex items-center justify-center shrink-0">
+              <Layers size={18} />
+            </div>
+            <span>{initialData?.id ? "Edit Rubrik Penilaian" : "Buat Rubrik Penilaian Baru"}</span>
           </h3>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-xs text-[#6B7280] mt-1">
             Tentukan kriteria penilaian agar AI Copilot dapat memberikan evaluasi yang terstruktur dan konsisten.
           </p>
         </div>
 
         {/* Quick Presets */}
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
-            <Wand2 className="w-3.5 h-3.5 text-accent" /> Template:
+          <span className="text-xs font-bold text-[#6B7280] flex items-center gap-1 mr-1">
+            <Wand2 className="w-3.5 h-3.5 text-[#FFA07A]" /> Template:
           </span>
           {PRESETS.map((p, idx) => (
-            <Button
+            <button
               key={p.name}
               type="button"
-              variant="outline"
-              size="sm"
               onClick={() => applyPreset(idx)}
-              className="text-xs h-7 px-2.5 bg-muted/40 hover:bg-accent/10 hover:text-accent border-border"
+              className="text-xs font-bold px-3 py-1.5 rounded-full bg-[#F3F4F6] hover:bg-[#E2EFE9] text-[#374151] hover:text-[#1E4D3B] border border-[#E5E7EB] transition-all cursor-pointer"
             >
               {p.name.split(" ")[1] || p.name}
-            </Button>
+            </button>
           ))}
         </div>
       </div>
 
       {error && (
-        <div className="p-3 text-sm rounded-xl bg-destructive/10 border border-destructive/20 text-destructive font-medium flex items-center gap-2">
+        <div className="p-3.5 text-xs rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 font-medium flex items-center gap-2">
           <AlertCircle className="w-4 h-4 flex-shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       {/* Rubric Title */}
-      <div className="space-y-2">
-        <Label htmlFor="rubricTitle" className="text-sm font-semibold">
-          Judul Rubrik <span className="text-destructive">*</span>
+      <div className="space-y-1.5">
+        <Label htmlFor="rubricTitle" className="text-xs font-extrabold text-[#374151]">
+          Judul Rubrik <span className="text-rose-600">*</span>
         </Label>
         <Input
           id="rubricTitle"
@@ -230,36 +233,35 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
           onChange={(e) => setTitle(e.target.value)}
           required
           disabled={loading}
-          className="text-base font-medium"
+          className="rounded-2xl bg-[#F9FAFB] border-[#E5E7EB] focus:border-[#1E4D3B] focus:bg-white text-xs py-2.5 h-10 font-medium"
         />
       </div>
 
       {/* Criteria List */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <Label className="text-sm font-semibold">Daftar Kriteria Penilaian</Label>
+          <Label className="text-xs font-extrabold text-[#374151]">Daftar Kriteria Penilaian</Label>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Total Bobot:</span>
-            <Badge
-              variant={isWeightValid ? "default" : "destructive"}
-              className={`font-mono text-xs ${
+            <span className="text-xs font-medium text-[#6B7280]">Total Bobot:</span>
+            <span
+              className={`font-mono text-xs px-3 py-0.5 rounded-full font-bold ${
                 isWeightValid
-                  ? "bg-emerald-600 hover:bg-emerald-600 text-white"
-                  : "bg-destructive text-destructive-foreground"
+                  ? "bg-[#E2EFE9] text-[#1E4D3B] border border-[#C5DDD1]"
+                  : "bg-rose-100 text-rose-700 border border-rose-200"
               }`}
             >
               {isWeightValid ? <CheckCircle2 className="w-3 h-3 mr-1 inline" /> : null}
               {totalWeight}% / 100%
-            </Badge>
+            </span>
           </div>
         </div>
 
         {/* Progress Bar of Weight Allocation */}
-        <div className="w-full h-2 bg-muted rounded-full overflow-hidden flex">
+        <div className="w-full h-2.5 bg-[#F3F4F6] rounded-full overflow-hidden flex">
           <div
             className={`h-full transition-all duration-300 ${
               isWeightValid
-                ? "bg-emerald-500"
+                ? "bg-[#1E4D3B]"
                 : totalWeight > 100
                 ? "bg-rose-500"
                 : "bg-amber-500"
@@ -268,17 +270,17 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
           />
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-3.5">
           {criteria.map((c, index) => (
             <div
               key={index}
-              className="p-4 rounded-xl border border-border/80 bg-muted/20 hover:border-border transition-all space-y-3"
+              className="p-5 rounded-2xl border border-[#E5E7EB] bg-[#F9FAFB] hover:border-[#C5DDD1] transition-all space-y-3.5"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 grid grid-cols-1 sm:grid-cols-12 gap-3">
                   <div className="sm:col-span-6 space-y-1">
-                    <Label className="text-xs text-muted-foreground">
-                      Label Kriteria #{index + 1} <span className="text-destructive">*</span>
+                    <Label className="text-xs font-bold text-[#4B5563]">
+                      Label Kriteria #{index + 1} <span className="text-rose-600">*</span>
                     </Label>
                     <Input
                       placeholder="cth. Pemahaman Konsep & Teori"
@@ -286,12 +288,13 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
                       onChange={(e) => updateCriterion(index, "label", e.target.value)}
                       required
                       disabled={loading}
+                      className="rounded-xl bg-white border-[#E5E7EB] focus:border-[#1E4D3B] text-xs h-9"
                     />
                   </div>
 
                   <div className="sm:col-span-3 space-y-1">
-                    <Label className="text-xs text-muted-foreground">
-                      Bobot (%) <span className="text-destructive">*</span>
+                    <Label className="text-xs font-bold text-[#4B5563]">
+                      Bobot (%) <span className="text-rose-600">*</span>
                     </Label>
                     <div className="relative">
                       <Input
@@ -302,15 +305,15 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
                         onChange={(e) => updateCriterion(index, "weight", e.target.value)}
                         required
                         disabled={loading}
-                        className="pr-7 font-mono font-semibold"
+                        className="rounded-xl bg-white border-[#E5E7EB] focus:border-[#1E4D3B] pr-7 font-mono font-bold text-xs h-9"
                       />
-                      <span className="absolute right-2.5 top-2.5 text-xs text-muted-foreground font-mono">%</span>
+                      <span className="absolute right-2.5 top-2 text-xs text-[#9CA3AF] font-mono">%</span>
                     </div>
                   </div>
 
                   <div className="sm:col-span-3 space-y-1">
-                    <Label className="text-xs text-muted-foreground">
-                      Skor Maksimal <span className="text-destructive">*</span>
+                    <Label className="text-xs font-bold text-[#4B5563]">
+                      Skor Maksimal <span className="text-rose-600">*</span>
                     </Label>
                     <Input
                       type="number"
@@ -320,26 +323,24 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
                       onChange={(e) => updateCriterion(index, "maxScore", e.target.value)}
                       required
                       disabled={loading}
-                      className="font-mono"
+                      className="rounded-xl bg-white border-[#E5E7EB] focus:border-[#1E4D3B] font-mono font-bold text-xs h-9"
                     />
                   </div>
                 </div>
 
-                <Button
+                <button
                   type="button"
-                  variant="ghost"
-                  size="sm"
                   onClick={() => removeCriterion(index)}
                   disabled={criteria.length <= 1 || loading}
-                  className="text-muted-foreground hover:text-destructive h-9 w-9 p-0 mt-6"
+                  className="text-[#9CA3AF] hover:text-rose-600 hover:bg-rose-50 h-9 w-9 rounded-xl flex items-center justify-center transition mt-5 shrink-0 cursor-pointer disabled:opacity-40"
                   title="Hapus Kriteria"
                 >
                   <Trash2 className="w-4 h-4" />
-                </Button>
+                </button>
               </div>
 
               <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">
+                <Label className="text-xs font-medium text-[#6B7280]">
                   Deskripsi / Panduan Penilaian (Opsional)
                 </Label>
                 <Input
@@ -347,40 +348,57 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
                   value={c.description}
                   onChange={(e) => updateCriterion(index, "description", e.target.value)}
                   disabled={loading}
-                  className="text-xs"
+                  className="rounded-xl bg-white border-[#E5E7EB] focus:border-[#1E4D3B] text-xs h-9"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs font-medium text-[#6B7280] flex items-center gap-1.5">
+                  Kunci Jawaban Eksak (Opsional)
+                  <span className="text-[9px] font-bold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded uppercase tracking-wider">⚡ Fast-Pass</span>
+                </Label>
+                <Input
+                  placeholder="Misal: deskripsi NLP (AI akan otomatis memberi nilai penuh jika jawaban mahasiswa mengandung kata ini)"
+                  value={c.expectedAnswer || ""}
+                  onChange={(e) => updateCriterion(index, "expectedAnswer", e.target.value)}
+                  disabled={loading}
+                  className="rounded-xl bg-white border-[#E5E7EB] focus:border-[#1E4D3B] text-xs h-9"
                 />
               </div>
             </div>
           ))}
         </div>
 
-        <Button
+        <button
           type="button"
-          variant="outline"
           onClick={addCriterion}
           disabled={loading}
-          className="w-full border-dashed border-primary/40 text-primary hover:bg-primary/5 gap-2"
+          className="w-full py-3 rounded-2xl border-2 border-dashed border-[#C5DDD1] text-[#1E4D3B] hover:bg-[#E2EFE9]/40 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
         >
           <Plus className="w-4 h-4" />
-          Tambah Kriteria Penilaian
-        </Button>
+          <span>Tambah Kriteria Penilaian</span>
+        </button>
       </div>
 
       {/* Form Actions */}
-      <div className="flex items-center justify-end gap-3 pt-4 border-t border-border/50">
+      <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#F3F4F6]">
         {onCancel && (
-          <Button type="button" variant="outline" onClick={onCancel} disabled={loading}>
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={loading}
+            className="px-5 py-2.5 rounded-full border border-[#E5E7EB] text-[#374151] hover:bg-[#F3F4F6] text-xs font-bold transition cursor-pointer"
+          >
             Batal
-          </Button>
+          </button>
         )}
-        <Button
+        <button
           type="submit"
           disabled={loading || !isWeightValid}
-          className="gap-2 bg-primary text-primary-foreground font-semibold px-6 shadow-sm"
+          className="flex items-center gap-2 bg-[#1E4D3B] hover:bg-[#15392C] text-white font-extrabold text-xs px-6 py-2.5 rounded-full shadow-xs hover:shadow transition-all disabled:opacity-50 cursor-pointer"
         >
           {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-          {initialData?.id ? "Simpan Perubahan" : "Simpan Rubrik Penilaian"}
-        </Button>
+          <span>{initialData?.id ? "Simpan Perubahan" : "Simpan Rubrik Penilaian"}</span>
+        </button>
       </div>
     </form>
   );

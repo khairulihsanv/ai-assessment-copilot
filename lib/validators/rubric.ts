@@ -6,6 +6,7 @@ const rubricCriterionSchema = z.object({
   description: z.string().max(500).optional(),
   maxScore: z.number().min(0, "Skor maksimal tidak boleh negatif").max(1000),
   weight: z.number().min(0, "Bobot tidak boleh negatif").max(100, "Bobot maksimal 100%"),
+  expectedAnswer: z.string().max(255).optional(),
 });
 
 export const createRubricSchema = z.object({

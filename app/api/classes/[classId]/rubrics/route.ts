@@ -92,6 +92,7 @@ export async function POST(
           create: criteria.map((c) => ({
             label: c.label,
             description: c.description || null,
+            expectedAnswer: c.expectedAnswer || null,
             maxScore: c.maxScore,
             weight: c.weight,
           })),

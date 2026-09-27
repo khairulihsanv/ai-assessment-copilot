@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { RefreshCw, Key, Copy, Check } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 interface RegenerateKeyButtonProps {
   classId: string;
@@ -23,7 +22,11 @@ export function RegenerateKeyButton({ classId, initialKey }: RegenerateKeyButton
   };
 
   const handleRegenerate = async () => {
-    if (!confirm("Apakah Anda yakin ingin membuat kode kelas baru? Mahasiswa yang belum mendaftar tidak akan bisa memakai kode lama.")) {
+    if (
+      !confirm(
+        "Apakah Anda yakin ingin membuat kode kelas baru? Mahasiswa yang belum mendaftar tidak akan bisa memakai kode lama."
+      )
+    ) {
       return;
     }
 
@@ -47,44 +50,42 @@ export function RegenerateKeyButton({ classId, initialKey }: RegenerateKeyButton
   };
 
   return (
-    <div className="flex items-center gap-2 bg-muted/60 p-2 rounded-xl border border-border/80">
-      <div className="flex items-center gap-2 px-3 py-1 bg-background rounded-lg border border-border">
-        <Key className="w-4 h-4 text-primary" />
-        <span className="font-mono text-base font-bold tracking-wider text-foreground">
+    <div className="flex items-center gap-2 bg-[#F9FAFB] p-2 rounded-2xl border border-[#E5E7EB]">
+      <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-xl border border-[#E5E7EB] shadow-2xs">
+        <Key className="w-4 h-4 text-[#1E4D3B]" />
+        <span className="font-mono text-sm font-extrabold tracking-wider text-[#111827]">
           {currentKey}
         </span>
       </div>
 
-      <Button
-        variant="ghost"
-        size="sm"
+      <button
+        type="button"
         onClick={handleCopy}
         title="Salin Kode Kelas"
-        className="h-9 px-3 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+        className="h-9 px-3 rounded-xl border border-[#E5E7EB] bg-white hover:bg-[#E2EFE9] flex items-center gap-1.5 text-xs text-[#374151] hover:text-[#1E4D3B] font-bold transition shadow-2xs cursor-pointer"
       >
         {copied ? (
           <>
-            <Check className="w-4 h-4 text-emerald-500" />
-            <span className="text-emerald-500 font-medium">Tersalin</span>
+            <Check className="w-3.5 h-3.5 text-emerald-600" />
+            <span className="text-emerald-700">Tersalin</span>
           </>
         ) : (
           <>
-            <Copy className="w-4 h-4" />
+            <Copy className="w-3.5 h-3.5" />
             <span>Salin</span>
           </>
         )}
-      </Button>
+      </button>
 
-      <Button
-        variant="ghost"
-        size="sm"
+      <button
+        type="button"
         onClick={handleRegenerate}
         disabled={loading}
         title="Acak Ulang Kode"
-        className="h-9 px-2 text-muted-foreground hover:text-foreground"
+        className="h-9 w-9 rounded-xl border border-[#E5E7EB] bg-white hover:bg-rose-50 flex items-center justify-center text-[#6B7280] hover:text-rose-600 transition shadow-2xs cursor-pointer disabled:opacity-50"
       >
         <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-      </Button>
+      </button>
     </div>
   );
 }

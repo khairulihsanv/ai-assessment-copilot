@@ -105,7 +105,7 @@ export async function GET(
         sendEvent("status", {
           step: 4,
           totalSteps: 4,
-          message: "Memproses evaluasi dengan AI (Google Gemini)...",
+          message: "Memproses evaluasi dengan AI Copilot (Groq)...",
         });
 
         await prisma.submission.update({

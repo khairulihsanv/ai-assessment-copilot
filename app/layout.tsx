@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
-import { Space_Grotesk, DM_Sans, Geist } from "next/font/google";
+import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeInitializer } from "@/components/theme-initializer";
 import { QueryProvider } from "@/components/query-provider";
 import { cn } from "@/lib/utils";
-
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -14,26 +12,33 @@ const spaceGrotesk = Space_Grotesk({
   weight: ["400", "500", "600", "700"],
 });
 
-const dmSans = DM_Sans({
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-body",
+  variable: "--font-sans",
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
   display: "swap",
   weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
   title: {
-    default: "Dexa Assessment",
-    template: "%s | Dexa Assessment",
+    default: "AI Assessment Copilot | Sekolah Vokasi UNS",
+    template: "%s | AI Assessment Copilot",
   },
   description:
-    "Dexa Assessment — Platform manajemen tugas dan evaluasi cerdas dengan AI Copilot berlandaskan Human-in-the-Loop untuk pendidikan tinggi.",
+    "AI Assessment Copilot — Platform manajemen tugas dan evaluasi cerdas dengan AI berlandaskan Human-in-the-Loop untuk Sekolah Vokasi Universitas Sebelas Maret.",
   keywords: [
-    "AI",
-    "Assessment",
-    "Grading",
-    "Education",
+    "AI Assessment Copilot",
+    "Sekolah Vokasi UNS",
     "Human-in-the-Loop",
+    "Evaluasi Akademik",
+    "Rubrik Penilaian",
     "LMS",
   ],
 };
@@ -46,10 +51,16 @@ export default function RootLayout({
   return (
     <html
       lang="id"
-      className={cn(spaceGrotesk.variable, dmSans.variable, "font-sans", geist.variable)}
+      className={cn(spaceGrotesk.variable, inter.variable, jetbrainsMono.variable, "font-sans")}
       suppressHydrationWarning
     >
-      <body className="min-h-screen antialiased">
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+        />
+      </head>
+      <body className="min-h-screen antialiased bg-[#f8f9ff] text-[#0b1c30]">
         <a href="#main-content" className="skip-to-content">
           Langsung ke konten utama
         </a>
@@ -59,3 +70,4 @@ export default function RootLayout({
     </html>
   );
 }
+

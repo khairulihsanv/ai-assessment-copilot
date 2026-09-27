@@ -13,9 +13,8 @@ import {
   Clock,
   CheckCircle2,
   FileCheck,
+  ChevronLeft,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RegenerateKeyButton } from "@/components/features/regenerate-key-button";
 import { AssignmentCard } from "@/components/features/assignment-card";
@@ -77,44 +76,63 @@ export default async function ClassDetailPage({ params }: ClassDetailPageProps) 
 
   if (!isDosen && !isEnrolled) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <h2 className="text-xl font-bold font-display text-destructive">Akses Ditolak</h2>
-        <p className="text-sm text-muted-foreground mt-2 max-w-sm">
-          Anda tidak terdaftar di kelas ini. Masukkan kode kelas untuk mendaftar terlebih dahulu.
+      <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 max-w-md mx-auto">
+        <div className="w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center">
+          <BookOpen size={28} />
+        </div>
+        <h2 className="text-xl font-extrabold font-display text-[#111827]">Akses Kelas Dibatasi</h2>
+        <p className="text-xs text-[#6B7280] leading-relaxed">
+          Anda tidak terdaftar di kelas ini. Masukkan kode kelas untuk bergabung terlebih dahulu.
         </p>
-        <Button asChild className="mt-6">
-          <Link href="/classes">Kembali ke Daftar Kelas</Link>
-        </Button>
+        <Link
+          href="/classes"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1E4D3B] hover:bg-[#15392C] text-white text-xs font-extrabold shadow-xs transition"
+        >
+          <span>Kembali ke Daftar Kelas</span>
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in-50 duration-300">
-      {/* Header Banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/95 via-primary/85 to-accent/90 text-primary-foreground p-6 sm:p-8 shadow-md">
+    <div className="space-y-6 pb-12 animate-in fade-in-50 duration-300">
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-2 text-xs text-[#6B7280]">
+        <Link
+          href="/classes"
+          className="hover:text-[#1E4D3B] flex items-center gap-1 font-medium transition-colors"
+        >
+          <ChevronLeft size={14} />
+          <span>Semua Kelas Kuliah</span>
+        </Link>
+      </div>
+
+      {/* Header Banner (Forest Green Dribbble Style) */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#173D2F] via-[#1E4D3B] to-[#255C47] text-white p-7 sm:p-9 shadow-md">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2 max-w-2xl">
+          <div className="space-y-3 max-w-2xl">
             <div className="flex items-center gap-2">
-              <Badge className="bg-white/20 hover:bg-white/30 text-white border-0 text-xs backdrop-blur-sm">
+              <span className="font-mono text-[10px] font-bold px-3 py-1 rounded-full bg-white/10 text-emerald-200 backdrop-blur-sm">
                 {cls.subject || "Mata Kuliah"}
-              </Badge>
+              </span>
               {cls.isArchived && (
-                <Badge variant="destructive" className="text-xs">
+                <span className="font-mono text-[10px] font-bold px-3 py-1 rounded-full bg-rose-500/20 text-rose-200">
                   Diarsipkan
-                </Badge>
+                </span>
               )}
             </div>
-            <h1 className="text-2xl sm:text-4xl font-extrabold font-display tracking-tight text-white">
+            <h1 className="text-2xl sm:text-4xl font-extrabold font-display tracking-tight text-white leading-tight">
               {cls.name}
             </h1>
             {cls.description && (
-              <p className="text-sm sm:text-base text-white/80 line-clamp-2">
+              <p className="text-xs sm:text-sm text-emerald-100/90 line-clamp-2 leading-relaxed">
                 {cls.description}
               </p>
             )}
-            <div className="flex items-center gap-4 text-xs text-white/70 pt-2">
-              <span>Pengajar: <strong className="text-white">{cls.dosen.name}</strong></span>
+            <div className="flex items-center gap-3 text-xs text-emerald-200/80 pt-1">
+              <span>
+                Pengajar: <strong className="text-white">{cls.dosen.name}</strong>
+              </span>
               <span>•</span>
               <span>{cls.enrollments.length} Mahasiswa Terdaftar</span>
             </div>
@@ -122,18 +140,18 @@ export default async function ClassDetailPage({ params }: ClassDetailPageProps) 
 
           {/* Dosen Enrollment Key Panel */}
           {isDosen && (
-            <div className="bg-background/95 backdrop-blur-md text-foreground p-4 rounded-xl border border-border shadow-lg space-y-2 md:min-w-[280px]">
+            <div className="bg-white text-[#111827] p-5 rounded-3xl border border-[#E5E7EB] shadow-lg space-y-2.5 md:min-w-[280px]">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Kode Pendaftaran
+                <span className="text-[10px] font-extrabold text-[#6B7280] uppercase tracking-wider">
+                  Kode Pendaftaran Kelas
                 </span>
-                <Badge variant="outline" className="text-[10px] bg-primary/5 text-primary border-primary/20">
+                <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#E2EFE9] text-[#1E4D3B]">
                   Bagikan ke Mhs
-                </Badge>
+                </span>
               </div>
               <RegenerateKeyButton classId={cls.id} initialKey={cls.enrollmentKey} />
-              <p className="text-[11px] text-muted-foreground">
-                Mahasiswa dapat langsung bergabung menggunakan kode ini.
+              <p className="text-[11px] text-[#6B7280] leading-snug">
+                Mahasiswa dapat langsung bergabung menggunakan kode token ini.
               </p>
             </div>
           )}
@@ -142,36 +160,47 @@ export default async function ClassDetailPage({ params }: ClassDetailPageProps) 
 
       {/* Main Tabs Navigation */}
       <Tabs defaultValue="assignments" className="w-full space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/40 pb-2">
-          <TabsList className="bg-muted/60 p-1">
-            <TabsTrigger value="assignments" className="gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E5E7EB] pb-3">
+          <TabsList className="bg-white p-1 rounded-full border border-[#E5E7EB] shadow-2xs">
+            <TabsTrigger
+              value="assignments"
+              className="gap-2 rounded-full px-4 py-2 text-xs font-bold data-[state=active]:bg-[#1E4D3B] data-[state=active]:text-white transition-all"
+            >
               <Calendar className="w-4 h-4" />
               <span>Tugas ({cls.assignments.length})</span>
             </TabsTrigger>
-            <TabsTrigger value="rubrics" className="gap-2">
+            <TabsTrigger
+              value="rubrics"
+              className="gap-2 rounded-full px-4 py-2 text-xs font-bold data-[state=active]:bg-[#1E4D3B] data-[state=active]:text-white transition-all"
+            >
               <Layers className="w-4 h-4" />
-              <span>Rubrik Penilaian ({cls.rubrics.length})</span>
+              <span>Rubrik ({cls.rubrics.length})</span>
             </TabsTrigger>
-            <TabsTrigger value="members" className="gap-2">
+            <TabsTrigger
+              value="members"
+              className="gap-2 rounded-full px-4 py-2 text-xs font-bold data-[state=active]:bg-[#1E4D3B] data-[state=active]:text-white transition-all"
+            >
               <Users className="w-4 h-4" />
               <span>Mahasiswa ({cls.enrollments.length})</span>
             </TabsTrigger>
           </TabsList>
 
           {isDosen && (
-            <div className="flex items-center gap-2">
-              <Button size="sm" variant="outline" asChild className="gap-1.5 border-primary/30 text-primary hover:bg-primary/5">
-                <Link href={`/classes/${cls.id}/rubrics`}>
-                  <Plus className="w-4 h-4" />
-                  Buat Rubrik
-                </Link>
-              </Button>
-              <Button size="sm" asChild className="gap-1.5 bg-primary text-primary-foreground shadow-sm">
-                <Link href={`/classes/${cls.id}/assignments/new`}>
-                  <Plus className="w-4 h-4" />
-                  Buat Tugas Baru
-                </Link>
-              </Button>
+            <div className="flex items-center gap-2.5">
+              <Link
+                href={`/classes/${cls.id}/rubrics`}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#E5E7EB] bg-white text-[#1E4D3B] hover:bg-[#E2EFE9] text-xs font-bold transition shadow-2xs cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Buat Rubrik</span>
+              </Link>
+              <Link
+                href={`/classes/${cls.id}/assignments/new`}
+                className="inline-flex items-center gap-1.5 px-5 py-2 rounded-full bg-[#1E4D3B] hover:bg-[#15392C] text-white text-xs font-extrabold shadow-xs transition active:scale-[0.98] cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Buat Tugas Baru</span>
+              </Link>
             </div>
           )}
         </div>
@@ -179,23 +208,24 @@ export default async function ClassDetailPage({ params }: ClassDetailPageProps) 
         {/* Tab 1: Assignments */}
         <TabsContent value="assignments" className="space-y-6 focus:outline-none">
           {cls.assignments.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 px-4 text-center rounded-2xl border border-dashed border-border bg-card/40">
-              <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-3">
+            <div className="flex flex-col items-center justify-center py-16 px-4 text-center rounded-3xl border border-dashed border-[#E5E7EB] bg-white shadow-xs">
+              <div className="w-14 h-14 rounded-2xl bg-[#E2EFE9] text-[#1E4D3B] flex items-center justify-center mb-3">
                 <Calendar className="w-7 h-7" />
               </div>
-              <h3 className="text-lg font-bold text-foreground font-display">Belum Ada Tugas</h3>
-              <p className="text-sm text-muted-foreground max-w-sm mt-1 mb-5">
+              <h3 className="text-base font-extrabold text-[#111827] font-display">Belum Ada Tugas</h3>
+              <p className="text-xs text-[#6B7280] max-w-sm mt-1 mb-5 leading-relaxed">
                 {isDosen
                   ? "Buat penugasan pertama untuk kelas ini dan tentukan rubrik penilaian AI yang sesuai."
                   : "Belum ada tugas yang diberikan oleh dosen pengampu saat ini."}
               </p>
               {isDosen && (
-                <Button size="sm" asChild className="gap-2">
-                  <Link href={`/classes/${cls.id}/assignments/new`}>
-                    <Plus className="w-4 h-4" />
-                    Buat Tugas Pertama
-                  </Link>
-                </Button>
+                <Link
+                  href={`/classes/${cls.id}/assignments/new`}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1E4D3B] text-white text-xs font-extrabold hover:bg-[#15392C] shadow-xs cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Buat Tugas Pertama</span>
+                </Link>
               )}
             </div>
           ) : (
@@ -230,67 +260,74 @@ export default async function ClassDetailPage({ params }: ClassDetailPageProps) 
         <TabsContent value="rubrics" className="space-y-6 focus:outline-none">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-bold font-display text-foreground">Rubrik Penilaian AI</h2>
-              <p className="text-xs text-muted-foreground">
+              <h2 className="text-base font-extrabold font-display text-[#111827]">Rubrik Penilaian AI</h2>
+              <p className="text-xs text-[#6B7280]">
                 Rubrik digunakan sebagai pedoman objektif bagi AI Copilot dan Dosen saat memeriksa jawaban tugas.
               </p>
             </div>
             {isDosen && (
-              <Button size="sm" asChild className="gap-1.5">
-                <Link href={`/classes/${cls.id}/rubrics`}>
-                  <Plus className="w-4 h-4" />
-                  Kelola Rubrik
-                </Link>
-              </Button>
+              <Link
+                href={`/classes/${cls.id}/rubrics`}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#1E4D3B] text-white text-xs font-bold hover:bg-[#15392C] shadow-xs cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Kelola Rubrik</span>
+              </Link>
             )}
           </div>
 
           {cls.rubrics.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 px-4 text-center rounded-2xl border border-dashed border-border bg-card/40">
-              <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center text-accent mb-3">
+            <div className="flex flex-col items-center justify-center py-12 px-4 text-center rounded-3xl border border-dashed border-[#E5E7EB] bg-white shadow-xs">
+              <div className="w-12 h-12 rounded-2xl bg-[#E2EFE9] flex items-center justify-center text-[#1E4D3B] mb-3">
                 <Layers className="w-6 h-6" />
               </div>
-              <h3 className="text-base font-bold font-display">Belum Ada Rubrik Penilaian</h3>
-              <p className="text-xs text-muted-foreground max-w-sm mt-1 mb-4">
+              <h3 className="text-base font-extrabold font-display text-[#111827]">Belum Ada Rubrik Penilaian</h3>
+              <p className="text-xs text-[#6B7280] max-w-sm mt-1 mb-4 leading-relaxed">
                 Buat rubrik dengan kriteria penilaian berbobot (total 100%) agar AI dapat memberikan draft penilaian yang presisi.
               </p>
               {isDosen && (
-                <Button size="sm" variant="outline" asChild>
-                  <Link href={`/classes/${cls.id}/rubrics`}>Buat Rubrik Sekarang</Link>
-                </Button>
+                <Link
+                  href={`/classes/${cls.id}/rubrics`}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#E5E7EB] bg-white text-[#1E4D3B] hover:bg-[#E2EFE9] text-xs font-bold transition shadow-2xs"
+                >
+                  <span>Buat Rubrik Sekarang</span>
+                </Link>
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {cls.rubrics.map((rubric) => (
                 <div
                   key={rubric.id}
-                  className="p-5 rounded-xl border border-border bg-card hover:border-primary/40 transition-all space-y-4"
+                  className="p-6 rounded-3xl border border-[#E5E7EB] bg-white hover:border-[#C5DDD1] transition-all space-y-4 shadow-xs"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <h4 className="font-bold text-foreground text-base font-display">{rubric.title}</h4>
-                      <p className="text-xs text-muted-foreground mt-0.5">
+                      <h4 className="font-bold text-[#111827] text-base font-display">{rubric.title}</h4>
+                      <p className="text-xs text-[#6B7280] mt-1">
                         Dibuat pada {formatDate(rubric.createdAt)} • Dipakai di {rubric._count.assignments} tugas
                       </p>
                     </div>
-                    <Badge variant="outline" className="text-xs bg-primary/5 text-primary border-primary/20">
+                    <span className="font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#E2EFE9] text-[#1E4D3B]">
                       {rubric.criteria.length} Kriteria
-                    </Badge>
+                    </span>
                   </div>
 
-                  <div className="space-y-2 pt-2 border-t border-border/50">
+                  <div className="space-y-2 pt-2 border-t border-[#F3F4F6]">
                     {rubric.criteria.map((crit) => (
-                      <div key={crit.id} className="flex items-center justify-between text-xs bg-muted/30 p-2 rounded-lg">
+                      <div
+                        key={crit.id}
+                        className="flex items-center justify-between text-xs bg-[#F9FAFB] p-3 rounded-2xl border border-[#E5E7EB]"
+                      >
                         <div>
-                          <span className="font-semibold text-foreground">{crit.label}</span>
+                          <span className="font-bold text-[#111827]">{crit.label}</span>
                           {crit.description && (
-                            <p className="text-[11px] text-muted-foreground line-clamp-1">{crit.description}</p>
+                            <p className="text-[11px] text-[#6B7280] line-clamp-1">{crit.description}</p>
                           )}
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
-                          <span className="font-mono text-muted-foreground">Bobot: {crit.weight}%</span>
-                          <span className="font-mono font-bold text-primary">Maks {crit.maxScore}</span>
+                          <span className="font-mono text-[11px] text-[#6B7280]">Bobot: {crit.weight}%</span>
+                          <span className="font-mono font-bold text-[#1E4D3B]">Maks {crit.maxScore}</span>
                         </div>
                       </div>
                     ))}
@@ -305,38 +342,38 @@ export default async function ClassDetailPage({ params }: ClassDetailPageProps) 
         <TabsContent value="members" className="space-y-6 focus:outline-none">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-bold font-display text-foreground">Daftar Mahasiswa Terdaftar</h2>
-              <p className="text-xs text-muted-foreground">
+              <h2 className="text-base font-extrabold font-display text-[#111827]">Daftar Mahasiswa Terdaftar</h2>
+              <p className="text-xs text-[#6B7280]">
                 Total {cls.enrollments.length} mahasiswa aktif mengikuti kelas ini.
               </p>
             </div>
           </div>
 
           {cls.enrollments.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 px-4 text-center rounded-2xl border border-dashed border-border bg-card/40">
-              <Users className="w-10 h-10 text-muted-foreground mb-2" />
-              <h3 className="text-base font-bold font-display">Belum Ada Mahasiswa</h3>
-              <p className="text-xs text-muted-foreground max-w-sm mt-1">
-                Bagikan kode kelas <strong className="text-primary font-mono">{cls.enrollmentKey}</strong> kepada mahasiswa agar mereka dapat bergabung.
+            <div className="flex flex-col items-center justify-center py-12 px-4 text-center rounded-3xl border border-dashed border-[#E5E7EB] bg-white shadow-xs">
+              <Users className="w-10 h-10 text-[#6B7280] mb-2" />
+              <h3 className="text-base font-extrabold font-display text-[#111827]">Belum Ada Mahasiswa</h3>
+              <p className="text-xs text-[#6B7280] max-w-sm mt-1 leading-relaxed">
+                Bagikan kode kelas <strong className="text-[#1E4D3B] font-mono">{cls.enrollmentKey}</strong> kepada mahasiswa agar mereka dapat bergabung.
               </p>
             </div>
           ) : (
-            <div className="rounded-xl border border-border overflow-hidden bg-card">
-              <div className="divide-y divide-border/60">
-                {cls.enrollments.map((enr, idx) => (
-                  <div key={enr.id} className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-xs font-mono">
+            <div className="rounded-3xl border border-[#E5E7EB] overflow-hidden bg-white shadow-xs">
+              <div className="divide-y divide-[#F3F4F6]">
+                {cls.enrollments.map((enr) => (
+                  <div key={enr.id} className="flex items-center justify-between p-4 sm:p-5 hover:bg-[#F9FAFB] transition-colors">
+                    <div className="flex items-center gap-3.5">
+                      <div className="w-10 h-10 rounded-full bg-[#1E4D3B] text-white font-extrabold flex items-center justify-center text-xs font-mono shadow-2xs">
                         {getInitials(enr.mahasiswa.name)}
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-foreground">{enr.mahasiswa.name}</p>
-                        <p className="text-xs text-muted-foreground">{enr.mahasiswa.email}</p>
+                        <p className="text-xs font-bold text-[#111827]">{enr.mahasiswa.name}</p>
+                        <p className="text-[11px] text-[#6B7280]">{enr.mahasiswa.email}</p>
                       </div>
                     </div>
 
                     <div className="text-right">
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-xs text-[#6B7280]">
                         Bergabung {formatDate(enr.joinedAt)}
                       </span>
                     </div>

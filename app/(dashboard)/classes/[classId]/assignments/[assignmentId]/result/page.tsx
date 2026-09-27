@@ -16,7 +16,7 @@ interface ResultPageProps {
 }
 
 export const metadata = {
-  title: "Hasil Penilaian Tugas — Dexa Assessment",
+  title: "Hasil Penilaian Tugas — AI Assessment Copilot • SV UNS",
 };
 
 export default async function AssignmentResultPage({ params }: ResultPageProps) {

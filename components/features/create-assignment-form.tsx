@@ -13,13 +13,12 @@ import {
   Clock,
   Layers,
   AlertCircle,
+  Send,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 
 interface RubricItem {
   id: string;
@@ -112,36 +111,44 @@ export function CreateAssignmentForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6 pb-12 animate-in fade-in-50 duration-300">
       {/* Back Link */}
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-        <Link href={`/classes/${classId}`} className="hover:text-foreground flex items-center gap-1">
-          <ChevronLeft className="w-3.5 h-3.5" />
+      <div className="flex items-center gap-2 text-xs text-[#6B7280]">
+        <Link
+          href={`/classes/${classId}`}
+          className="hover:text-[#1E4D3B] flex items-center gap-1.5 transition-colors font-medium"
+        >
+          <ChevronLeft className="w-4 h-4" />
           <span>Kembali ke Kelas {className}</span>
         </Link>
       </div>
 
-      <div className="border-b border-border/40 pb-4">
-        <h1 className="text-2xl sm:text-3xl font-bold font-display text-foreground">
+      <div className="border-b border-[#E5E7EB] pb-4">
+        <div className="flex items-center gap-2 mb-1.5">
+          <span className="font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#E2EFE9] text-[#1E4D3B]">
+            Assignment Designer
+          </span>
+        </div>
+        <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-[#111827]">
           Buat Tugas Baru
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Rancang instruksi penugasan dan kaitkan dengan rubrik AI untuk mempermudah koreksi.
+        <p className="text-xs text-[#6B7280] mt-1">
+          Rancang instruksi penugasan dan kaitkan dengan rubrik AI untuk mempermudah evaluasi otomatis.
         </p>
       </div>
 
       {error && (
-        <div className="p-3.5 text-sm rounded-xl bg-destructive/10 border border-destructive/20 text-destructive font-medium flex items-center gap-2">
+        <div className="p-3.5 text-xs rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 font-medium flex items-center gap-2">
           <AlertCircle className="w-4 h-4 flex-shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
-      <div className="p-6 rounded-2xl border border-border bg-card space-y-5 shadow-sm">
+      <div className="p-7 rounded-3xl border border-[#E5E7EB] bg-white space-y-6 shadow-xs">
         {/* Title */}
-        <div className="space-y-2">
-          <Label htmlFor="title" className="text-sm font-semibold">
-            Judul Penugasan <span className="text-destructive">*</span>
+        <div className="space-y-1.5">
+          <Label htmlFor="title" className="text-xs font-extrabold text-[#374151]">
+            Judul Penugasan <span className="text-rose-600">*</span>
           </Label>
           <Input
             id="title"
@@ -150,14 +157,14 @@ export function CreateAssignmentForm({
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             required
             disabled={loading}
-            className="text-base"
+            className="rounded-2xl bg-[#F9FAFB] border-[#E5E7EB] focus:border-[#1E4D3B] focus:bg-white text-xs h-10 font-medium"
           />
         </div>
 
         {/* Instructions */}
-        <div className="space-y-2">
-          <Label htmlFor="instructions" className="text-sm font-semibold">
-            Instruksi & Soal Tugas <span className="text-destructive">*</span>
+        <div className="space-y-1.5">
+          <Label htmlFor="instructions" className="text-xs font-extrabold text-[#374151]">
+            Instruksi & Soal Tugas <span className="text-rose-600">*</span>
           </Label>
           <Textarea
             id="instructions"
@@ -167,9 +174,9 @@ export function CreateAssignmentForm({
             onChange={(e) => setFormData({ ...formData, instructions: e.target.value })}
             required
             disabled={loading}
-            className="text-sm font-normal"
+            className="rounded-2xl bg-[#F9FAFB] border-[#E5E7EB] focus:border-[#1E4D3B] focus:bg-white text-xs leading-relaxed"
           />
-          <p className="text-xs text-muted-foreground">
+          <p className="text-[11px] text-[#6B7280]">
             Instruksi ini akan dibaca oleh AI Copilot untuk memahami konteks jawaban yang diharapkan dari mahasiswa.
           </p>
         </div>
@@ -177,18 +184,18 @@ export function CreateAssignmentForm({
         {/* Two-column layout for settings */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2">
           {/* Submission Type */}
-          <div className="space-y-2">
-            <Label htmlFor="submissionType" className="text-sm font-semibold">
+          <div className="space-y-1.5">
+            <Label htmlFor="submissionType" className="text-xs font-extrabold text-[#374151]">
               Format Pengumpulan Jawaban
             </Label>
             <Select
               value={formData.submissionType}
               onValueChange={(val) => setFormData({ ...formData, submissionType: val ?? "ANY" })}
             >
-              <SelectTrigger id="submissionType">
+              <SelectTrigger id="submissionType" className="rounded-2xl bg-[#F9FAFB] border-[#E5E7EB] text-xs h-10">
                 <SelectValue placeholder="Pilih Format" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="rounded-2xl border-[#E5E7EB]">
                 <SelectItem value="ANY">Bebas (File Dokumen atau Teks Esai)</SelectItem>
                 <SelectItem value="PDF">Dokumen PDF (.pdf)</SelectItem>
                 <SelectItem value="DOCX">Microsoft Word (.docx)</SelectItem>
@@ -198,10 +205,10 @@ export function CreateAssignmentForm({
           </div>
 
           {/* Due Date */}
-          <div className="space-y-2">
-            <Label htmlFor="dueDate" className="text-sm font-semibold flex items-center gap-1.5">
-              <Clock className="w-4 h-4 text-primary" />
-              Tenggat Waktu (Deadline) <span className="text-destructive">*</span>
+          <div className="space-y-1.5">
+            <Label htmlFor="dueDate" className="text-xs font-extrabold text-[#374151] flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-[#1E4D3B]" />
+              Tenggat Waktu (Deadline) <span className="text-rose-600">*</span>
             </Label>
             <Input
               id="dueDate"
@@ -210,12 +217,13 @@ export function CreateAssignmentForm({
               onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
               required
               disabled={loading}
+              className="rounded-2xl bg-[#F9FAFB] border-[#E5E7EB] focus:border-[#1E4D3B] focus:bg-white text-xs h-10 font-mono"
             />
           </div>
 
           {/* Max Score */}
-          <div className="space-y-2">
-            <Label htmlFor="maxScore" className="text-sm font-semibold">
+          <div className="space-y-1.5">
+            <Label htmlFor="maxScore" className="text-xs font-extrabold text-[#374151]">
               Skor Maksimal
             </Label>
             <Input
@@ -227,20 +235,20 @@ export function CreateAssignmentForm({
               onChange={(e) => setFormData({ ...formData, maxScore: Number(e.target.value) || 100 })}
               required
               disabled={loading}
-              className="font-mono"
+              className="rounded-2xl bg-[#F9FAFB] border-[#E5E7EB] focus:border-[#1E4D3B] focus:bg-white text-xs h-10 font-mono font-bold"
             />
           </div>
 
           {/* Rubric Selection */}
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <Label htmlFor="rubricSelect" className="text-sm font-semibold flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-accent" />
+              <Label htmlFor="rubricSelect" className="text-xs font-extrabold text-[#374151] flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-[#FFA07A]" />
                 Rubrik Penilaian AI
               </Label>
               <Link
                 href={`/classes/${classId}/rubrics`}
-                className="text-[11px] text-primary hover:underline"
+                className="text-[11px] text-[#1E4D3B] font-bold hover:underline"
               >
                 + Kelola Rubrik
               </Link>
@@ -249,10 +257,10 @@ export function CreateAssignmentForm({
               value={formData.rubricId}
               onValueChange={(val) => setFormData({ ...formData, rubricId: val ?? "" })}
             >
-              <SelectTrigger id="rubricSelect">
+              <SelectTrigger id="rubricSelect" className="rounded-2xl bg-[#F9FAFB] border-[#E5E7EB] text-xs h-10">
                 <SelectValue placeholder="Pilih Rubrik Penilaian" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="rounded-2xl border-[#E5E7EB]">
                 <SelectItem value="">Tanpa Rubrik Khusus (Penilaian Umum AI)</SelectItem>
                 {rubrics.map((r) => (
                   <SelectItem key={r.id} value={r.id}>
@@ -265,37 +273,37 @@ export function CreateAssignmentForm({
         </div>
 
         {/* Allow Late Submissions Toggle */}
-        <div className="flex items-center gap-3 pt-3 border-t border-border/50">
+        <div className="flex items-center gap-3 pt-3 border-t border-[#F3F4F6]">
           <input
             type="checkbox"
             id="allowLate"
             checked={formData.allowLateSubmission}
             onChange={(e) => setFormData({ ...formData, allowLateSubmission: e.target.checked })}
-            className="w-4 h-4 rounded text-primary focus:ring-primary border-border"
+            className="w-4 h-4 rounded accent-[#1E4D3B] cursor-pointer"
           />
-          <Label htmlFor="allowLate" className="text-xs text-muted-foreground cursor-pointer select-none">
+          <Label htmlFor="allowLate" className="text-xs text-[#6B7280] cursor-pointer select-none">
             Izinkan pengumpulan terlambat setelah tenggat waktu (akan ditandai status Terlambat)
           </Label>
         </div>
       </div>
 
       <div className="flex items-center justify-end gap-3 pt-2">
-        <Button
+        <button
           type="button"
-          variant="outline"
           onClick={() => router.back()}
           disabled={loading}
+          className="px-5 py-2.5 rounded-full border border-[#E5E7EB] text-[#374151] hover:bg-[#F3F4F6] text-xs font-bold transition cursor-pointer"
         >
           Batal
-        </Button>
-        <Button
+        </button>
+        <button
           type="submit"
           disabled={loading}
-          className="gap-2 bg-primary text-primary-foreground font-semibold px-6 shadow-sm"
+          className="inline-flex items-center gap-2 bg-[#1E4D3B] hover:bg-[#15392C] text-white font-extrabold text-xs px-7 py-3 rounded-full shadow-xs hover:shadow transition-all disabled:opacity-60 cursor-pointer active:scale-[0.99]"
         >
           {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-          Terbitkan Tugas
-        </Button>
+          <span>Terbitkan Tugas</span>
+        </button>
       </div>
     </form>
   );

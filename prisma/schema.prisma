@@ -109,6 +109,7 @@ model RubricCriterion {
   description String?
   maxScore    Float
   weight      Float  // percentage, all criteria in a rubric should sum to 100
+  expectedAnswer String? // Optional keyword or exact match string
 
   // Relations
   rubricId String

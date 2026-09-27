@@ -1,418 +1,562 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
 import {
   Sparkles,
-  GraduationCap,
-  Upload,
-  CheckCircle2,
   ArrowRight,
-  Shield,
-  Zap,
-  BarChart3,
+  ShieldCheck,
+  CheckCircle2,
+  Lock,
+  School,
+  User,
+  Copy,
+  Check,
+  RotateCw,
+  Activity,
+  Layers,
+  FileCheck,
+  Cpu,
   BookOpen,
-  Users,
-  Brain,
+  Calendar,
+  ExternalLink,
   ChevronRight,
+  Award,
+  Upload,
+  Star,
+  Users,
+  PlayCircle
 } from "lucide-react";
 
-export const metadata = {
-  title: "Dexa Assessment — Modern LMS Collaboration Hub & Evaluasi Cerdas",
-  description:
-    "Dexa Assessment — Platform manajemen tugas & penilaian berbasis AI yang membantu dosen mengoreksi tugas lebih efisien dengan pendekatan Human-in-the-Loop.",
-};
-
 export default function LandingPage() {
+  const [copiedDosen, setCopiedDosen] = useState(false);
+  const [copiedMhs, setCopiedMhs] = useState(false);
+
+  const copyToClipboard = (text: string, isDosen: boolean) => {
+    navigator.clipboard.writeText(text);
+    if (isDosen) {
+      setCopiedDosen(true);
+      setTimeout(() => setCopiedDosen(false), 2000);
+    } else {
+      setCopiedMhs(true);
+      setTimeout(() => setCopiedMhs(false), 2000);
+    }
+  };
+
   return (
-    <div className="min-h-screen" style={{ background: "var(--surface)" }}>
-      {/* ─── Navigation ─── */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl border-b" style={{ background: "color-mix(in oklch, var(--surface) 85%, transparent)", borderColor: "var(--border)" }}>
-        <nav className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "var(--color-primary-500)" }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+    <div className="min-h-screen bg-white text-[#111827] antialiased selection:bg-[#1E4D3B] selection:text-white font-sans">
+      {/* ─── NAVBAR ─── */}
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-[#E5E7EB]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className="w-10 h-10 rounded-2xl bg-[#1E4D3B] text-white flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform flex-shrink-0">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L15 9L22 12L15 15L12 22L9 15L2 12L9 9L12 2Z" fill="currentColor" />
               </svg>
             </div>
-            <span className="font-display text-lg font-bold" style={{ color: "var(--text-primary)" }}>
-              Dexa Assessment
-            </span>
-          </div>
-          <div className="flex items-center gap-3">
+            <div className="flex flex-col">
+              <span className="font-display text-base font-extrabold text-[#111827] leading-none tracking-tight">
+                Dexa Assessment
+              </span>
+              <span className="text-[10px] font-mono text-[#1E4D3B] uppercase font-bold tracking-wider mt-0.5">
+                Sekolah Vokasi UNS
+              </span>
+            </div>
+          </Link>
+
+          {/* Center Nav */}
+          <nav className="hidden md:flex items-center gap-8">
+            <a href="#fitur" className="text-sm font-semibold text-[#4B5563] hover:text-[#1E4D3B] transition-colors">
+              Fitur
+            </a>
+            <a href="#cara-kerja" className="text-sm font-semibold text-[#4B5563] hover:text-[#1E4D3B] transition-colors">
+              Cara Kerja
+            </a>
+            <a href="#tentang" className="text-sm font-semibold text-[#4B5563] hover:text-[#1E4D3B] transition-colors">
+              Human-in-the-Loop
+            </a>
+            <a href="#demo-section" className="text-sm font-semibold text-[#4B5563] hover:text-[#1E4D3B] transition-colors">
+              Demo
+            </a>
+          </nav>
+
+          {/* Right CTAs */}
+          <div className="flex items-center gap-4">
             <Link
               href="/login"
-              className="px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:opacity-80"
-              style={{ color: "var(--text-primary)" }}
+              className="text-sm font-bold text-[#111827] hover:text-[#1E4D3B] transition-colors hidden sm:block"
             >
               Masuk
             </Link>
             <Link
               href="/register"
-              className="px-5 py-2 rounded-lg text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98]"
-              style={{ background: "var(--color-primary-500)" }}
+              className="inline-flex items-center justify-center px-6 py-2.5 rounded-full bg-[#111827] text-white text-sm font-bold hover:bg-[#1E4D3B] transition-all shadow-sm active:scale-95"
             >
               Daftar Gratis
             </Link>
           </div>
-        </nav>
+        </div>
       </header>
 
-      <main id="main-content">
-        {/* ─── Hero Section ─── */}
-        <section className="relative overflow-hidden pt-20 pb-28">
-          {/* Background decoration */}
-          <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full opacity-20" style={{ background: "radial-gradient(circle, var(--color-primary-200), transparent 70%)" }} />
-            <div className="absolute -bottom-20 -left-20 w-[400px] h-[400px] rounded-full opacity-15" style={{ background: "radial-gradient(circle, var(--color-ai-200), transparent 70%)" }} />
-          </div>
+      <main>
+        {/* ─── HERO SECTION ─── */}
+        <section className="pt-20 pb-16 md:pt-28 md:pb-24 overflow-hidden relative">
+          {/* Subtle background glow */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#E2EFE9]/40 rounded-full blur-[100px] -z-10 pointer-events-none" />
 
-          <div className="max-w-7xl mx-auto px-6 relative">
-            <div className="max-w-3xl mx-auto text-center">
-              {/* Tag */}
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium mb-6 animate-[fade-in_0.5s_ease-out]"
-                style={{ background: "var(--color-ai-100)", color: "var(--color-ai-700)", border: "1px solid var(--color-ai-200)" }}
-              >
-                <Sparkles size={14} />
-                <span>AI-Powered Assessment Platform</span>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center">
+            
+            {/* Social Proof Badge */}
+            <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white border border-[#E5E7EB] shadow-sm mb-8">
+              <div className="flex -space-x-2">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className={`w-7 h-7 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-bold text-white ${i === 1 ? 'bg-[#1E4D3B]' : i === 2 ? 'bg-[#4B5563]' : 'bg-[#111827]'}`}>
+                    <User size={12} />
+                  </div>
+                ))}
               </div>
-
-              <h1 className="font-display text-5xl sm:text-6xl font-bold leading-[1.1] mb-6 animate-[slide-up_0.6s_ease-out]" style={{ color: "var(--text-primary)" }}>
-                Koreksi Tugas Lebih Cepat,{" "}
-                <span className="text-gradient-primary">Keputusan Tetap di Tangan Dosen</span>
-              </h1>
-
-              <p className="text-lg sm:text-xl leading-relaxed mb-10 max-w-2xl mx-auto animate-[slide-up_0.7s_ease-out]" style={{ color: "var(--text-secondary)" }}>
-                Platform manajemen tugas & penilaian yang menggunakan AI untuk membantu dosen menganalisis jawaban mahasiswa — bukan menggantikan, tapi mempercepat proses koreksi dengan <strong style={{ color: "var(--text-primary)" }}>pendekatan Human-in-the-Loop</strong>.
-              </p>
-
-              <div className="flex flex-col sm:flex-row gap-4 justify-center animate-[slide-up_0.8s_ease-out]">
-                <Link
-                  href="/register"
-                  className="px-8 py-3.5 rounded-xl text-base font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98] flex items-center justify-center gap-2"
-                  style={{ background: "var(--color-primary-500)" }}
-                >
-                  Mulai Sekarang
-                  <ArrowRight size={18} />
-                </Link>
-                <Link
-                  href="#cara-kerja"
-                  className="px-8 py-3.5 rounded-xl text-base font-semibold transition-all hover:opacity-80 flex items-center justify-center gap-2"
-                  style={{ color: "var(--text-primary)", border: "1.5px solid var(--border)" }}
-                >
-                  Lihat Cara Kerja
-                </Link>
+              <div className="flex items-center gap-1.5 border-l border-[#E5E7EB] pl-3">
+                <Star size={14} className="text-[#F59E0B] fill-[#F59E0B]" />
+                <span className="text-xs font-bold text-[#374151]">
+                  Meningkatkan efisiensi dosen 80%
+                </span>
               </div>
             </div>
 
-            {/* Hero Preview */}
-            <div className="mt-20 max-w-5xl mx-auto relative animate-[slide-up_1s_ease-out]">
-              <div className="rounded-2xl overflow-hidden border shadow-xl" style={{ background: "var(--surface-elevated)", borderColor: "var(--border)" }}>
-                {/* Mock browser bar */}
-                <div className="h-10 flex items-center px-4 gap-2 border-b" style={{ background: "var(--surface-muted)", borderColor: "var(--border)" }}>
-                  <div className="flex gap-1.5">
-                    <div className="w-3 h-3 rounded-full" style={{ background: "oklch(0.7 0.15 25)" }} />
-                    <div className="w-3 h-3 rounded-full" style={{ background: "oklch(0.8 0.15 85)" }} />
-                    <div className="w-3 h-3 rounded-full" style={{ background: "oklch(0.7 0.15 145)" }} />
-                  </div>
-                  <div className="flex-1 mx-4 h-6 rounded-md px-3 flex items-center text-xs" style={{ background: "var(--surface-elevated)", color: "var(--text-muted)" }}>
-                    ai-assessment-copilot.vercel.app/dashboard
-                  </div>
-                </div>
-                {/* Mock dashboard content */}
-                <div className="p-6">
-                  <div className="grid grid-cols-3 gap-4 mb-6">
-                    {[
-                      { label: "Kelas Aktif", value: "5", icon: BookOpen, color: "var(--color-primary-500)" },
-                      { label: "Menunggu Review", value: "12", icon: Sparkles, color: "var(--color-ai-500)" },
-                      { label: "Mahasiswa", value: "148", icon: Users, color: "var(--color-final-500)" },
-                    ].map((stat) => (
-                      <div key={stat.label} className="p-4 rounded-xl border" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
-                        <div className="flex items-center gap-2 mb-2">
-                          <stat.icon size={16} style={{ color: stat.color }} />
-                          <span className="text-xs font-medium" style={{ color: "var(--text-muted)" }}>{stat.label}</span>
-                        </div>
-                        <span className="font-display text-2xl font-bold" style={{ color: "var(--text-primary)" }}>{stat.value}</span>
-                      </div>
-                    ))}
-                  </div>
-                  {/* Mock submission rows */}
-                  <div className="space-y-3">
-                    {[
-                      { name: "Ahmad Rizki", task: "Analisis Algoritma — Tugas 3", status: "AI_REVIEWED", statusColor: "var(--color-ai-500)" },
-                      { name: "Siti Rahayu", task: "Basis Data — UTS", status: "GRADED", statusColor: "var(--color-final-500)" },
-                      { name: "Budi Santoso", task: "Pemrograman Web — Tugas 5", status: "SUBMITTED", statusColor: "var(--color-warning-500)" },
-                    ].map((row) => (
-                      <div key={row.name} className="flex items-center justify-between p-3 rounded-lg border" style={{ borderColor: "var(--border)" }}>
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white" style={{ background: "var(--color-primary-400)" }}>
-                            {row.name.split(" ").map(w => w[0]).join("")}
-                          </div>
-                          <div>
-                            <div className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{row.name}</div>
-                            <div className="text-xs" style={{ color: "var(--text-muted)" }}>{row.task}</div>
-                          </div>
-                        </div>
-                        <span className="text-xs font-medium px-2.5 py-1 rounded-full" style={{
-                          background: `color-mix(in oklch, ${row.statusColor} 15%, transparent)`,
-                          color: row.statusColor,
-                        }}>
-                          {row.status === "AI_REVIEWED" ? "✨ Siap Review" : row.status === "GRADED" ? "✓ Dinilai" : "⏳ Baru Masuk"}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+            {/* Headline */}
+            <h1 className="font-display text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-[#111827] max-w-4xl leading-[1.1] mb-6">
+              Koreksi Tugas Lebih Cepat <br className="hidden md:block" />
+              <span className="text-[#1E4D3B]">
+                dengan Bantuan AI.
+              </span>
+            </h1>
 
-        {/* ─── Problem → Solution ─── */}
-        <section className="py-24 border-t" style={{ background: "var(--surface-muted)", borderColor: "var(--border)" }}>
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="max-w-3xl mx-auto text-center mb-16">
-              <h2 className="font-display text-3xl sm:text-4xl font-bold mb-4" style={{ color: "var(--text-primary)" }}>
-                Mengapa Dexa Assessment?
-              </h2>
-              <p className="text-lg" style={{ color: "var(--text-secondary)" }}>
-                Dosen menghabiskan berjam-jam untuk mengoreksi tugas secara manual. Kami hadir untuk membantu — bukan menggantikan.
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-8">
-              {[
-                {
-                  icon: Zap,
-                  title: "Koreksi 10x Lebih Cepat",
-                  desc: "AI menganalisis jawaban dan memberikan saran nilai awal berdasarkan rubrik penilaian. Dosen tinggal review dan finalisasi.",
-                  color: "var(--color-primary-500)",
-                },
-                {
-                  icon: Shield,
-                  title: "Kontrol Penuh di Dosen",
-                  desc: "Pendekatan Human-in-the-Loop — AI hanya memberikan saran draft. Keputusan nilai akhir 100% di tangan dosen.",
-                  color: "var(--color-final-500)",
-                },
-                {
-                  icon: BarChart3,
-                  title: "Feedback Konstruktif",
-                  desc: "Setiap penilaian disertai feedback naratif per kriteria rubrik, membantu mahasiswa memahami area yang perlu diperbaiki.",
-                  color: "var(--color-ai-500)",
-                },
-              ].map((feature) => (
-                <div key={feature.title} className="p-8 rounded-2xl border transition-all duration-300 hover:translate-y-[-2px] hover:shadow-lg"
-                  style={{ background: "var(--surface-elevated)", borderColor: "var(--border)" }}
-                >
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5"
-                    style={{ background: `color-mix(in oklch, ${feature.color} 15%, transparent)` }}
-                  >
-                    <feature.icon size={24} style={{ color: feature.color }} />
-                  </div>
-                  <h3 className="font-display text-xl font-bold mb-3" style={{ color: "var(--text-primary)" }}>
-                    {feature.title}
-                  </h3>
-                  <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-                    {feature.desc}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ─── How It Works ─── */}
-        <section id="cara-kerja" className="py-24 border-t" style={{ borderColor: "var(--border)" }}>
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="max-w-3xl mx-auto text-center mb-16">
-              <h2 className="font-display text-3xl sm:text-4xl font-bold mb-4" style={{ color: "var(--text-primary)" }}>
-                Cara Kerja
-              </h2>
-              <p className="text-lg" style={{ color: "var(--text-secondary)" }}>
-                Empat langkah sederhana dari pembuatan kelas hingga penilaian final
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-4 gap-6">
-              {[
-                {
-                  step: "01",
-                  icon: GraduationCap,
-                  title: "Buat Kelas & Rubrik",
-                  desc: "Dosen membuat kelas, menambahkan rubrik penilaian dengan kriteria & bobot, lalu membuat assignment.",
-                  color: "var(--color-primary-500)",
-                },
-                {
-                  step: "02",
-                  icon: Upload,
-                  title: "Mahasiswa Submit Tugas",
-                  desc: "Mahasiswa mengerjakan dan submit tugas dalam bentuk teks, PDF, atau DOCX sebelum deadline.",
-                  color: "var(--color-warning-500)",
-                },
-                {
-                  step: "03",
-                  icon: Brain,
-                  title: "AI Analisis & Draft Nilai",
-                  desc: "AI mengekstrak teks, menganalisis jawaban berdasarkan rubrik, dan menghasilkan draft skor + feedback per kriteria.",
-                  color: "var(--color-ai-500)",
-                },
-                {
-                  step: "04",
-                  icon: CheckCircle2,
-                  title: "Dosen Review & Finalisasi",
-                  desc: "Dosen mereview saran AI, mengedit jika perlu, lalu memfinalisasi nilai. Mahasiswa melihat nilai final.",
-                  color: "var(--color-final-500)",
-                },
-              ].map((item, i) => (
-                <div key={item.step} className="relative">
-                  <div className="p-6 rounded-2xl border h-full transition-all duration-300 hover:translate-y-[-2px] hover:shadow-md"
-                    style={{ background: "var(--surface-elevated)", borderColor: "var(--border)" }}
-                  >
-                    <div className="font-display text-5xl font-bold mb-4 opacity-10" style={{ color: item.color }}>
-                      {item.step}
-                    </div>
-                    <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-4"
-                      style={{ background: `color-mix(in oklch, ${item.color} 15%, transparent)` }}
-                    >
-                      <item.icon size={20} style={{ color: item.color }} />
-                    </div>
-                    <h3 className="font-display text-lg font-bold mb-2" style={{ color: "var(--text-primary)" }}>
-                      {item.title}
-                    </h3>
-                    <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>
-                      {item.desc}
-                    </p>
-                  </div>
-                  {/* Arrow between steps */}
-                  {i < 3 && (
-                    <div className="hidden md:flex absolute top-1/2 -right-3 z-10" style={{ color: "var(--border-strong)" }}>
-                      <ChevronRight size={20} />
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* ─── HITL Explanation ─── */}
-        <section className="py-24 border-t" style={{ background: "var(--surface-muted)", borderColor: "var(--border)" }}>
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="grid md:grid-cols-2 gap-16 items-center">
-              <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium mb-4"
-                  style={{ background: "var(--color-final-100)", color: "var(--color-final-600)" }}
-                >
-                  <Shield size={12} />
-                  Human-in-the-Loop
-                </div>
-                <h2 className="font-display text-3xl font-bold mb-4" style={{ color: "var(--text-primary)" }}>
-                  AI Sebagai Asisten, Bukan Pengganti
-                </h2>
-                <p className="text-base leading-relaxed mb-6" style={{ color: "var(--text-secondary)" }}>
-                  Dalam pendekatan Human-in-the-Loop, AI berperan sebagai <strong>asisten</strong> yang membantu mempercepat proses — bukan mengambil keputusan. Setiap saran nilai dari AI hanya bersifat <strong>draft</strong> yang harus divalidasi oleh dosen sebelum dikirim ke mahasiswa.
-                </p>
-                <ul className="space-y-3">
-                  {[
-                    "Saran AI tidak pernah otomatis menjadi nilai final",
-                    "Dosen bisa menerima, mengedit, atau menolak seluruh saran",
-                    "Sistem mencatat apakah nilai final diubah dari saran AI (transparansi)",
-                    "Mahasiswa hanya melihat nilai yang sudah difinalisasi dosen",
-                  ].map((point) => (
-                    <li key={point} className="flex items-start gap-3 text-sm" style={{ color: "var(--text-secondary)" }}>
-                      <CheckCircle2 size={16} className="mt-0.5 flex-shrink-0" style={{ color: "var(--color-final-500)" }} />
-                      <span>{point}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              {/* Visual: AI Draft vs Final */}
-              <div className="space-y-4">
-                <div className="p-5 rounded-xl border-2 border-dashed" style={{ borderColor: "var(--color-ai-400)", background: "color-mix(in oklch, var(--color-ai-100) 50%, var(--surface-elevated))" }}>
-                  <div className="flex items-center gap-2 mb-3">
-                    <Sparkles size={16} style={{ color: "var(--color-ai-500)" }} />
-                    <span className="text-sm font-semibold" style={{ color: "var(--color-ai-700)" }}>Saran AI (Draft)</span>
-                  </div>
-                  <div className="space-y-2 text-sm" style={{ color: "var(--text-secondary)" }}>
-                    <div className="flex justify-between"><span>Pemahaman Konsep</span><span className="font-mono font-semibold">22/25</span></div>
-                    <div className="flex justify-between"><span>Ketepatan Analisis</span><span className="font-mono font-semibold">18/25</span></div>
-                    <div className="flex justify-between"><span>Penulisan & Struktur</span><span className="font-mono font-semibold">20/25</span></div>
-                    <div className="flex justify-between"><span>Referensi</span><span className="font-mono font-semibold">22/25</span></div>
-                    <div className="border-t pt-2 mt-2 flex justify-between font-semibold" style={{ borderColor: "var(--color-ai-300)", color: "var(--color-ai-700)" }}>
-                      <span>Total Saran</span><span className="font-mono">82/100</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-center">
-                  <div className="flex items-center gap-2 text-xs font-medium" style={{ color: "var(--text-muted)" }}>
-                    <span>Dosen mengedit</span>
-                    <ArrowRight size={14} />
-                  </div>
-                </div>
-
-                <div className="p-5 rounded-xl border-2" style={{ borderColor: "var(--color-final-500)", background: "color-mix(in oklch, var(--color-final-100) 50%, var(--surface-elevated))" }}>
-                  <div className="flex items-center gap-2 mb-3">
-                    <CheckCircle2 size={16} style={{ color: "var(--color-final-500)" }} />
-                    <span className="text-sm font-semibold" style={{ color: "var(--color-final-700)" }}>Nilai Final (Dosen)</span>
-                  </div>
-                  <div className="space-y-2 text-sm" style={{ color: "var(--text-secondary)" }}>
-                    <div className="flex justify-between"><span>Pemahaman Konsep</span><span className="font-mono font-semibold">22/25</span></div>
-                    <div className="flex justify-between"><span>Ketepatan Analisis</span><span className="font-mono font-semibold" style={{ color: "var(--color-danger-500)" }}>15/25 ✎</span></div>
-                    <div className="flex justify-between"><span>Penulisan & Struktur</span><span className="font-mono font-semibold">20/25</span></div>
-                    <div className="flex justify-between"><span>Referensi</span><span className="font-mono font-semibold">22/25</span></div>
-                    <div className="border-t pt-2 mt-2 flex justify-between font-semibold" style={{ borderColor: "var(--color-final-400)", color: "var(--color-final-700)" }}>
-                      <span>Total Final</span><span className="font-mono">79/100</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ─── CTA ─── */}
-        <section className="py-24 border-t" style={{ borderColor: "var(--border)" }}>
-          <div className="max-w-3xl mx-auto px-6 text-center">
-            <h2 className="font-display text-3xl sm:text-4xl font-bold mb-4" style={{ color: "var(--text-primary)" }}>
-              Siap Mempercepat Proses Penilaian?
-            </h2>
-            <p className="text-lg mb-10" style={{ color: "var(--text-secondary)" }}>
-              Daftar gratis dan mulai gunakan Dexa Assessment untuk kelas Anda.
+            {/* Subtitle */}
+            <p className="text-lg text-[#4B5563] max-w-2xl leading-relaxed mb-10 font-medium">
+              Platform manajemen tugas & evaluasi cerdas yang membantu Anda menganalisis jawaban mahasiswa secara objektif via arsitektur <span className="text-[#111827] font-bold border-b-2 border-[#E2EFE9]">Human-in-the-Loop</span>.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+
+            {/* CTAs */}
+            <div className="flex flex-col sm:flex-row items-center gap-4 mb-20">
               <Link
-                href="/register"
-                className="px-8 py-3.5 rounded-xl text-base font-semibold text-white transition-all hover:opacity-90 active:scale-[0.98] flex items-center justify-center gap-2"
-                style={{ background: "var(--color-primary-500)" }}
+                href="#demo-section"
+                className="inline-flex items-center justify-center h-14 px-8 rounded-full bg-[#1E4D3B] text-white text-base font-bold hover:bg-[#15392C] shadow-lg shadow-[#1E4D3B]/20 transition-all active:scale-95"
               >
-                Daftar Sebagai Dosen
-                <GraduationCap size={18} />
+                Mulai Sekarang Gratis
               </Link>
-              <Link
-                href="/register"
-                className="px-8 py-3.5 rounded-xl text-base font-semibold transition-all hover:opacity-80 flex items-center justify-center gap-2"
-                style={{ color: "var(--text-primary)", border: "1.5px solid var(--border)" }}
+              <a
+                href="#cara-kerja"
+                className="inline-flex items-center justify-center h-14 px-8 rounded-full bg-white text-[#111827] text-base font-bold border-2 border-[#E5E7EB] hover:border-[#111827] hover:bg-[#F9FAFB] transition-all active:scale-95 gap-2"
               >
-                Daftar Sebagai Mahasiswa
-                <BookOpen size={18} />
-              </Link>
+                <PlayCircle size={20} />
+                Lihat Demo
+              </a>
+            </div>
+
+            {/* ─── HERO GRAPHIC (Bento Box Style, mimicking the Dribbble puzzle feel but with UI) ─── */}
+            <div className="w-full max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 md:grid-rows-2 gap-4 h-auto md:h-[500px]">
+              
+              {/* Large Main Feature (Forest Green) */}
+              <div className="md:col-span-2 md:row-span-2 rounded-[2.5rem] bg-[#1E4D3B] p-8 md:p-12 relative overflow-hidden flex flex-col justify-between text-left group">
+                <div className="relative z-10">
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-md text-white text-xs font-bold mb-6 border border-white/10">
+                    <Sparkles size={14} className="text-[#E2EFE9]" />
+                    AI Grading Assistant
+                  </div>
+                  <h3 className="text-3xl md:text-5xl font-display font-extrabold text-white leading-tight max-w-md">
+                    Learn Happy, <br />
+                    <span className="text-[#E2EFE9]">Grow Bright</span>
+                  </h3>
+                </div>
+                
+                {/* Mock UI snippet floating */}
+                <div className="absolute -bottom-6 -right-6 md:right-8 md:bottom-8 w-[80%] md:w-[320px] bg-white rounded-3xl p-5 shadow-2xl border border-white/20 transform group-hover:-translate-y-2 transition-transform duration-500">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-[#E2EFE9] flex items-center justify-center text-[#1E4D3B]">
+                        <CheckCircle2 size={16} />
+                      </div>
+                      <div className="font-bold text-sm text-[#111827]">Tugas 01 - Basis Data</div>
+                    </div>
+                    <span className="text-xs font-bold text-[#1E4D3B] bg-[#E2EFE9] px-2 py-1 rounded-full">Selesai</span>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="h-2 bg-gray-100 rounded-full w-full overflow-hidden">
+                      <div className="h-full bg-[#1E4D3B] w-[85%] rounded-full"></div>
+                    </div>
+                    <div className="text-xs text-gray-500 flex justify-between font-medium">
+                      <span>Akurasi Rubrik</span>
+                      <span className="text-[#111827] font-bold">85/100</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Decorative background shapes */}
+                <svg className="absolute top-0 right-0 w-[400px] h-[400px] text-white/5 transform translate-x-1/4 -translate-y-1/4" viewBox="0 0 100 100" fill="currentColor">
+                  <circle cx="50" cy="50" r="50" />
+                </svg>
+              </div>
+
+              {/* Top Right Box (Warm Cream) */}
+              <div className="rounded-[2.5rem] bg-[#F4F3ED] p-8 relative overflow-hidden flex flex-col items-center justify-center text-center">
+                <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center text-[#B45309] mb-4">
+                  <Cpu size={32} />
+                </div>
+                <h4 className="text-xl font-display font-extrabold text-[#111827] mb-2">Analisis Instan</h4>
+                <p className="text-sm text-[#4B5563] font-medium">Evaluasi ratusan baris kode dalam hitungan detik.</p>
+              </div>
+
+              {/* Bottom Right Box (Soft Mint) */}
+              <div className="rounded-[2.5rem] bg-[#E2EFE9] p-8 relative overflow-hidden flex flex-col items-center justify-center text-center">
+                <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center text-[#1E4D3B] mb-4">
+                  <ShieldCheck size={32} />
+                </div>
+                <h4 className="text-xl font-display font-extrabold text-[#111827] mb-2">100% Terkendali</h4>
+                <p className="text-sm text-[#4B5563] font-medium">Nilai final selalu membutuhkan persetujuan Anda.</p>
+              </div>
+
+            </div>
+          </div>
+        </section>
+
+        {/* ─── TRUSTED BY SECTION ─── */}
+        <section className="py-12 border-y border-[#E5E7EB] bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <p className="text-xs font-bold tracking-widest text-[#6B7280] uppercase mb-8">
+              Dipercaya oleh institusi yang mengedepankan kualitas pendidikan
+            </p>
+            <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
+              <div className="flex items-center gap-2 font-display font-extrabold text-xl text-[#111827]">
+                <School size={28} />
+                Sekolah Vokasi UNS
+              </div>
+              <div className="flex items-center gap-2 font-display font-extrabold text-xl text-[#111827]">
+                <Layers size={28} />
+                D3 Teknik Informatika
+              </div>
+              <div className="flex items-center gap-2 font-display font-extrabold text-xl text-[#111827]">
+                <BookOpen size={28} />
+                Prodi Terapan
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ─── ABOUT / SPLIT FEATURE SECTION ─── */}
+        <section id="tentang" className="py-24 bg-white overflow-hidden">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+              
+              {/* Left Content */}
+              <div className="space-y-8 max-w-lg">
+                <div>
+                  <span className="font-mono text-xs font-bold tracking-wider text-[#1E4D3B] uppercase mb-4 block">
+                    Tentang Sistem
+                  </span>
+                  <h2 className="font-display text-4xl sm:text-5xl font-extrabold text-[#111827] leading-[1.1]">
+                    Pemberdayaan <br />
+                    <span className="text-[#1E4D3B]">Bukan Penggantian.</span>
+                  </h2>
+                </div>
+                <p className="text-lg text-[#4B5563] leading-relaxed font-medium">
+                  Dexa Assessment dirancang dengan filosofi <strong className="text-[#111827]">Human-in-the-Loop</strong>. Sistem ini membaca, menganalisis, dan mencocokkan jawaban dengan rubrik, namun <strong className="text-[#111827]">keputusan akhir, empati, dan konteks pedagogis</strong> tetap menjadi otoritas mutlak seorang dosen.
+                </p>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 rounded-full bg-[#E2EFE9] text-[#1E4D3B] flex items-center justify-center flex-shrink-0">
+                      <Check size={14} strokeWidth={3} />
+                    </div>
+                    <span className="font-bold text-[#111827]">Menghindari bias "AI Slop"</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 rounded-full bg-[#E2EFE9] text-[#1E4D3B] flex items-center justify-center flex-shrink-0">
+                      <Check size={14} strokeWidth={3} />
+                    </div>
+                    <span className="font-bold text-[#111827]">Transparansi dasar penilaian yang jelas</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 rounded-full bg-[#E2EFE9] text-[#1E4D3B] flex items-center justify-center flex-shrink-0">
+                      <Check size={14} strokeWidth={3} />
+                    </div>
+                    <span className="font-bold text-[#111827]">Dukungan multi-format (Kode, PDF, Teks)</span>
+                  </div>
+                </div>
+                <div className="pt-4">
+                  <Link
+                    href="/login"
+                    className="inline-flex items-center justify-center h-14 px-8 rounded-full bg-[#111827] text-white text-base font-bold hover:bg-[#1E4D3B] transition-all"
+                  >
+                    Pelajari Lebih Lanjut
+                  </Link>
+                </div>
+              </div>
+
+              {/* Right Graphic */}
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-tr from-[#E2EFE9] to-[#F4F3ED] rounded-[3rem] transform rotate-3 scale-105 -z-10"></div>
+                <div className="bg-white border border-[#E5E7EB] rounded-[3rem] p-8 shadow-xl relative overflow-hidden">
+                  
+                  {/* Decorative Header */}
+                  <div className="flex items-center justify-between mb-8 pb-6 border-b border-gray-100">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-2xl bg-[#F4F3ED] flex items-center justify-center text-[#B45309]">
+                        <User size={20} />
+                      </div>
+                      <div>
+                        <div className="font-bold text-[#111827]">Lembar Jawaban Budi</div>
+                        <div className="text-xs text-gray-500 font-medium">NIM: V3922001</div>
+                      </div>
+                    </div>
+                    <div className="px-3 py-1.5 rounded-full bg-[#E2EFE9] text-[#1E4D3B] text-xs font-bold">
+                      Menunggu Validasi
+                    </div>
+                  </div>
+
+                  {/* Mock Content */}
+                  <div className="space-y-4">
+                    <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-bold text-sm text-[#111827]">Saran Nilai AI</span>
+                        <span className="font-display font-extrabold text-xl text-[#1E4D3B]">85<span className="text-sm text-gray-400">/100</span></span>
+                      </div>
+                      <p className="text-xs text-gray-500 leading-relaxed mb-3">
+                        Berdasarkan rubrik, implementasi fungsi login sudah aman dari SQL Injection (Poin penuh). Namun penanganan error masih kurang spesifik (-15 poin).
+                      </p>
+                      <button className="w-full py-2.5 rounded-xl bg-[#1E4D3B] text-white text-xs font-bold">
+                        Setujui & Rilis Nilai
+                      </button>
+                      <button className="w-full py-2.5 rounded-xl bg-white text-[#4B5563] text-xs font-bold border border-gray-200 mt-2 hover:bg-gray-50">
+                        Edit Manual
+                      </button>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </section>
+
+        {/* ─── CARA KERJA (ALUR TERSTRUKTUR) ─── */}
+        <section id="cara-kerja" className="py-24 bg-white border-t border-[#E5E7EB]">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-2xl mx-auto mb-16">
+              <span className="font-mono text-xs font-bold tracking-wider text-[#1E4D3B] uppercase mb-4 block">
+                Alur Praktis
+              </span>
+              <h2 className="font-display text-4xl md:text-5xl font-extrabold text-[#111827] leading-tight">
+                Bagaimana Sistem Bekerja
+              </h2>
+              <p className="text-lg text-[#4B5563] mt-4 font-medium">
+                4 langkah sederhana dari pembuatan rubrik hingga perilisan nilai akhir.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="p-8 rounded-[2rem] bg-[#FAFAFA] border border-[#E5E7EB] hover:border-[#1E4D3B]/30 transition-colors group">
+                <span className="font-display font-extrabold text-4xl text-[#1E4D3B] opacity-50 group-hover:opacity-100 transition-opacity">01</span>
+                <h4 className="font-display font-bold text-lg text-[#111827] mt-6 mb-3">Desain Rubrik</h4>
+                <p className="text-sm text-[#4B5563] leading-relaxed font-medium">
+                  Dosen menyusun kriteria penilaian dan bobot nilai secara terstruktur sebagai acuan mutlak.
+                </p>
+              </div>
+
+              <div className="p-8 rounded-[2rem] bg-[#FAFAFA] border border-[#E5E7EB] hover:border-[#B45309]/30 transition-colors group">
+                <span className="font-display font-extrabold text-4xl text-[#B45309] opacity-50 group-hover:opacity-100 transition-opacity">02</span>
+                <h4 className="font-display font-bold text-lg text-[#111827] mt-6 mb-3">Kumpul Berkas</h4>
+                <p className="text-sm text-[#4B5563] leading-relaxed font-medium">
+                  Mahasiswa mengunggah jawaban, baik dalam format dokumen (PDF) maupun teks (Kode).
+                </p>
+              </div>
+
+              <div className="p-8 rounded-[2rem] bg-[#FAFAFA] border border-[#E5E7EB] hover:border-[#DC2626]/30 transition-colors group">
+                <span className="font-display font-extrabold text-4xl text-[#DC2626] opacity-50 group-hover:opacity-100 transition-opacity">03</span>
+                <h4 className="font-display font-bold text-lg text-[#111827] mt-6 mb-3">Analisis Kognitif</h4>
+                <p className="text-sm text-[#4B5563] leading-relaxed font-medium">
+                  AI menguji jawaban terhadap rubrik dan menghasilkan draf nilai secara instan.
+                </p>
+              </div>
+
+              <div className="p-8 rounded-[2rem] bg-[#FAFAFA] border border-[#E5E7EB] hover:border-[#2563EB]/30 transition-colors group">
+                <span className="font-display font-extrabold text-4xl text-[#2563EB] opacity-50 group-hover:opacity-100 transition-opacity">04</span>
+                <h4 className="font-display font-bold text-lg text-[#111827] mt-6 mb-3">Validasi & Rilis</h4>
+                <p className="text-sm text-[#4B5563] leading-relaxed font-medium">
+                  Dosen memeriksa draf AI, menyesuaikan skor bila perlu, dan mempublikasikan hasil.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ─── FEATURES GRID ─── */}
+        <section id="fitur" className="py-24 bg-[#FAFAFA] border-t border-[#E5E7EB]">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-2xl mx-auto mb-16">
+              <span className="font-mono text-xs font-bold tracking-wider text-[#1E4D3B] uppercase mb-4 block">
+                Keunggulan
+              </span>
+              <h2 className="font-display text-4xl md:text-5xl font-extrabold text-[#111827] leading-tight">
+                Pelajaran Menarik <br />
+                Dirancang untuk Memicu Rasa Ingin Tahu
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              
+              {/* Feature 1 */}
+              <div className="bg-white rounded-[2rem] p-6 text-center border border-[#E5E7EB] shadow-sm hover:shadow-xl transition-shadow group">
+                <div className="w-full aspect-square rounded-3xl bg-[#F4F3ED] mb-6 flex items-center justify-center p-6 relative overflow-hidden group-hover:scale-[1.02] transition-transform">
+                  <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+                  <FileCheck size={64} className="text-[#B45309] relative z-10" strokeWidth={1.5} />
+                </div>
+                <h3 className="font-display text-xl font-bold text-[#111827] mb-2">Desain Rubrik</h3>
+                <p className="text-sm text-[#4B5563] font-medium">Buat kriteria penilaian terstruktur.</p>
+              </div>
+
+              {/* Feature 2 */}
+              <div className="bg-white rounded-[2rem] p-6 text-center border border-[#E5E7EB] shadow-sm hover:shadow-xl transition-shadow group">
+                <div className="w-full aspect-square rounded-3xl bg-[#E2EFE9] mb-6 flex items-center justify-center p-6 relative overflow-hidden group-hover:scale-[1.02] transition-transform">
+                  <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+                  <Cpu size={64} className="text-[#1E4D3B] relative z-10" strokeWidth={1.5} />
+                </div>
+                <h3 className="font-display text-xl font-bold text-[#111827] mb-2">Analisis Kognitif</h3>
+                <p className="text-sm text-[#4B5563] font-medium">Evaluasi otomatis berbasis AI.</p>
+              </div>
+
+              {/* Feature 3 */}
+              <div className="bg-white rounded-[2rem] p-6 text-center border border-[#E5E7EB] shadow-sm hover:shadow-xl transition-shadow group">
+                <div className="w-full aspect-square rounded-3xl bg-[#FEF2F2] mb-6 flex items-center justify-center p-6 relative overflow-hidden group-hover:scale-[1.02] transition-transform">
+                  <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+                  <CheckCircle2 size={64} className="text-[#DC2626] relative z-10" strokeWidth={1.5} />
+                </div>
+                <h3 className="font-display text-xl font-bold text-[#111827] mb-2">Validasi Dosen</h3>
+                <p className="text-sm text-[#4B5563] font-medium">Tinjau dan sesuaikan nilai akhir.</p>
+              </div>
+
+              {/* Feature 4 */}
+              <div className="bg-white rounded-[2rem] p-6 text-center border border-[#E5E7EB] shadow-sm hover:shadow-xl transition-shadow group">
+                <div className="w-full aspect-square rounded-3xl bg-[#EFF6FF] mb-6 flex items-center justify-center p-6 relative overflow-hidden group-hover:scale-[1.02] transition-transform">
+                  <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+                  <Activity size={64} className="text-[#2563EB] relative z-10" strokeWidth={1.5} />
+                </div>
+                <h3 className="font-display text-xl font-bold text-[#111827] mb-2">Analitik Kelas</h3>
+                <p className="text-sm text-[#4B5563] font-medium">Pantau performa dan tren.</p>
+              </div>
+
+            </div>
+          </div>
+        </section>
+
+        {/* ─── SANDBOX DEMO SECTION ─── */}
+        <section id="demo-section" className="py-24 bg-white">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="bg-[#111827] rounded-[3rem] p-8 md:p-16 text-white text-center relative overflow-hidden shadow-2xl">
+              
+              {/* Background abstract */}
+              <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#1E4D3B] rounded-full blur-[120px] opacity-40 translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
+              
+              <div className="relative z-10">
+                <h2 className="font-display text-4xl md:text-5xl font-extrabold mb-6">
+                  Siap Mencoba?
+                </h2>
+                <p className="text-lg text-gray-300 mb-12 max-w-2xl mx-auto">
+                  Gunakan kredensial sandbox instan berikut untuk menjelajahi fitur tanpa perlu registrasi.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl mx-auto text-left">
+                  
+                  {/* Dosen Card */}
+                  <div className="bg-white/10 backdrop-blur-md rounded-3xl p-6 border border-white/10 hover:bg-white/15 transition-colors">
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="font-bold text-[#E2EFE9] text-sm">Akun Dosen</span>
+                      <button
+                        onClick={() => copyToClipboard("dosen.demo@example.com", true)}
+                        className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
+                      >
+                        {copiedDosen ? <Check size={14} className="text-[#E2EFE9]" /> : <Copy size={14} />}
+                      </button>
+                    </div>
+                    <div className="font-mono text-sm text-gray-300 space-y-2 mb-6">
+                      <div className="flex justify-between border-b border-white/10 pb-2">
+                        <span>Email</span>
+                        <span className="text-white">dosen.demo@example.com</span>
+                      </div>
+                      <div className="flex justify-between pb-2">
+                        <span>Password</span>
+                        <span className="text-white">dosen123</span>
+                      </div>
+                    </div>
+                    <Link
+                      href="/login"
+                      className="block w-full py-3 rounded-full bg-[#1E4D3B] text-white text-center text-sm font-bold hover:bg-[#15392C] transition-colors"
+                    >
+                      Masuk Sebagai Dosen
+                    </Link>
+                  </div>
+
+                  {/* Mahasiswa Card */}
+                  <div className="bg-white/10 backdrop-blur-md rounded-3xl p-6 border border-white/10 hover:bg-white/15 transition-colors">
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="font-bold text-[#F59E0B] text-sm">Akun Mahasiswa</span>
+                      <button
+                        onClick={() => copyToClipboard("mahasiswa.demo@example.com", false)}
+                        className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
+                      >
+                        {copiedMhs ? <Check size={14} className="text-[#F59E0B]" /> : <Copy size={14} />}
+                      </button>
+                    </div>
+                    <div className="font-mono text-sm text-gray-300 space-y-2 mb-6">
+                      <div className="flex justify-between border-b border-white/10 pb-2">
+                        <span>Email</span>
+                        <span className="text-white">mahasiswa.demo@example.com</span>
+                      </div>
+                      <div className="flex justify-between pb-2">
+                        <span>Password</span>
+                        <span className="text-white">mhs123</span>
+                      </div>
+                    </div>
+                    <Link
+                      href="/login"
+                      className="block w-full py-3 rounded-full bg-white text-[#111827] text-center text-sm font-bold hover:bg-gray-100 transition-colors"
+                    >
+                      Masuk Sebagai Mahasiswa
+                    </Link>
+                  </div>
+
+                </div>
+              </div>
             </div>
           </div>
         </section>
       </main>
 
-      {/* ─── Footer ─── */}
-      <footer className="border-t py-8" style={{ borderColor: "var(--border)" }}>
-        <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-sm" style={{ color: "var(--text-muted)" }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-            </svg>
-            <span>Dexa Assessment — Modern LMS Collaboration Hub</span>
+      {/* ─── FOOTER ─── */}
+      <footer className="bg-white border-t border-[#E5E7EB] py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-8">
+          
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-[#1E4D3B] text-white flex items-center justify-center shadow-sm">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L15 9L22 12L15 15L12 22L9 15L2 12L9 9L12 2Z" fill="currentColor" />
+              </svg>
+            </div>
+            <div>
+              <span className="font-display font-bold text-[#111827] block leading-tight">Dexa Assessment</span>
+              <span className="text-xs text-gray-500 font-medium">© 2024 Sekolah Vokasi UNS</span>
+            </div>
           </div>
-          <div className="text-sm" style={{ color: "var(--text-muted)" }}>
-            © {new Date().getFullYear()}. Human-in-the-Loop AI Assessment.
+
+          <div className="flex items-center gap-8 text-sm font-semibold text-[#4B5563]">
+            <a href="#" className="hover:text-[#1E4D3B] transition-colors">Privasi</a>
+            <a href="#" className="hover:text-[#1E4D3B] transition-colors">Syarat Ketentuan</a>
+            <a href="#" className="hover:text-[#1E4D3B] transition-colors">Bantuan</a>
           </div>
+
         </div>
       </footer>
     </div>
   );
 }
+
