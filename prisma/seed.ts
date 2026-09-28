@@ -18,7 +18,8 @@ async function main() {
   await prisma.user.deleteMany();
 
   // 2. Create Users
-  const salt = await bcrypt.genSalt(10);
+  // Use lower bcrypt cost (6) for Vercel Serverless environment to prevent timeout
+  const salt = await bcrypt.genSalt(6);
   const passwordHashDosen = await bcrypt.hash("Dosen@12345", salt);
   const passwordHashMhs = await bcrypt.hash("Mhs@12345", salt);
 
