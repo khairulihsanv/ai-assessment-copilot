@@ -44,7 +44,7 @@ export async function registerAction(formData: FormData): Promise<ActionResult> 
     }
 
     // Hash password
-    const passwordHash = await bcrypt.hash(password, 12);
+    const passwordHash = await bcrypt.hash(password, 8); // lower cost for faster login
 
     // Create user
     await prisma.user.create({

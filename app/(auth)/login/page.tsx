@@ -69,16 +69,23 @@ function LoginForm() {
     formData.append("email", email);
     formData.append("password", password);
 
+    // fallback timeout in case server is slow
+    const timeoutId = setTimeout(() => {
+      setError("Server terlalu lama merespon. Silakan coba lagi.");
+      setLoading(false);
+    }, 8000);
+
     try {
       const result = await loginAction(formData);
+      clearTimeout(timeoutId);
       if (!result.success) {
         setError(result.error ?? "Email atau kata sandi tidak cocok.");
         setLoading(false);
       } else {
-        router.push("/dashboard");
-        router.refresh();
+        router.push("/dashboard"); // removed refresh to avoid extra reload
       }
     } catch {
+      clearTimeout(timeoutId);
       setError("Gagal menghubungi server autentikasi. Silakan coba lagi.");
       setLoading(false);
     }
