@@ -15,6 +15,7 @@ declare module "next-auth" {
 
 export const authConfig: NextAuthConfig = {
   trustHost: true,
+  secret: process.env.AUTH_SECRET || "supersecretdevkey1234567890abcdef",
   pages: {
     signIn: "/login",
   },
