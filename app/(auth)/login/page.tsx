@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Eye,
   EyeOff,
@@ -16,9 +16,10 @@ import {
   Loader2,
   ArrowRight,
 } from "lucide-react";
-import { loginAction } from "@/lib/actions/auth-actions";
+import { signIn } from "next-auth/react";
 
 function LoginForm() {
+  const router = useRouter();
   const searchParams = useSearchParams();
 
   const [role, setRole] = useState<"DOSEN" | "MAHASISWA">("DOSEN");
@@ -69,19 +70,25 @@ function LoginForm() {
     formData.append("password", password);
 
     try {
-      // loginAction will redirect to /dashboard on success (via NEXT_REDIRECT).
-      // If we reach the lines below, it means login failed and returned an error.
-      const result = await loginAction(formData);
-      if (!result.success) {
-        setError(result.error ?? "Email atau kata sandi tidak cocok.");
+      // Use NextAuth client-side signIn for robust redirect and callbackUrl handling
+      const result = await signIn("credentials", {
+        redirect: false,
+        email,
+        password,
+      });
+
+      if (result?.error) {
+        setError("Email atau kata sandi tidak cocok.");
         setLoading(false);
+      } else if (result?.ok) {
+        // Success! Redirect to callbackUrl or dashboard
+        const callbackUrl = searchParams.get("callbackUrl");
+        router.push(callbackUrl || "/dashboard");
+        router.refresh();
       }
     } catch (err: any) {
-      if (err?.message === "NEXT_REDIRECT") {
-        throw err; // Re-throw so Next.js router can catch and redirect
-      }
-      console.error("Client caught error:", err);
-      setError(`Gagal menghubungi server: ${err?.message || String(err)}`);
+      console.error("Login error:", err);
+      setError("Gagal menghubungi server autentikasi. Silakan coba lagi.");
       setLoading(false);
     }
   }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Eye,
   EyeOff,
@@ -15,8 +15,10 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { registerAction } from "@/lib/actions/auth-actions";
+import { signIn } from "next-auth/react";
 
 function RegisterForm() {
+  const router = useRouter();
   const searchParams = useSearchParams();
 
   const [role, setRole] = useState<"DOSEN" | "MAHASISWA">("DOSEN");
@@ -50,19 +52,34 @@ function RegisterForm() {
     formData.append("role", role);
 
     try {
-      // registerAction will redirect to /dashboard on success (via NEXT_REDIRECT).
-      // If we reach the lines below, it means registration failed and returned an error.
+      // 1. Create account using Server Action
       const result = await registerAction(formData);
+      
       if (!result.success) {
         setError(result.error ?? "Terjadi kesalahan saat mendaftar");
+        setLoading(false);
+        return;
+      }
+
+      // 2. Auto sign in on the client side
+      const signInResult = await signIn("credentials", {
+        redirect: false,
+        email,
+        password,
+      });
+
+      if (signInResult?.error) {
+        setError("Registrasi berhasil, tetapi gagal masuk otomatis.");
+        setLoading(false);
+      } else if (signInResult?.ok) {
+        // Success! Redirect to callbackUrl or dashboard
+        const callbackUrl = searchParams.get("callbackUrl");
+        router.push(callbackUrl || "/dashboard");
+        router.refresh();
       }
     } catch (err: any) {
-      if (err?.message === "NEXT_REDIRECT") {
-        throw err; // Re-throw so Next.js router can catch and redirect
-      }
-      console.error("Client caught error:", err);
-      // If the server action throws NEXT_REDIRECT, Next.js handles it automatically.
-      setError("Gagal memproses pendaftaran. Periksa koneksi database Anda.");
+      console.error("Register error:", err);
+      setError("Gagal memproses pendaftaran. Periksa koneksi Anda.");
       setLoading(false);
     }
   }

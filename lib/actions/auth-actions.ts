@@ -70,17 +70,6 @@ export async function registerAction(formData: FormData): Promise<ActionResult> 
     };
   }
 
-  // signIn MUST be called outside try/catch so NEXT_REDIRECT propagates correctly.
-  // Next-Auth v5 throws a NEXT_REDIRECT on successful signIn, which Next.js
-  // needs to catch to perform the redirect. If we wrap it in try/catch, the
-  // redirect gets swallowed and login appears to hang.
-  await signIn("credentials", {
-    email,
-    password,
-    redirectTo: "/dashboard",
-  });
-
-  // Technically unreachable because signIn throws a redirect, but required by TypeScript
   return { success: true };
 }
 
