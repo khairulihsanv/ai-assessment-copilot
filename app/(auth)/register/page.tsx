@@ -56,10 +56,13 @@ function RegisterForm() {
       if (!result.success) {
         setError(result.error ?? "Terjadi kesalahan saat mendaftar");
       }
-    } catch {
+    } catch (err: any) {
+      if (err?.message === "NEXT_REDIRECT") {
+        throw err; // Re-throw so Next.js router can catch and redirect
+      }
+      console.error("Client caught error:", err);
       // If the server action throws NEXT_REDIRECT, Next.js handles it automatically.
       setError("Gagal memproses pendaftaran. Periksa koneksi database Anda.");
-    } finally {
       setLoading(false);
     }
   }

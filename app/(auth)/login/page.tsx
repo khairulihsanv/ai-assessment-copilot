@@ -74,13 +74,14 @@ function LoginForm() {
       const result = await loginAction(formData);
       if (!result.success) {
         setError(result.error ?? "Email atau kata sandi tidak cocok.");
+        setLoading(false);
       }
     } catch (err: any) {
+      if (err?.message === "NEXT_REDIRECT") {
+        throw err; // Re-throw so Next.js router can catch and redirect
+      }
       console.error("Client caught error:", err);
-      // If the server action throws NEXT_REDIRECT, Next.js handles it automatically
-      // and navigates the browser. Any other error is a real failure.
       setError(`Gagal menghubungi server: ${err?.message || String(err)}`);
-    } finally {
       setLoading(false);
     }
   }
