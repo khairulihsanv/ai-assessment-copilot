@@ -79,6 +79,9 @@ export async function registerAction(formData: FormData): Promise<ActionResult> 
     password,
     redirectTo: "/dashboard",
   });
+
+  // Technically unreachable because signIn throws a redirect, but required by TypeScript
+  return { success: true };
 }
 
 export async function loginAction(formData: FormData): Promise<ActionResult> {
