@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import {
   Eye,
   EyeOff,
@@ -17,7 +17,6 @@ import {
 import { registerAction } from "@/lib/actions/auth-actions";
 
 function RegisterForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const [role, setRole] = useState<"DOSEN" | "MAHASISWA">("DOSEN");
@@ -47,19 +46,20 @@ function RegisterForm() {
     formData.append("name", name);
     formData.append("email", email);
     formData.append("password", password);
+    formData.append("confirmPassword", password); // validator requires this field
     formData.append("role", role);
 
     try {
+      // registerAction will redirect to /dashboard on success (via NEXT_REDIRECT).
+      // If we reach the lines below, it means registration failed and returned an error.
       const result = await registerAction(formData);
       if (!result.success) {
         setError(result.error ?? "Terjadi kesalahan saat mendaftar");
-        setLoading(false);
-      } else {
-        router.push("/dashboard");
-        router.refresh();
       }
     } catch {
+      // If the server action throws NEXT_REDIRECT, Next.js handles it automatically.
       setError("Gagal memproses pendaftaran. Periksa koneksi database Anda.");
+    } finally {
       setLoading(false);
     }
   }

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db/prisma";
 import { signIn } from "@/lib/auth/auth";
 import { registerSchema, loginSchema } from "@/lib/validators/auth";
 import { AuthError } from "next-auth";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 
 interface ActionResult {
   success: boolean;
@@ -44,7 +45,7 @@ export async function registerAction(formData: FormData): Promise<ActionResult> 
     }
 
     // Hash password
-    const passwordHash = await bcrypt.hash(password, 8); // lower cost for faster login
+    const passwordHash = await bcrypt.hash(password, 10);
 
     // Create user
     await prisma.user.create({
@@ -57,14 +58,22 @@ export async function registerAction(formData: FormData): Promise<ActionResult> 
     });
 
     // Auto sign in after registration
+    // signIn will throw a NEXT_REDIRECT on success — we must let it propagate
     await signIn("credentials", {
       email,
       password,
-      redirect: false,
+      redirectTo: "/dashboard",
     });
 
+    // This line is technically unreachable because signIn redirects on success
     return { success: true };
   } catch (error) {
+    // CRITICAL: Next-Auth v5 signIn() throws a NEXT_REDIRECT error on success.
+    // We MUST re-throw it so Next.js can handle the redirect properly.
+    if (isRedirectError(error)) {
+      throw error;
+    }
+
     console.error("Register action error:", error);
     if (error instanceof AuthError) {
       return { success: false, error: "Registrasi berhasil, silakan coba login." };
@@ -98,14 +107,22 @@ export async function loginAction(formData: FormData): Promise<ActionResult> {
   }
 
   try {
-    const res = await signIn("credentials", {
+    // signIn will throw a NEXT_REDIRECT on success — we must let it propagate
+    await signIn("credentials", {
       email: parsed.data.email,
       password: parsed.data.password,
-      redirect: false,
+      redirectTo: "/dashboard",
     });
 
+    // This line is technically unreachable because signIn redirects on success
     return { success: true };
   } catch (error) {
+    // CRITICAL: Next-Auth v5 signIn() throws a NEXT_REDIRECT error on success.
+    // We MUST re-throw it so Next.js can handle the redirect properly.
+    if (isRedirectError(error)) {
+      throw error;
+    }
+
     console.error("Login action error:", error);
     if (error instanceof AuthError) {
       return { success: false, error: "Email atau password salah." };

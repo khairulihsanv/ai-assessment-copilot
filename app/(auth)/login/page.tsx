@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import {
   Eye,
   EyeOff,
@@ -19,7 +19,6 @@ import {
 import { loginAction } from "@/lib/actions/auth-actions";
 
 function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const [role, setRole] = useState<"DOSEN" | "MAHASISWA">("DOSEN");
@@ -69,24 +68,18 @@ function LoginForm() {
     formData.append("email", email);
     formData.append("password", password);
 
-    // fallback timeout in case server is slow
-    const timeoutId = setTimeout(() => {
-      setError("Server terlalu lama merespon. Silakan coba lagi.");
-      setLoading(false);
-    }, 8000);
-
     try {
+      // loginAction will redirect to /dashboard on success (via NEXT_REDIRECT).
+      // If we reach the lines below, it means login failed and returned an error.
       const result = await loginAction(formData);
-      clearTimeout(timeoutId);
       if (!result.success) {
         setError(result.error ?? "Email atau kata sandi tidak cocok.");
-        setLoading(false);
-      } else {
-        router.push("/dashboard"); // removed refresh to avoid extra reload
       }
     } catch {
-      clearTimeout(timeoutId);
+      // If the server action throws NEXT_REDIRECT, Next.js handles it automatically
+      // and navigates the browser. Any other error is a real failure.
       setError("Gagal menghubungi server autentikasi. Silakan coba lagi.");
+    } finally {
       setLoading(false);
     }
   }
