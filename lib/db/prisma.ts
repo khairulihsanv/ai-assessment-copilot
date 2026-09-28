@@ -4,9 +4,15 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-const databaseUrl =
+let databaseUrl =
   process.env.DATABASE_URL ||
   "postgresql://neondb_owner:npg_HCFvQ49hqIoc@ep-raspy-base-b3xtlvc1-pooler.c-4.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&pgbouncer=true";
+
+// CRITICAL FIX: If using Neon pooler, Prisma REQUIRES pgbouncer=true.
+// If the user forgot to add it in Vercel env, it will hang indefinitely.
+if (databaseUrl.includes("-pooler.") && !databaseUrl.includes("pgbouncer=true")) {
+  databaseUrl += databaseUrl.includes("?") ? "&pgbouncer=true" : "?pgbouncer=true";
+}
 
 export const prisma =
   globalForPrisma.prisma ??
