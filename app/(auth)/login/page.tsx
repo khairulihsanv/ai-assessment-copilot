@@ -81,10 +81,9 @@ function LoginForm() {
         setError("Email atau kata sandi tidak cocok.");
         setLoading(false);
       } else if (result?.ok) {
-        // Success! Redirect to callbackUrl or dashboard
+        // Success! Redirect using window.location for 100% reliability and fresh state
         const callbackUrl = searchParams.get("callbackUrl");
-        router.push(callbackUrl || "/dashboard");
-        router.refresh();
+        window.location.assign(callbackUrl || "/dashboard");
       }
     } catch (err: any) {
       console.error("Login error:", err);

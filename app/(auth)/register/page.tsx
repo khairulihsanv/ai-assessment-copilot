@@ -72,10 +72,9 @@ function RegisterForm() {
         setError("Registrasi berhasil, tetapi gagal masuk otomatis.");
         setLoading(false);
       } else if (signInResult?.ok) {
-        // Success! Redirect to callbackUrl or dashboard
+        // Success! Redirect using window.location for 100% reliability
         const callbackUrl = searchParams.get("callbackUrl");
-        router.push(callbackUrl || "/dashboard");
-        router.refresh();
+        window.location.assign(callbackUrl || "/dashboard");
       }
     } catch (err: any) {
       console.error("Register error:", err);
