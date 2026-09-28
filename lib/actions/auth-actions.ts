@@ -5,7 +5,6 @@ import { prisma } from "@/lib/db/prisma";
 import { signIn } from "@/lib/auth/auth";
 import { registerSchema, loginSchema } from "@/lib/validators/auth";
 import { AuthError } from "next-auth";
-import { isRedirectError } from "next/dist/client/components/redirect-error";
 
 interface ActionResult {
   success: boolean;
@@ -56,28 +55,8 @@ export async function registerAction(formData: FormData): Promise<ActionResult> 
         role,
       },
     });
-
-    // Auto sign in after registration
-    // signIn will throw a NEXT_REDIRECT on success — we must let it propagate
-    await signIn("credentials", {
-      email,
-      password,
-      redirectTo: "/dashboard",
-    });
-
-    // This line is technically unreachable because signIn redirects on success
-    return { success: true };
   } catch (error) {
-    // CRITICAL: Next-Auth v5 signIn() throws a NEXT_REDIRECT error on success.
-    // We MUST re-throw it so Next.js can handle the redirect properly.
-    if (isRedirectError(error)) {
-      throw error;
-    }
-
     console.error("Register action error:", error);
-    if (error instanceof AuthError) {
-      return { success: false, error: "Registrasi berhasil, silakan coba login." };
-    }
     const msg = error instanceof Error ? error.message : "";
     if (msg.includes("connect") || msg.includes("PrismaClientInitializationError") || msg.includes("database")) {
       return {
@@ -90,6 +69,16 @@ export async function registerAction(formData: FormData): Promise<ActionResult> 
       error: "Gagal memproses pendaftaran. Periksa koneksi database Anda.",
     };
   }
+
+  // signIn MUST be called outside try/catch so NEXT_REDIRECT propagates correctly.
+  // Next-Auth v5 throws a NEXT_REDIRECT on successful signIn, which Next.js
+  // needs to catch to perform the redirect. If we wrap it in try/catch, the
+  // redirect gets swallowed and login appears to hang.
+  await signIn("credentials", {
+    email,
+    password,
+    redirectTo: "/dashboard",
+  });
 }
 
 export async function loginAction(formData: FormData): Promise<ActionResult> {
@@ -107,36 +96,23 @@ export async function loginAction(formData: FormData): Promise<ActionResult> {
   }
 
   try {
-    // signIn will throw a NEXT_REDIRECT on success — we must let it propagate
+    // signIn MUST be called so that NEXT_REDIRECT can propagate.
+    // We only catch AuthError (wrong credentials), and re-throw everything else
+    // (including NEXT_REDIRECT which Next.js needs for navigation).
     await signIn("credentials", {
       email: parsed.data.email,
       password: parsed.data.password,
       redirectTo: "/dashboard",
     });
-
-    // This line is technically unreachable because signIn redirects on success
-    return { success: true };
   } catch (error) {
-    // CRITICAL: Next-Auth v5 signIn() throws a NEXT_REDIRECT error on success.
-    // We MUST re-throw it so Next.js can handle the redirect properly.
-    if (isRedirectError(error)) {
-      throw error;
-    }
-
-    console.error("Login action error:", error);
     if (error instanceof AuthError) {
       return { success: false, error: "Email atau password salah." };
     }
-    const msg = error instanceof Error ? error.message : "";
-    if (msg.includes("connect") || msg.includes("PrismaClientInitializationError") || msg.includes("database") || msg.includes("ECONNREFUSED")) {
-      return {
-        success: false,
-        error: "Tidak dapat terhubung ke database. Pastikan DATABASE_URL PostgreSQL aktif.",
-      };
-    }
-    return {
-      success: false,
-      error: "Terjadi kesalahan saat masuk. Pastikan database PostgreSQL aktif.",
-    };
+    // Re-throw everything else — this includes NEXT_REDIRECT (successful login)
+    // and any other unexpected errors. Next.js will handle the redirect.
+    throw error;
   }
+
+  // Technically unreachable — signIn either redirects or throws
+  return { success: true };
 }

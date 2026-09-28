@@ -13,6 +13,7 @@ const loginSchema = z.object({
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
   secret: process.env.AUTH_SECRET || "supersecretdevkey1234567890abcdef",
+  trustHost: true, // Required for Vercel deployment
   providers: [
     Credentials({
       credentials: {
