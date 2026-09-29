@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/db/prisma";
 import { createRubricSchema } from "@/lib/validators/rubric";
+import { generateEmbedding } from "@/lib/ai/embedding-client";
 
 // GET /api/classes/[classId]/rubrics
 export async function GET(
@@ -83,19 +84,53 @@ export async function POST(
 
     const { title, criteria } = parsed.data;
 
+    // Generate embeddings for answer keys and materials
+    const criteriaWithEmbeddings = await Promise.all(
+      criteria.map(async (c) => {
+        let answerKeyEmbedding: number[] | undefined = undefined;
+        let materialEmbedding: number[] | undefined = undefined;
+
+        // Generate embedding for answer key
+        if (c.answerKey && c.answerKey.trim()) {
+          try {
+            const result = await generateEmbedding(c.answerKey);
+            answerKeyEmbedding = result.embedding;
+          } catch (err) {
+            console.warn("[Rubric API] Gagal embed kunci jawaban:", err instanceof Error ? err.message : err);
+          }
+        }
+
+        // Generate embedding for material
+        if (c.material && c.material.trim()) {
+          try {
+            const result = await generateEmbedding(c.material);
+            materialEmbedding = result.embedding;
+          } catch (err) {
+            console.warn("[Rubric API] Gagal embed materi:", err instanceof Error ? err.message : err);
+          }
+        }
+
+        return {
+          label: c.label,
+          description: c.description || null,
+          expectedAnswer: c.expectedAnswer || null,
+          answerKey: c.answerKey || null,
+          material: c.material || null,
+          answerKeyEmbedding: answerKeyEmbedding ?? undefined,
+          materialEmbedding: materialEmbedding ?? undefined,
+          maxScore: c.maxScore,
+          weight: c.weight,
+        };
+      })
+    );
+
     const rubric = await prisma.rubric.create({
       data: {
         title,
         classId,
         createdById: session.user.id,
         criteria: {
-          create: criteria.map((c) => ({
-            label: c.label,
-            description: c.description || null,
-            expectedAnswer: c.expectedAnswer || null,
-            maxScore: c.maxScore,
-            weight: c.weight,
-          })),
+          create: criteriaWithEmbeddings,
         },
       },
       include: {

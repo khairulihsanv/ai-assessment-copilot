@@ -109,7 +109,13 @@ model RubricCriterion {
   description String?
   maxScore    Float
   weight      Float  // percentage, all criteria in a rubric should sum to 100
-  expectedAnswer String? // Optional keyword or exact match string
+  expectedAnswer String? // Legacy: keyword matching (kept for backward compat)
+
+  // Vector-based grading fields
+  answerKey          String?  @db.Text // Full answer key from dosen
+  material           String?  @db.Text // Reference material/materi from dosen
+  answerKeyEmbedding Json?    // Embedding vector for answer key (Float[])
+  materialEmbedding  Json?    // Embedding vector for material (Float[])
 
   // Relations
   rubricId String

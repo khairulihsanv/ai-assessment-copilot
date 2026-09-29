@@ -74,13 +74,18 @@ export async function POST(
       );
     }
 
-    // 2. Prepare rubric criteria
+    // 2. Prepare rubric criteria with answer keys, materials & embeddings
     let rubricCriteria = submission.assignment.rubric?.criteria.map((c) => ({
       id: c.id,
       label: c.label,
       description: c.description,
       maxScore: c.maxScore,
       weight: c.weight,
+      expectedAnswer: c.expectedAnswer,
+      answerKey: c.answerKey,
+      material: c.material,
+      answerKeyEmbedding: c.answerKeyEmbedding as number[] | null,
+      materialEmbedding: c.materialEmbedding as number[] | null,
     }));
 
     // Fallback if assignment doesn't have a rubric
@@ -92,11 +97,16 @@ export async function POST(
           description: "Kesesuaian dan kedalaman jawaban terhadap instruksi yang diberikan",
           maxScore: submission.assignment.maxScore,
           weight: 100,
+          expectedAnswer: null,
+          answerKey: null,
+          material: null,
+          answerKeyEmbedding: null,
+          materialEmbedding: null,
         },
       ];
     }
 
-    // 3. Call AI Grading Client
+    // 3. Call AI Grading Client (with vector embedding similarity)
     await prisma.submission.update({
       where: { id: submissionId },
       data: { status: "AI_PROCESSING" },
@@ -118,7 +128,7 @@ export async function POST(
       where: { submissionId },
       update: {
         rawModelOutput: gradingResult.rawOutput as object,
-        perCriterionScore: gradingResult.response.perCriterion as object,
+        perCriterionScore: gradingResult.response.perCriterion as unknown as object,
         suggestedTotalScore: gradingResult.response.suggestedTotalScore,
         suggestedFeedback: gradingResult.response.suggestedFeedback,
         tokenUsage: gradingResult.tokenUsage as object,
@@ -126,7 +136,7 @@ export async function POST(
       create: {
         submissionId,
         rawModelOutput: gradingResult.rawOutput as object,
-        perCriterionScore: gradingResult.response.perCriterion as object,
+        perCriterionScore: gradingResult.response.perCriterion as unknown as object,
         suggestedTotalScore: gradingResult.response.suggestedTotalScore,
         suggestedFeedback: gradingResult.response.suggestedFeedback,
         tokenUsage: gradingResult.tokenUsage as object,
