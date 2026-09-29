@@ -17,6 +17,7 @@ import {
   ChevronDown,
   ChevronUp,
   Brain,
+  Upload,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -130,6 +131,29 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
     if (confirm(`Terapkan preset template "${p.name}"? Kriteria saat ini akan digantikan.`)) {
       setTitle(p.name);
       setCriteria([...p.criteria.map((c) => ({ ...c, answerKey: "", material: "" }))]);
+    }
+  };
+
+  const handleExtractText = async (index: number, field: "answerKey" | "material", file: File) => {
+    if (!file) return;
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/extract-text", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal ekstrak teks");
+
+      updateCriterion(index, field, data.text);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Terjadi kesalahan saat ekstrak teks");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -449,13 +473,33 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
                   <div className="px-5 pb-5 space-y-4 border-t border-[#E5E7EB] pt-4 bg-gradient-to-b from-[#F0F7F4]/50 to-[#F9FAFB]">
                     {/* Answer Key Input */}
                     <div className="space-y-2">
-                      <Label className="text-xs font-bold text-[#1E4D3B] flex items-center gap-1.5">
-                        <KeyRound size={13} className="text-emerald-600" />
-                        Kunci Jawaban
-                        <span className="font-mono text-[9px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded uppercase tracking-wider font-bold">
-                          🧬 Akan di-embed
-                        </span>
-                      </Label>
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs font-bold text-[#1E4D3B] flex items-center gap-1.5">
+                          <KeyRound size={13} className="text-emerald-600" />
+                          Kunci Jawaban
+                          <span className="font-mono text-[9px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded uppercase tracking-wider font-bold">
+                            🧬 Akan di-embed
+                          </span>
+                        </Label>
+                        <div className="relative overflow-hidden inline-block">
+                          <input
+                            type="file"
+                            accept=".pdf,.docx"
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleExtractText(index, "answerKey", file);
+                              e.target.value = "";
+                            }}
+                            disabled={loading}
+                            title="Upload PDF atau DOCX untuk mengekstrak teks"
+                          />
+                          <button type="button" className="relative flex items-center gap-1 px-2.5 py-1 bg-white border border-[#E5E7EB] rounded-lg hover:bg-[#F3F4F6] text-[#374151] font-medium transition-colors pointer-events-none" disabled={loading}>
+                            <Upload size={12} className="text-[#6B7280]" />
+                            <span className="text-[10px]">Upload (PDF/DOCX)</span>
+                          </button>
+                        </div>
+                      </div>
                       <p className="text-[10px] text-[#6B7280] leading-relaxed -mt-0.5">
                         Tulis kunci jawaban lengkap untuk kriteria ini. AI akan menghitung kesamaan semantik antara jawaban mahasiswa dengan kunci jawaban ini.
                       </p>
@@ -476,13 +520,33 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
 
                     {/* Material Input */}
                     <div className="space-y-2">
-                      <Label className="text-xs font-bold text-[#1E4D3B] flex items-center gap-1.5">
-                        <BookOpen size={13} className="text-blue-600" />
-                        Materi Referensi
-                        <span className="font-mono text-[9px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded uppercase tracking-wider font-bold">
-                          🧬 Akan di-embed
-                        </span>
-                      </Label>
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs font-bold text-[#1E4D3B] flex items-center gap-1.5">
+                          <BookOpen size={13} className="text-blue-600" />
+                          Materi Referensi
+                          <span className="font-mono text-[9px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded uppercase tracking-wider font-bold">
+                            🧬 Akan di-embed
+                          </span>
+                        </Label>
+                        <div className="relative overflow-hidden inline-block">
+                          <input
+                            type="file"
+                            accept=".pdf,.docx"
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleExtractText(index, "material", file);
+                              e.target.value = "";
+                            }}
+                            disabled={loading}
+                            title="Upload PDF atau DOCX untuk mengekstrak teks materi"
+                          />
+                          <button type="button" className="relative flex items-center gap-1 px-2.5 py-1 bg-white border border-[#E5E7EB] rounded-lg hover:bg-[#F3F4F6] text-[#374151] font-medium transition-colors pointer-events-none" disabled={loading}>
+                            <Upload size={12} className="text-[#6B7280]" />
+                            <span className="text-[10px]">Upload (PDF/DOCX)</span>
+                          </button>
+                        </div>
+                      </div>
                       <p className="text-[10px] text-[#6B7280] leading-relaxed -mt-0.5">
                         Paste materi ajar, catatan kuliah, atau referensi yang relevan. AI akan menggunakan ini sebagai dasar pengetahuan faktual saat mengevaluasi.
                       </p>

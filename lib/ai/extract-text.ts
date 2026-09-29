@@ -23,6 +23,17 @@ export async function extractTextFromFile(
   }
 }
 
+export async function extractTextFromBuffer(buffer: Buffer, fileType: "PDF" | "DOCX"): Promise<string> {
+  switch (fileType) {
+    case "PDF":
+      return extractFromPDF(buffer);
+    case "DOCX":
+      return extractFromDOCX(buffer);
+    default:
+      throw new Error(`Tipe file tidak didukung: ${fileType}`);
+  }
+}
+
 async function extractFromPDF(buffer: Buffer): Promise<string> {
   try {
     const parser = new PDFParse({ data: buffer });
