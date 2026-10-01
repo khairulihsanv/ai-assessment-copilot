@@ -15,14 +15,44 @@ export async function GET(
 
   const { classId } = await params;
 
+  const cls = await prisma.class.findUnique({
+    where: { id: classId },
+    include: { enrollments: { where: { userId: session.user.id } } }
+  });
+
+  if (!cls) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  const isDosen = cls.dosenId === session.user.id;
+  const enrollment = cls.enrollments[0];
+  const isAssistant = enrollment?.role === "ASSISTANT";
+  const isPrivileged = isDosen || isAssistant;
+
+  if (!isPrivileged && !enrollment) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const assignments = await prisma.assignment.findMany({
     where: { classId },
     include: {
       rubric: {
-        include: { criteria: true },
+        include: {
+          criteria: isPrivileged ? true : {
+            select: {
+              id: true,
+              label: true,
+              description: true,
+              maxScore: true,
+              weight: true,
+              expectedAnswer: true,
+              rubricId: true,
+            }
+          }
+        },
       },
       submissions: {
-        where: session.user.role === "MAHASISWA" ? { mahasiswaId: session.user.id } : undefined,
+        where: isPrivileged ? undefined : { userId: session.user.id },
         include: {
           grade: true,
         },

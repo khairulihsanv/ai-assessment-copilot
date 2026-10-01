@@ -40,7 +40,7 @@ export default async function ClassDetailPage({ params }: ClassDetailPageProps) 
       },
       enrollments: {
         include: {
-          mahasiswa: {
+          user: {
             select: { id: true, name: true, email: true, createdAt: true },
           },
         },
@@ -72,7 +72,7 @@ export default async function ClassDetailPage({ params }: ClassDetailPageProps) 
   }
 
   const isDosen = session.user.id === cls.dosenId;
-  const isEnrolled = cls.enrollments.some((e) => e.mahasiswaId === session.user.id);
+  const isEnrolled = cls.enrollments.some((e) => e.userId === session.user.id);
 
   if (!isDosen && !isEnrolled) {
     return (
@@ -232,7 +232,7 @@ export default async function ClassDetailPage({ params }: ClassDetailPageProps) 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {cls.assignments.map((assignment) => {
                 const studentSub = !isDosen
-                  ? assignment.submissions.find((s) => s.mahasiswaId === session.user.id)
+                  ? assignment.submissions.find((s) => s.userId === session.user.id)
                   : null;
 
                 return (
@@ -364,11 +364,11 @@ export default async function ClassDetailPage({ params }: ClassDetailPageProps) 
                   <div key={enr.id} className="flex items-center justify-between p-4 sm:p-5 hover:bg-[#F9FAFB] transition-colors">
                     <div className="flex items-center gap-3.5">
                       <div className="w-10 h-10 rounded-full bg-[#1E4D3B] text-white font-extrabold flex items-center justify-center text-xs font-mono shadow-2xs">
-                        {getInitials(enr.mahasiswa.name)}
+                        {getInitials(enr.user.name)}
                       </div>
                       <div>
-                        <p className="text-xs font-bold text-[#111827]">{enr.mahasiswa.name}</p>
-                        <p className="text-[11px] text-[#6B7280]">{enr.mahasiswa.email}</p>
+                        <p className="text-xs font-bold text-[#111827]">{enr.user.name}</p>
+                        <p className="text-[11px] text-[#6B7280]">{enr.user.email}</p>
                       </div>
                     </div>
 

@@ -15,7 +15,7 @@ export default async function GradesPage() {
   if (!session?.user) redirect("/login");
 
   const grades = await prisma.grade.findMany({
-    where: { submission: { mahasiswaId: session.user.id } },
+    where: { submission: { userId: session.user.id } },
     include: {
       submission: {
         include: {

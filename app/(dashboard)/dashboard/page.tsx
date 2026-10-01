@@ -73,7 +73,7 @@ async function DosenDashboard({ userId, userName }: { userId: string; userName: 
         assignment: { class: { dosenId: userId } },
       },
       include: {
-        mahasiswa: { select: { id: true, name: true, email: true } },
+        user: { select: { id: true, name: true, email: true } },
         assignment: {
           select: {
             id: true,
@@ -391,15 +391,15 @@ async function DosenDashboard({ userId, userName }: { userId: string; userName: 
                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                         <div className="flex items-start gap-3 min-w-0">
                           <div className="w-10 h-10 rounded-full bg-[#1E4D3B] text-white font-bold flex items-center justify-center text-xs shrink-0">
-                            {sub.mahasiswa.name.slice(0, 2).toUpperCase()}
+                            {sub.user.name.slice(0, 2).toUpperCase()}
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="text-xs font-bold text-[#111827] truncate">
-                                {sub.mahasiswa.name}
+                                {sub.user.name}
                               </span>
                               <span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-white border border-[#E5E7EB] text-[#4B5563]">
-                                {sub.mahasiswa.email}
+                                {sub.user.email}
                               </span>
                               <span className="font-mono text-[10px] text-[#9CA3AF]">
                                 • {formatRelativeTime(sub.submittedAt)}
@@ -643,12 +643,12 @@ async function DosenDashboard({ userId, userName }: { userId: string; userName: 
 async function MahasiswaDashboard({ userId, userName }: { userId: string; userName: string }) {
   const [enrollments, upcomingAssignments, recentGrades] = await Promise.all([
     prisma.enrollment.findMany({
-      where: { mahasiswaId: userId },
+      where: { userId: userId },
       include: { class: { select: { id: true, name: true, subject: true } } },
     }),
     prisma.assignment.findMany({
       where: {
-        class: { enrollments: { some: { mahasiswaId: userId } } },
+        class: { enrollments: { some: { userId: userId } } },
         status: "PUBLISHED",
       },
       orderBy: { dueDate: "asc" },
@@ -656,11 +656,11 @@ async function MahasiswaDashboard({ userId, userName }: { userId: string; userNa
       include: {
         class: { select: { id: true, name: true, subject: true } },
         rubric: { select: { title: true } },
-        submissions: { where: { mahasiswaId: userId }, select: { id: true, status: true } },
+        submissions: { where: { userId: userId }, select: { id: true, status: true } },
       },
     }),
     prisma.grade.findMany({
-      where: { submission: { mahasiswaId: userId } },
+      where: { submission: { userId: userId } },
       include: {
         submission: {
           include: {

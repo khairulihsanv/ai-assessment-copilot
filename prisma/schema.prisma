@@ -15,6 +15,11 @@ enum Role {
   MAHASISWA
 }
 
+enum ClassRole {
+  STUDENT
+  ASSISTANT
+}
+
 enum SubmissionType {
   TEXT
   PDF
@@ -45,10 +50,10 @@ model User {
   createdAt    DateTime @default(now())
 
   // Relations
-  ownedClasses  Class[]      @relation("DosenClasses")
-  enrollments   Enrollment[]
-  submissions   Submission[]
-  gradedGrades  Grade[]      @relation("GradedByDosen")
+  ownedClasses   Class[]      @relation("DosenClasses")
+  enrollments    Enrollment[]
+  submissions    Submission[]
+  gradedGrades   Grade[]      @relation("GradedByDosen")
   createdRubrics Rubric[]
 
   @@map("users")
@@ -74,16 +79,17 @@ model Class {
 }
 
 model Enrollment {
-  id       String   @id @default(cuid())
-  joinedAt DateTime @default(now())
+  id       String    @id @default(cuid())
+  role     ClassRole @default(STUDENT)
+  joinedAt DateTime  @default(now())
 
   // Relations
-  classId     String
-  class       Class  @relation(fields: [classId], references: [id], onDelete: Cascade)
-  mahasiswaId String
-  mahasiswa   User   @relation(fields: [mahasiswaId], references: [id], onDelete: Cascade)
+  classId String
+  class   Class  @relation(fields: [classId], references: [id], onDelete: Cascade)
+  userId  String @map("mahasiswaId")
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([classId, mahasiswaId])
+  @@unique([classId, userId])
   @@map("enrollments")
 }
 
@@ -93,29 +99,29 @@ model Rubric {
   createdAt DateTime @default(now())
 
   // Relations
-  classId    String
-  class      Class            @relation(fields: [classId], references: [id], onDelete: Cascade)
+  classId     String
+  class       Class             @relation(fields: [classId], references: [id], onDelete: Cascade)
   createdById String
-  createdBy  User             @relation(fields: [createdById], references: [id], onDelete: Cascade)
-  criteria   RubricCriterion[]
+  createdBy   User              @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  criteria    RubricCriterion[]
   assignments Assignment[]
 
   @@map("rubrics")
 }
 
 model RubricCriterion {
-  id          String @id @default(cuid())
-  label       String
-  description String?
-  maxScore    Float
-  weight      Float  // percentage, all criteria in a rubric should sum to 100
+  id             String  @id @default(cuid())
+  label          String
+  description    String?
+  maxScore       Float
+  weight         Float // percentage, all criteria in a rubric should sum to 100
   expectedAnswer String? // Legacy: keyword matching (kept for backward compat)
 
   // Vector-based grading fields
-  answerKey          String?  @db.Text // Full answer key from dosen
-  material           String?  @db.Text // Reference material/materi from dosen
-  answerKeyEmbedding Json?    // Embedding vector for answer key (Float[])
-  materialEmbedding  Json?    // Embedding vector for material (Float[])
+  answerKey          String? @db.Text // Full answer key from dosen
+  material           String? @db.Text // Reference material/materi from dosen
+  answerKeyEmbedding Json? // Embedding vector for answer key (Float[])
+  materialEmbedding  Json? // Embedding vector for material (Float[])
 
   // Relations
   rubricId String
@@ -125,21 +131,21 @@ model RubricCriterion {
 }
 
 model Assignment {
-  id               String           @id @default(cuid())
-  title            String
-  instructions     String
-  submissionType   SubmissionType   @default(ANY)
-  dueDate          DateTime
-  maxScore         Float            @default(100)
-  allowLateSubmission Boolean       @default(false)
-  status           AssignmentStatus @default(DRAFT)
-  createdAt        DateTime         @default(now())
+  id                  String           @id @default(cuid())
+  title               String
+  instructions        String
+  submissionType      SubmissionType   @default(ANY)
+  dueDate             DateTime
+  maxScore            Float            @default(100)
+  allowLateSubmission Boolean          @default(false)
+  status              AssignmentStatus @default(DRAFT)
+  createdAt           DateTime         @default(now())
 
   // Relations
-  classId    String
-  class      Class       @relation(fields: [classId], references: [id], onDelete: Cascade)
-  rubricId   String?
-  rubric     Rubric?     @relation(fields: [rubricId], references: [id], onDelete: SetNull)
+  classId     String
+  class       Class        @relation(fields: [classId], references: [id], onDelete: Cascade)
+  rubricId    String?
+  rubric      Rubric?      @relation(fields: [rubricId], references: [id], onDelete: SetNull)
   submissions Submission[]
 
   @@map("assignments")
@@ -148,8 +154,8 @@ model Assignment {
 model Submission {
   id          String           @id @default(cuid())
   type        SubmissionType
-  content     String?          // text content if TEXT submission
-  fileUrl     String?          // file path/URL if PDF/DOCX
+  content     String? // text content if TEXT submission
+  fileUrl     String? // file path/URL if PDF/DOCX
   fileName    String?
   submittedAt DateTime         @default(now())
   status      SubmissionStatus @default(SUBMITTED)
@@ -157,22 +163,22 @@ model Submission {
   // Relations
   assignmentId String
   assignment   Assignment    @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
-  mahasiswaId  String
-  mahasiswa    User          @relation(fields: [mahasiswaId], references: [id], onDelete: Cascade)
+  userId       String        @map("mahasiswaId")
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   aiEvaluation AIEvaluation?
   grade        Grade?
 
-  @@unique([assignmentId, mahasiswaId])
+  @@unique([assignmentId, userId])
   @@map("submissions")
 }
 
 model AIEvaluation {
   id                  String   @id @default(cuid())
-  rawModelOutput      Json     // full raw JSON from LLM
-  perCriterionScore   Json     // [{criterionId, score, reasoning}]
+  rawModelOutput      Json // full raw JSON from LLM
+  perCriterionScore   Json // [{criterionId, score, reasoning}]
   suggestedTotalScore Float
   suggestedFeedback   String
-  tokenUsage          Json?    // {promptTokens, completionTokens, totalTokens}
+  tokenUsage          Json? // {promptTokens, completionTokens, totalTokens}
   createdAt           DateTime @default(now())
 
   // Relations

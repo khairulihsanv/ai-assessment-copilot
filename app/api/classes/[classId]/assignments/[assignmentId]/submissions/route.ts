@@ -18,7 +18,7 @@ export async function GET(
 
   const assignment = await prisma.assignment.findFirst({
     where: { id: assignmentId, classId },
-    include: { class: true },
+    include: { class: { include: { enrollments: { where: { userId: session.user.id } } } } },
   });
 
   if (!assignment) {
@@ -26,18 +26,21 @@ export async function GET(
   }
 
   const isDosen = assignment.class.dosenId === session.user.id;
+  const enrollment = assignment.class.enrollments[0];
+  const isAssistant = enrollment?.role === "ASSISTANT";
+  const isPrivileged = isDosen || isAssistant;
 
   const submissions = await prisma.submission.findMany({
     where: {
       assignmentId,
-      ...(isDosen ? {} : { mahasiswaId: session.user.id }),
+      ...(isPrivileged ? {} : { userId: session.user.id }),
     },
     include: {
-      mahasiswa: {
+      user: {
         select: { id: true, name: true, email: true },
       },
       grade: true,
-      aiEvaluation: isDosen ? true : false, // Hide raw AI evaluation from student
+      aiEvaluation: isPrivileged,
     },
     orderBy: { submittedAt: "desc" },
   });
@@ -63,9 +66,9 @@ export async function POST(
   // Check enrollment
   const enrollment = await prisma.enrollment.findUnique({
     where: {
-      classId_mahasiswaId: {
+      classId_userId: {
         classId,
-        mahasiswaId: session.user.id,
+        userId: session.user.id,
       },
     },
   });
@@ -179,9 +182,9 @@ export async function POST(
     // Upsert submission
     const submission = await prisma.submission.upsert({
       where: {
-        assignmentId_mahasiswaId: {
+        assignmentId_userId: {
           assignmentId,
-          mahasiswaId: session.user.id,
+          userId: session.user.id,
         },
       },
       update: {
@@ -194,7 +197,7 @@ export async function POST(
       },
       create: {
         assignmentId,
-        mahasiswaId: session.user.id,
+        userId: session.user.id,
         type: submissionType,
         content,
         fileUrl,

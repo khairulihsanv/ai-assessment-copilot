@@ -1,0 +1,81 @@
+# Matriks Traceability Dexa Assessment
+
+| ID | Sumber/Bagian PRD | Fase | Lokasi Kode | Gap/Bukti | Acceptance/Test | Status | Blocker |
+|---|---|---|---|---|---|---|---|
+| **FR1** | 7. Registry FR | R2 |  | | `AT-FR1` | NOT_STARTED | |
+| **FR2** | 7. Registry FR | R0 |  | | `AT-FR2` | NOT_STARTED | |
+| **FR3** | 7. Registry FR | R2 |  | | `AT-FR3` | NOT_STARTED | |
+| **FR4** | 7. Registry FR | R2 |  | | `AT-FR4` | NOT_STARTED | |
+| **FR5** | 7. Registry FR | R2 |  | | `AT-FR5` | NOT_STARTED | |
+| **FR6a** | 7. Registry FR | R0 |  | | `AT-FR6a` | NOT_STARTED | |
+| **FR6b** | 7. Registry FR | R2 |  | | `AT-FR6b` | NOT_STARTED | |
+| **FR7a** | 7. Registry FR | R2 |  | | `AT-FR7a` | NOT_STARTED | |
+| **FR7b** | 7. Registry FR | R2 |  | | `AT-FR7b` | NOT_STARTED | |
+| **FR8** | 7. Registry FR | R2 |  | | `AT-FR8` | NOT_STARTED | |
+| **FR9** | 7. Registry FR | R2 |  | | `AT-FR9` | NOT_STARTED | |
+| **FR10** | 7. Registry FR | R2 |  | | `AT-FR10` | NOT_STARTED | |
+| **FR11** | 7. Registry FR | R2 |  | | `AT-FR11` | NOT_STARTED | |
+| **FR12** | 7. Registry FR | R1 |  | | `AT-FR12` | NOT_STARTED | |
+| **FR13** | 7. Registry FR | R0 |  | | `AT-FR13` | NOT_STARTED | |
+| **FR14** | 7. Registry FR | R0 | `prisma/schema.prisma` | DB role ditambahkan | `AT-FR14` | IMPLEMENTED_UNVERIFIED | Tes handler mock; DB terisolasi butuh setup |
+| **FR15** | 7. Registry FR | R2 |  | | `AT-FR15` | NOT_STARTED | |
+| **FR16** | 7. Registry FR | R1 |  | | `AT-FR16` | NOT_STARTED | |
+| **FR17** | 7. Registry FR | R2 |  | | `AT-FR17` | NOT_STARTED | |
+| **FR18** | 7. Registry FR | R2 |  | | `AT-FR18` | NOT_STARTED | |
+| **FR19** | 7. Registry FR | R1 |  | | `AT-FR19` | NOT_STARTED | |
+| **FR20** | 7. Registry FR | R2 |  | | `AT-FR20` | NOT_STARTED | |
+| **FR21** | 7. Registry FR | R2 |  | | `AT-FR21` | NOT_STARTED | |
+| **FR22** | 7. Registry FR | R2 |  | | `AT-FR22` | NOT_STARTED | |
+| **FR23** | 7. Registry FR | R2 |  | | `AT-FR23` | NOT_STARTED | |
+| **FR24** | 7. Registry FR | R2 |  | | `AT-FR24` | NOT_STARTED | |
+| **DX01** | 8. Registry DX | R1 |  | | `AT-DX01` | NOT_STARTED | |
+| **DX02** | 8. Registry DX | R1 |  | | `AT-DX02` | NOT_STARTED | |
+| **DX03** | 8. Registry DX | R1 |  | | `AT-DX03` | NOT_STARTED | |
+| **DX04** | 8. Registry DX | R1 |  | | `AT-DX04` | NOT_STARTED | |
+| **DX05** | 8. Registry DX | R1 |  | | `AT-DX05` | NOT_STARTED | |
+| **DX06** | 8. Registry DX | R1 |  | | `AT-DX06` | NOT_STARTED | |
+| **DX07** | 8. Registry DX | R1 |  | | `AT-DX07` | NOT_STARTED | |
+| **DX08** | 8. Registry DX | R1 |  | | `AT-DX08` | NOT_STARTED | |
+| **DX09** | 8. Registry DX | R1 |  | | `AT-DX09` | NOT_STARTED | |
+| **DX10** | 8. Registry DX | R1 |  | | `AT-DX10` | NOT_STARTED | |
+| **DX11** | 8. Registry DX | R1 |  | | `AT-DX11` | NOT_STARTED | |
+| **DX12** | 8. Registry DX | R1 |  | | `AT-DX12` | NOT_STARTED | |
+| **DX13** | 8. Registry DX | R1 |  | | `AT-DX13` | NOT_STARTED | |
+| **DX14** | 8. Registry DX | R1 |  | | `AT-DX14` | NOT_STARTED | |
+| **DX15** | 8. Registry DX | R1 |  | | `AT-DX15` | NOT_STARTED | |
+| **DX16** | 8. Registry DX | R1 | `app/api/...` | Payload API di-sanitize | `AT-DX16` | IMPLEMENTED_UNVERIFIED | Tes integrasi rute penuh blm ada |
+| **DX17** | 8. Registry DX | R1 |  | | `AT-DX17` | NOT_STARTED | |
+| **DX18** | 8. Registry DX | R1 |  | | `AT-DX18` | NOT_STARTED | |
+| **DX19** | 8. Registry DX | R1 |  | | `AT-DX19` | NOT_STARTED | |
+| **DX20** | 8. Registry DX | R1 |  | | `AT-DX20` | NOT_STARTED | |
+| **DX21** | 8. Registry DX | R1 |  | | `AT-DX21` | NOT_STARTED | |
+| **DX22** | 8. Registry DX | R1 |  | | `AT-DX22` | NOT_STARTED | |
+| **EXT01** | 9. Komitmen tambahan | R2/R3 |  | | `AT-EXT01` | NOT_STARTED | |
+| **EXT02** | 9. Komitmen tambahan | R2/R3 |  | | `AT-EXT02` | NOT_STARTED | |
+| **EXT03** | 9. Komitmen tambahan | R2/R3 |  | | `AT-EXT03` | NOT_STARTED | |
+| **EXT04** | 9. Komitmen tambahan | R2/R3 |  | | `AT-EXT04` | NOT_STARTED | |
+| **EXT05** | 9. Komitmen tambahan | R2/R3 |  | | `AT-EXT05` | NOT_STARTED | |
+| **EXT06** | 9. Komitmen tambahan | R2/R3 |  | | `AT-EXT06` | NOT_STARTED | |
+| **EXT07** | 9. Komitmen tambahan | R2/R3 |  | | `AT-EXT07` | NOT_STARTED | |
+| **EXT08** | 9. Komitmen tambahan | R2/R3 |  | | `AT-EXT08` | NOT_STARTED | |
+| **EXT09** | 9. Komitmen tambahan | R2/R3 |  | | `AT-EXT09` | NOT_STARTED | |
+| **EXT10** | 9. Komitmen tambahan | R2/R3 |  | | `AT-EXT10` | NOT_STARTED | |
+| **EXT11** | 9. Komitmen tambahan | R2/R3 |  | | `AT-EXT11` | NOT_STARTED | |
+| **EXT12** | 9. Komitmen tambahan | R2/R3 |  | | `AT-EXT12` | NOT_STARTED | |
+| **EXT13** | 9. Komitmen tambahan | R2/R3 |  | | `AT-EXT13` | NOT_STARTED | |
+| **NFR01** | 16. Persyaratan nonfungsional | R2 | `app/api/...` | RBAC & Authorization via `isPrivileged` | `AT-NFR01` | IMPLEMENTED_UNVERIFIED | Tes integrasi penuh & RSC blm tervalidasi |
+| **NFR02** | 16. Persyaratan nonfungsional | R2 |  | | `AT-NFR02` | NOT_STARTED | |
+| **NFR03** | 16. Persyaratan nonfungsional | R2 |  | | `AT-NFR03` | NOT_STARTED | |
+| **NFR04** | 16. Persyaratan nonfungsional | R2 |  | | `AT-NFR04` | NOT_STARTED | |
+| **NFR05** | 16. Persyaratan nonfungsional | R2 |  | | `AT-NFR05` | NOT_STARTED | |
+| **NFR06** | 16. Persyaratan nonfungsional | R2 |  | | `AT-NFR06` | NOT_STARTED | |
+| **NFR07** | 16. Persyaratan nonfungsional | R2 |  | | `AT-NFR07` | NOT_STARTED | |
+| **NFR08** | 16. Persyaratan nonfungsional | R2 |  | | `AT-NFR08` | NOT_STARTED | |
+| **NFR09** | 16. Persyaratan nonfungsional | R2 |  | | `AT-NFR09` | NOT_STARTED | |
+| **NFR10** | 16. Persyaratan nonfungsional | R2 |  | | `AT-NFR10` | NOT_STARTED | |
+| **NFR11** | 16. Persyaratan nonfungsional | R2 |  | | `AT-NFR11` | NOT_STARTED | |
+| **NFR12** | 16. Persyaratan nonfungsional | R2 |  | | `AT-NFR12` | NOT_STARTED | |
+| **NFR13** | 16. Persyaratan nonfungsional | R2 |  | | `AT-NFR13` | NOT_STARTED | |
+| **NFR14** | 16. Persyaratan nonfungsional | R2 |  | | `AT-NFR14` | NOT_STARTED | |
+| **NFR15** | 16. Persyaratan nonfungsional | R2 |  | | `AT-NFR15` | NOT_STARTED | |
+| **NFR16** | 16. Persyaratan nonfungsional | R2 |  | | `AT-NFR16` | NOT_STARTED | |

@@ -35,7 +35,7 @@ export default async function ClassesPage() {
     });
   } else {
     const enrollments = await prisma.enrollment.findMany({
-      where: { mahasiswaId: session.user.id },
+      where: { userId: session.user.id },
       orderBy: { joinedAt: "desc" },
       include: {
         class: {

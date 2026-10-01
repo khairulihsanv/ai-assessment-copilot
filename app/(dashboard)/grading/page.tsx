@@ -33,7 +33,7 @@ export default async function GradingStudioHubPage() {
       assignment: { class: { dosenId: session.user.id } },
     },
     include: {
-      mahasiswa: { select: { id: true, name: true, email: true } },
+      user: { select: { id: true, name: true, email: true } },
       assignment: {
         select: {
           id: true,
@@ -134,11 +134,11 @@ export default async function GradingStudioHubPage() {
 
                     <div className="flex items-center gap-2.5 text-xs text-[#6B7280]">
                       <div className="w-8 h-8 rounded-full bg-[#1E4D3B] text-white font-extrabold flex items-center justify-center text-[11px] shadow-2xs">
-                        {sub.mahasiswa.name.slice(0, 2).toUpperCase()}
+                        {sub.user.name.slice(0, 2).toUpperCase()}
                       </div>
                       <div className="flex flex-col">
-                        <span className="font-bold text-[#111827]">{sub.mahasiswa.name}</span>
-                        <span className="text-[11px] text-[#6B7280]">{sub.mahasiswa.email}</span>
+                        <span className="font-bold text-[#111827]">{sub.user.name}</span>
+                        <span className="text-[11px] text-[#6B7280]">{sub.user.email}</span>
                       </div>
                     </div>
                   </div>

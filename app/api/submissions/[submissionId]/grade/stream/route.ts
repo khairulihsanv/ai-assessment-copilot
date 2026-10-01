@@ -26,7 +26,7 @@ export async function GET(
           },
         },
       },
-      mahasiswa: {
+      user: {
         select: { id: true, name: true },
       },
     },

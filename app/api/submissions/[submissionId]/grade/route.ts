@@ -30,7 +30,7 @@ export async function POST(
           },
         },
       },
-      mahasiswa: {
+      user: {
         select: { id: true, name: true },
       },
     },

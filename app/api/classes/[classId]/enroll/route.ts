@@ -39,9 +39,9 @@ export async function POST(
   // Check if already enrolled
   const existing = await prisma.enrollment.findUnique({
     where: {
-      classId_mahasiswaId: {
+      classId_userId: {
         classId: cls.id,
-        mahasiswaId: session.user.id,
+        userId: session.user.id,
       },
     },
   });
@@ -53,7 +53,7 @@ export async function POST(
   await prisma.enrollment.create({
     data: {
       classId: cls.id,
-      mahasiswaId: session.user.id,
+      userId: session.user.id,
     },
   });
 

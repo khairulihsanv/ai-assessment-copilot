@@ -15,35 +15,72 @@ export async function GET(
 
   const { classId } = await params;
 
-  const cls = await prisma.class.findUnique({
+  // 1. Get class baseline to check authorization
+  const baseCls = await prisma.class.findUnique({
     where: { id: classId },
-    include: {
-      dosen: { select: { id: true, name: true, email: true } },
-      enrollments: {
-        include: { mahasiswa: { select: { id: true, name: true, email: true } } },
-      },
-      assignments: { orderBy: { createdAt: "desc" } },
-      rubrics: { include: { criteria: true } },
-      _count: { select: { enrollments: true, assignments: true } },
-    },
+    select: { dosenId: true },
   });
 
-  if (!cls) {
+  if (!baseCls) {
     return NextResponse.json({ error: "Kelas tidak ditemukan" }, { status: 404 });
   }
 
-  // Check access
-  const isDosen = session.user.role === "DOSEN" && cls.dosenId === session.user.id;
-  const isEnrolled = cls.enrollments.some((e) => e.mahasiswaId === session.user.id);
+  const isDosen = session.user.role === "DOSEN" && baseCls.dosenId === session.user.id;
+  const enrollment = await prisma.enrollment.findUnique({
+    where: { classId_userId: { classId, userId: session.user.id } }
+  });
+  
+  const isAssistant = enrollment?.role === "ASSISTANT";
+  const isPrivileged = isDosen || isAssistant;
 
-  if (!isDosen && !isEnrolled) {
+  if (!isPrivileged && !enrollment) {
     return NextResponse.json({ error: "Akses ditolak" }, { status: 403 });
   }
 
-  // Hide enrollment key from students
-  if (!isDosen) {
-    return NextResponse.json({ ...cls, enrollmentKey: undefined });
-  }
+  // 2. Fetch full data with conditional select
+  const cls = await prisma.class.findUnique({
+    where: { id: classId },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      subject: true,
+      enrollmentKey: isPrivileged,
+      isArchived: true,
+      createdAt: true,
+      dosenId: true,
+      dosen: { select: { id: true, name: true, email: true } },
+      enrollments: {
+        include: { user: { select: { id: true, name: true, email: true } } },
+      },
+      assignments: { orderBy: { createdAt: "desc" } },
+      rubrics: { 
+        select: {
+          id: true,
+          title: true,
+          createdAt: true,
+          classId: true,
+          createdById: true,
+          criteria: {
+            select: {
+              id: true,
+              label: true,
+              description: true,
+              maxScore: true,
+              weight: true,
+              expectedAnswer: true,
+              rubricId: true,
+              answerKey: isPrivileged,
+              material: isPrivileged,
+              answerKeyEmbedding: isPrivileged,
+              materialEmbedding: isPrivileged,
+            }
+          }
+        } 
+      },
+      _count: { select: { enrollments: true, assignments: true } },
+    }
+  });
 
   return NextResponse.json(cls);
 }

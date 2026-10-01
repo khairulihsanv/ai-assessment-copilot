@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
-    "test": "vitest run",
+    "test": "vitest run --exclude **/*.integration.test.ts",
+    "test:integration": "vitest run tests/authorization.integration.test.ts",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
     "seed": "tsx prisma/seed.ts"

@@ -29,7 +29,7 @@ export default async function SubmissionReviewPage({ params }: SubmissionReviewP
   const submission = await prisma.submission.findUnique({
     where: { id: submissionId },
     include: {
-      mahasiswa: {
+      user: {
         select: { id: true, name: true, email: true },
       },
       assignment: {
@@ -81,7 +81,7 @@ export default async function SubmissionReviewPage({ params }: SubmissionReviewP
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <h1 className="text-2xl font-bold font-display text-foreground">
-              Koreksi Jawaban: {submission.mahasiswa.name}
+              Koreksi Jawaban: {submission.user.name}
             </h1>
             <p className="text-xs text-muted-foreground mt-0.5">
               Tugas: {submission.assignment.title} • Skor Maksimal: {submission.assignment.maxScore}
@@ -96,7 +96,7 @@ export default async function SubmissionReviewPage({ params }: SubmissionReviewP
         assignmentId={assignmentId}
         assignmentTitle={submission.assignment.title}
         maxScore={submission.assignment.maxScore}
-        studentName={submission.mahasiswa.name}
+        studentName={submission.user.name}
         submissionType={submission.type}
         submissionContent={displayContent}
         fileName={submission.fileName}

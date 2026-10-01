@@ -47,7 +47,7 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
           dosen: { select: { id: true, name: true, email: true } },
           enrollments: {
             include: {
-              mahasiswa: { select: { id: true, name: true, email: true } },
+              user: { select: { id: true, name: true, email: true } },
             },
           },
         },
@@ -57,7 +57,7 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
       },
       submissions: {
         include: {
-          mahasiswa: { select: { id: true, name: true, email: true } },
+          user: { select: { id: true, name: true, email: true } },
           grade: true,
           aiEvaluation: true,
         },
@@ -71,7 +71,7 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
   }
 
   const isDosen = assignment.class.dosenId === session.user.id;
-  const isEnrolled = assignment.class.enrollments.some((e) => e.mahasiswaId === session.user.id);
+  const isEnrolled = assignment.class.enrollments.some((e) => e.userId === session.user.id);
 
   if (!isDosen && !isEnrolled) {
     redirect("/classes");
@@ -81,7 +81,7 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
   const isPastDue = due.getTime() < Date.now();
 
   const studentSubmission = !isDosen
-    ? assignment.submissions.find((s) => s.mahasiswaId === session.user.id)
+    ? assignment.submissions.find((s) => s.userId === session.user.id)
     : null;
 
   const totalEnrollments = assignment.class.enrollments.length;
@@ -275,12 +275,12 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
                         {/* Student Details */}
                         <div className="flex items-start gap-3 min-w-0">
                           <div className="w-10 h-10 rounded-xl bg-[#eff4ff] text-[#004ac6] font-bold flex items-center justify-center text-xs font-mono shrink-0">
-                            {getInitials(sub.mahasiswa.name)}
+                            {getInitials(sub.user.name)}
                           </div>
                           <div className="min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="font-bold text-xs sm:text-sm text-[#0b1c30] truncate">
-                                {sub.mahasiswa.name}
+                                {sub.user.name}
                               </span>
                               {isLate && (
                                 <span className="font-mono text-[10px] font-bold px-1.5 py-0.2 rounded bg-[#ffdad6] text-[#ba1a1a]">

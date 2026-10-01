@@ -29,9 +29,9 @@ export default async function AssignmentResultPage({ params }: ResultPageProps) 
 
   const submission = await prisma.submission.findUnique({
     where: {
-      assignmentId_mahasiswaId: {
+      assignmentId_userId: {
         assignmentId,
-        mahasiswaId: session.user.id,
+        userId: session.user.id,
       },
     },
     include: {

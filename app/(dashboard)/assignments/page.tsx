@@ -54,7 +54,7 @@ export default async function AssignmentsPage() {
 
   // Mahasiswa View
   const enrollments = await prisma.enrollment.findMany({
-    where: { mahasiswaId: session.user.id },
+    where: { userId: session.user.id },
     include: {
       class: {
         include: {
@@ -63,7 +63,7 @@ export default async function AssignmentsPage() {
             include: {
               rubric: { include: { criteria: true } },
               submissions: {
-                where: { mahasiswaId: session.user.id },
+                where: { userId: session.user.id },
                 include: { grade: true },
               },
             },

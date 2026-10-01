@@ -1,0 +1,302 @@
+# Analisis kesesuaian dan arah revisi Dexa Assessment
+
+Output 1 dari 5 | 1 Oktober 2026 | Versi 1.0
+
+Dexa Assessment sudah memiliki fondasi manajemen kelas, rubrik, bantuan AI dan pengesahan dosen. Namun, aplikasi belum memenuhi seluruh standar kedua lampiran maupun revisi baru berupa penilaian berbasis dokumen dengan NLP, LLM dan RAG. Prioritas pertama adalah perlindungan kunci jawaban dan ketepatan alur penilaian, disusul pipeline dokumen, penyelesaian fitur baseline dan perombakan UI/UX.
+
+Dokumen ini menjadi dasar PRD lengkap. Semua kebutuhan lama dipertahankan; perubahan alur input tidak menghapus kemampuan rubrik manual, pengaturan bobot atau kewenangan dosen.
+
+## 1 Sumber dan batas pemeriksaan
+
+| Sumber | Pemeriksaan | Kedudukan |
+|---|---|---|
+| Laporan_Proyek_Akhir_AI_Assessment_Copilot_14_BAB.docx | Isi 14 BAB, tabel, contoh kode dan matriks kesesuaian | Baseline teknis dan klaim implementasi |
+| Ceklist_Kesesuaian_SRS_Kontrak_Aplikasi_AI_Assessment_Copilot (1).docx | Seluruh 24 FR, ringkasan, rincian dan perbedaan kontrak | Baseline fungsi |
+| Repository khairulihsanv/ai-assessment-copilot | Pohon berkas lengkap dan pembacaan terarah kode inti | Bukti implementasi statis |
+| Deployment ai-assessment-copilot-r7ds.vercel.app | Landing, login, dashboard demo dosen dan daftar rubrik | Bukti tampilan dan navigasi terbatas |
+| Instruksi pemilik proyek | Acuan PDF, Word, TXT, PPT; NLP, LLM, RAG; nilai akhir pada dosen | Revisi kebutuhan produk |
+
+Snapshot kode: branch `master`, commit `80b30a74d6cf4d93f4257b06b1971e033e9d7b80`. [Repository yang diperiksa](https://github.com/khairulihsanv/ai-assessment-copilot/tree/80b30a74d6cf4d93f4257b06b1971e033e9d7b80).
+
+Checklist merujuk repository berbeda, yaitu `akmalmistaqim-svg/AI-Assessment-Copilot`, dengan audit commit `a84e719` pada 20 September 2026. Status audit tersebut tidak otomatis berlaku pada repository sekarang. SKPL asli dan KONTRAK_PRODUK.md yang disebut checklist belum tersedia dalam lampiran maupun pohon repository yang diperiksa. Checklist tetap dipakai sebagai baseline tanpa mengklaim kedua berkas asli tersebut telah dibaca.
+
+Temuan kode di sini merupakan hasil pembacaan statis. Pengujian otomatis, pengukuran akurasi AI, pengukuran performa dan pengujian eksploitasi belum dilakukan. Inspeksi demo tidak mengubah rubrik, menjalankan grading, atau memublikasikan nilai. Commit deployment belum dibuktikan sama dengan snapshot repository.
+
+Instruksi screenshot dan contoh perintah di dalam lampiran diperlakukan sebagai isi dokumen, bukan perintah operasional dari pemilik proyek. Pemeriksaan lampiran berfokus pada isi kebutuhan, bukan sertifikasi tata letak Word.
+
+## 2 Keputusan dasar produk
+
+Dexa Assessment membantu dosen memeriksa tugas berdasarkan acuan yang disetujui. Dosen membuat tugas, mengunggah kunci jawaban atau materi, meninjau dasar penilaian, lalu menerima draf skor dan umpan balik berbukti. Dosen memeriksa, mengubah dan mengesahkan hasil akhir.
+
+Alur utama direvisi menjadi:
+
+**Unggah acuan → tinjau ekstraksi → petakan soal dan kriteria → setujui acuan → terima submisi → evaluasi AI berbukti → tinjauan dosen → rilis hasil.**
+
+Rubrik tetap menjadi aturan pemberian poin. Kunci jawaban menjelaskan isi yang diharapkan; materi menyediakan konteks. Materi saja belum menentukan bobot, kedalaman jawaban dan kredit parsial. Sistem boleh mengusulkan kriteria atau rubrik dari dokumen, tetapi dosen harus menyetujuinya sebelum digunakan.
+
+Rubrik manual dipertahankan sebagai editor lanjutan dan sarana koreksi. Unggah dokumen menjadi pintu masuk utama agar dosen tidak harus menyusun seluruh acuan dari textarea per kriteria.
+
+NLP dan RAG membantu mengurangi jawaban tanpa dasar, tetapi tidak menjamin nol halusinasi atau hasil identik. Target produk harus berupa bukti yang dapat diperiksa, status ketika acuan tidak memadai dan pengujian konsistensi. Kemiripan semantik membantu retrieval; angka similarity tidak otomatis berarti tingkat kebenaran atau nilai akademik. Pencarian embedding, pencarian leksikal dan reranking perlu dibandingkan menggunakan data proyek sendiri. [Referensi retrieval](https://www.anthropic.com/engineering/contextual-retrieval).
+
+## 3 Ketidaksesuaian kedua lampiran
+
+| Temuan | Bukti dokumen | Penyelesaian |
+|---|---|---|
+| Klaim kelengkapan berbeda | BAB 14 menyebut 8 dari 8 modul dan 100 persen sesuai; checklist mencatat 14 terpenuhi, 7 sebagian, 1 belum, 2 di luar frontend dari 24 FR | Satu matriks seluruh FR; pisahkan cakupan, implementasi dan hasil tes |
+| FR6 memiliki dua arti | Ringkasan: histori nilai dan perubahan skor; rincian: notifikasi dan peringatan | Pertahankan FR6a histori perubahan dan FR6b peringatan |
+| FR7 memiliki dua arti | Ringkasan: sintaks/static analysis; rincian: jadwal penilaian massal | Pertahankan FR7a analisis kode dan FR7b jadwal batch |
+| Peran berbeda | Checklist: dosen/asisten; laporan: dosen/mahasiswa | Pertahankan tiga peran dengan izin jelas |
+| PWA ditunda | FR23 Must, tetapi laporan menempatkannya pada roadmap | PWA tetap kewajiban baseline |
+| Ekspor berbeda | FR21 CSV/JSON; placeholder screenshot 27 PDF/Excel | CSV/JSON wajib; PDF/XLSX tetap masuk inventaris komitmen laporan |
+| Bukti masih placeholder | Laporan memiliki 28 teks TEMPATKAN SCREENSHOT dan nol gambar tertanam pada word/media | Ganti dengan bukti aktual bertanggal dan terkait commit |
+| Frontend bercampur backend | Beberapa status sebagian dikaitkan dengan penyimpanan di server | Audit UI, API, persistensi dan integrasi secara terpisah |
+| Sesi tidak konsisten | Checklist menyebut HttpOnly cookie; contoh BAB 12 membaca localStorage dan refreshAuthToken mengembalikan null | Dokumentasikan implementasi nyata; contoh tidak dianggap bukti produksi |
+| Klaim teknis terlalu absolut | Strict TypeScript diklaim menjamin tanpa runtime crash; berbagai angka performa dinyatakan tercapai | Nyatakan kontrol dan hasil ukur, lengkap dengan metode dan bukti |
+
+Rekap 14/24 adalah rekap historis dokumen, bukan hasil audit baru atau persentase kesiapan produksi. Nomor baris repository lama perlu diganti dengan tautan commit dan lokasi kode yang relevan.
+
+## 4 Temuan implementasi yang perlu ditindaklanjuti
+
+P0 berarti perlu diperbaiki sebelum penggunaan dengan data akademik nyata. P1 berarti wajib untuk memenuhi standar dan alur inti. Temuan berikut berasal dari pembacaan kode, kecuali disebut diamati pada demo.
+
+### 4.1 Data submisi dan kunci jawaban belum dibatasi dengan tepat
+
+**P0.** GET detail tugas pada `app/api/classes/[classId]/assignments/[assignmentId]/route.ts` memeriksa sesi, kemudian mengembalikan tugas beserta seluruh kriteria rubrik, submisi, identitas mahasiswa, grade dan aiEvaluation. Handler tersebut tidak memeriksa kepemilikan kelas atau enrollment sebelum mengembalikan data.
+
+GET rubrik pada `app/api/classes/[classId]/rubrics/route.ts` memeriksa pemilik atau mahasiswa terdaftar, tetapi mengembalikan seluruh field kriteria. Skema kriteria mencakup answerKey, material dan embedding. Rubrik publik harus dibedakan dari acuan rahasia dosen melalui pemilihan field di server.
+
+Perbaikan: DTO sesuai peran, otorisasi kelas/tugas pada setiap endpoint, dan pembatasan data mahasiswa ke miliknya sendiri. Uji payload API dan halaman server, bukan hanya tombol UI. Temuan ini belum diuji dengan mengakses data pengguna lain. [Handler detail tugas](https://github.com/khairulihsanv/ai-assessment-copilot/blob/80b30a74d6cf4d93f4257b06b1971e033e9d7b80/app/api/classes/%5BclassId%5D/assignments/%5BassignmentId%5D/route.ts), [handler rubrik](https://github.com/khairulihsanv/ai-assessment-copilot/blob/80b30a74d6cf4d93f4257b06b1971e033e9d7b80/app/api/classes/%5BclassId%5D/rubrics/route.ts).
+
+### 4.2 Jalur streaming tidak meneruskan acuan dosen
+
+**P0.** AIReviewPanel menggunakan useAIGradingStream yang memanggil endpoint grade/stream. Pemetaan kriteria pada endpoint ini hanya meneruskan id, label, description, maxScore dan weight. answerKey, material dan embedding tidak ikut diteruskan. Endpoint POST grade meneruskan field tersebut, sehingga jalur UI dan jalur lain memasok konteks berbeda.
+
+Perbaikan: satu layanan penyusunan konteks untuk semua pemicu grading. Tes integrasi harus membuktikan kunci dan materi masuk ke evaluator pada alur yang dipakai UI. [Jalur streaming](https://github.com/khairulihsanv/ai-assessment-copilot/blob/80b30a74d6cf4d93f4257b06b1971e033e9d7b80/app/api/submissions/%5BsubmissionId%5D/grade/stream/route.ts).
+
+### 4.3 Embedding sudah tersedia tetapi RAG dokumen belum lengkap
+
+**P1.** RubricCriterion menyimpan satu embedding JSON untuk kunci dan satu untuk materi. Jalur inti membandingkan embedding jawaban terhadap embedding kriteria. Belum ditemukan pengelolaan dokumen berlokasi halaman/slide, chunk retrieval top-k, snapshot corpus dan sitasi bukti terstruktur pada jalur tersebut.
+
+Evaluator memotong kunci/materi menjadi 2.000 karakter per kriteria sebelum masuk prompt. Embedding memotong teks pada 8.000 karakter. Informasi pada bagian akhir dapat terabaikan. Perbaikan memerlukan pemecahan berdasarkan struktur, retrieval per soal/kriteria dan pemeriksaan kelengkapan. [Evaluator](https://github.com/khairulihsanv/ai-assessment-copilot/blob/80b30a74d6cf4d93f4257b06b1971e033e9d7b80/lib/ai/grading-client.ts), [skema data](https://github.com/khairulihsanv/ai-assessment-copilot/blob/80b30a74d6cf4d93f4257b06b1971e033e9d7b80/prisma/schema.prisma).
+
+### 4.4 Kegagalan embedding dapat menghasilkan baseline nol
+
+**P0.** computeSimilarity menyediakan fallback text overlap. Namun bobot gabungan ditentukan dari keberadaan array embedding tersimpan. Jika kedua embedding kosong, bobot keduanya nol sehingga skor gabungan nol walaupun overlap menemukan kecocokan. Evaluator memakai skor tersebut sebagai baseline penilaian.
+
+Perbaikan: kegagalan layanan menjadi status acuan belum siap atau evaluasi gagal, bukan nilai akademik nol. Nol hanya diberikan berdasarkan aturan penilaian yang disetujui dosen. Kompatibilitas endpoint embedding dan model provider juga perlu diuji; audit ini tidak melakukan panggilan berbayar. [Implementasi similarity](https://github.com/khairulihsanv/ai-assessment-copilot/blob/80b30a74d6cf4d93f4257b06b1971e033e9d7b80/lib/ai/embedding-client.ts).
+
+### 4.5 Total nilai perlu dihitung deterministik di server
+
+**P1.** Skema respons menerima skor nonnegatif, tetapi belum memastikan skor berada di bawah maksimum masing-masing kriteria serta ID kriteria lengkap, unik dan dikenal. Total dari model hanya dibatasi terhadap maksimum tugas.
+
+Perbaikan: validasi seluruh kriteria, lalu hitung total di server dengan aturan pembulatan tetap. Jika bobot persen digunakan, rumusnya: maksimum tugas × jumlah dari (bobot/100 × skor kriteria/maksimum kriteria). Jangan menjadikan cosine similarity sebagai nilai otomatis.
+
+### 4.6 Riwayat penilaian dan revisi submisi belum terpisah
+
+**P1.** AIEvaluation dan Grade masing-masing unik per submission. Upsert mengganti rekaman evaluasi atau grade sebelumnya. Unggah ulang juga menimpa Submission dan mengubah status menjadi SUBMITTED, tetapi handler yang diperiksa tidak menandai evaluasi dan grade sebelumnya sebagai usang.
+
+Perbaikan: tambahkan SubmissionVersion, EvaluationRun, RubricVersion, ReferenceSetVersion dan GradeRevision. Hasil final menunjuk versi jawaban tertentu. Simpan aktor, waktu, alasan override dan hubungan ke run AI. Jawaban baru tidak boleh menampilkan nilai versi lama sebagai hasilnya.
+
+### 4.7 SSE belum memenuhi streaming token dan pembatalan
+
+**P1.** Endpoint mengirim status tahap, menunggu respons JSON LLM lengkap, lalu mengirim done. FR5 meminta feedback token demi token. Hook utama belum mengekspos pembatalan dan tidak meneruskan cancel pengguna ke inferensi.
+
+Perbaikan: pisahkan teks streaming sementara dari output final tervalidasi. Buat job melalui POST, pantau dengan SSE dan sediakan cancel di server. Putus koneksi dan cancel harus berbeda agar reconnect tidak memulai evaluasi ganda.
+
+### 4.8 Unggah acuan baru mendukung sebagian kebutuhan
+
+**P1.** Rubric editor sudah menyediakan unggah PDF/DOCX untuk mengisi textarea kunci atau materi per kriteria. Jadi fitur unggah tidak perlu dibangun dari nol. Namun endpoint ekstraksi belum menerima TXT, PPT/PPTX atau DOC lama, dan file belum dikelola sebagai pustaka acuan berversi.
+
+Perbaikan: unggah menjadi langkah pertama, dukung PDF/DOCX/TXT/PPTX serta konversi terkontrol DOC/PPT. Tampilkan preview, status ekstraksi dan lokasi sumber. PDF pindai membutuhkan OCR; rumus, tabel atau gambar yang gagal dibaca harus ditandai dan ditinjau.
+
+### 4.9 Penyimpanan file produksi perlu diselesaikan
+
+**P1.** getStorage selalu menghasilkan LocalStorage yang menulis pada direktori uploads di process.cwd(). Adapter object storage belum diimplementasikan. Persistensi lintas instance dan redeploy pada lingkungan Vercel belum dibuktikan.
+
+Perbaikan: object storage privat dan akses berizin; ekstraksi memakai abstraksi storage yang sama. Uji unggah, pembacaan ulang setelah redeploy dan ekstraksi. [Implementasi storage](https://github.com/khairulihsanv/ai-assessment-copilot/blob/80b30a74d6cf4d93f4257b06b1971e033e9d7b80/lib/storage/storage.ts).
+
+### 4.10 Angka dan aksi simulasi tampil sebagai hasil nyata
+
+**P1.** Dashboard menetapkan confidence 95, penghematan 89 persen dan fallback 84 submisi ketika jumlah nilai selesai nol. Quick actions menampilkan alert untuk ekspor CSV, sinkronisasi SIAKAD, BAP dan broadcast. Halaman pengaturan yang diperiksa memiliki tombol simpan tanpa handler penyimpanan.
+
+Perbaikan: tampilkan data aktual, termasuk nol dan keadaan kosong. Pertahankan fungsi dalam backlog, implementasikan tindakan nyata, dan beri status belum tersedia selama belum berfungsi. Jangan menampilkan pesan sukses simulasi pada operasi akademik. [Dashboard](https://github.com/khairulihsanv/ai-assessment-copilot/blob/80b30a74d6cf4d93f4257b06b1971e033e9d7b80/app/%28dashboard%29/dashboard/page.tsx), [quick actions](https://github.com/khairulihsanv/ai-assessment-copilot/blob/80b30a74d6cf4d93f4257b06b1971e033e9d7b80/components/features/dashboard-quick-actions.tsx).
+
+### 4.11 Asisten penilai PWA dan quality gate belum sesuai baseline
+
+**P1.** Enum Role hanya memuat DOSEN dan MAHASISWA. Manifest/service worker PWA belum ditemukan pada pohon berkas. Workflow CI menjalankan test dan typecheck; langkah lint, coverage gate, build dan SonarQube tidak ada dalam workflow yang dibaca.
+
+Tambahkan izin asisten berbasis kelas, PWA dan pemeriksaan kualitas. Dependensi Vitest/Playwright tidak membuktikan coverage 84,5 persen atau keberhasilan E2E. [Workflow CI](https://github.com/khairulihsanv/ai-assessment-copilot/blob/80b30a74d6cf4d93f4257b06b1971e033e9d7b80/.github/workflows/ci.yml).
+
+### 4.12 Dokumentasi stack dan provider tertinggal
+
+**P1.** README/PRD masih menyebut Gemini dan Next.js 15. package.json menyatakan Next.js 16.3.5; evaluator menggunakan Groq dengan model default openai/gpt-oss-120b. Dokumentasi perlu memisahkan provider aktif, konfigurasi environment dan adapter yang direncanakan.
+
+AGENTS.md sudah tersedia dan meminta panduan Next.js versi terpasang dibaca sebelum perubahan kode. Panduan Antigravity nantinya perlu menambah konteks produk tanpa menghapus aturan tersebut.
+
+## 5 Matriks seluruh kebutuhan baseline
+
+Status lama berasal dari checklist dan tidak diwariskan sebagai status aplikasi sekarang. A berarti ada dasar implementasi, P sebagian/berbeda, N belum ditemukan pada struktur atau jalur yang diperiksa, V memerlukan verifikasi khusus. Tidak satu pun label ini menggantikan tes penerimaan menyeluruh.
+
+| ID | Kebutuhan yang dipertahankan | Status lama | Temuan sekarang dan revisi |
+|---|---|---|---|
+| FR1 | Penerimaan submisi kode/esai lewat API | Di luar frontend | P — teks/PDF/DOCX ada; unggah kode/arsip dan seluruh format perlu dipenuhi |
+| FR2 | Riwayat timestamp dan submission_id | Di luar frontend | P — data ada; upsert belum mempertahankan rangkaian histori |
+| FR3 | Dashboard tugas dan submisi | Terpenuhi | P — halaman ada; data simulasi harus diganti |
+| FR4 | Perbandingan nilai dengan ambang rubrik | Terpenuhi | V — threshold tersimpan, perhitungan dan tampilan perlu diuji |
+| FR5 | Streaming feedback token demi token | Terpenuhi | P — SSE status ada; token streaming belum pada jalur utama |
+| FR6a | Histori nilai dan penyesuaian dosen | Sebagian | P — grade ada, versi perubahan belum lengkap |
+| FR6b | Peringatan evaluasi dan penandaan ditinjau | Sebagian | N — log peringatan persisten perlu diwujudkan |
+| FR7a | Analisis sintaks dan static analysis kode | Sebagian | N — pipeline khusus kode perlu dibuktikan/dibangun |
+| FR7b | Penilaian massal terjadwal | Sebagian | N — jadwal dan worker persisten perlu dibangun |
+| FR8 | Log token limit timeout dan kegagalan | Sebagian | P — tokenUsage/error ada; log run gagal belum lengkap |
+| FR9 | Pembatalan generasi AI | Terpenuhi | N pada hook utama — tambah cancel sampai worker/provider |
+| FR10 | Statistik distribusi nilai dan kelulusan | Sebagian | V — uji agregasi seluruh dataset dan sumber nilai final |
+| FR11 | Preview kode dengan syntax highlighting | Terpenuhi | V — preview teks saja belum cukup; uji kode/anotasi |
+| FR12 | CRUD kriteria rubrik | Terpenuhi | A — pertahankan; tambah usulan dari dokumen dan versi |
+| FR13 | Login logout dan sesi | Terpenuhi | A — login demo diamati; tes akses dan hardening tetap perlu |
+| FR14 | Dosen dan asisten dengan izin berbeda | Terpenuhi | P — dosen/mahasiswa ada; asisten belum pada role |
+| FR15 | Konfigurasi prompt dan parameter AI | Terpenuhi | P — konfigurasi kode/env ada; UI lengkap belum terbukti |
+| FR16 | Pembaruan bobot oleh dosen | Terpenuhi | A — pertahankan validasi total 100 persen dan versi |
+| FR17 | Heartbeat engine online/offline | Sebagian | N — readiness dan status dependensi perlu dibangun |
+| FR18 | Kelas kategori tugas dan status review | Terpenuhi | A — kelas/enrollment ada; lengkapi kategori dan status |
+| FR19 | Versi rubrik dan prompt | Sebagian | N — snapshot berversi belum pada schema |
+| FR20 | Laporan harian dan berkala | Terpenuhi | P/V — analitik ada; laporan periodik/CPL/CPMK perlu dibuktikan |
+| FR21 | Ekspor CSV dan JSON | Terpenuhi | P — tombol CSV yang diperiksa hanya alert; kedua output harus nyata |
+| FR22 | UI tema terang/gelap dan aksesibilitas | Terpenuhi | P/V — dasar tersedia; kontras, keyboard dan mobile perlu audit |
+| FR23 | PWA installable dan offline caching | Belum | N — manifest/service worker belum ditemukan |
+| FR24 | Audit siapa menilai apa dan kapan | Sebagian | P — gradedBy/gradedAt ada; audit seluruh aksi belum lengkap |
+
+FR6 dan FR7 dipecah tanpa menghapus ID atau makna lamanya. Registry PRD harus mencatat asal ringkasan/rincian agar kedua arti tetap terlacak.
+
+Komitmen tambahan juga harus dicatat: web push yang disebut perbedaan kontrak; ekspor PDF/XLSX; voice feedback dan pemeriksaan kemiripan antar-submisi pada roadmap; CPL/CPMK; halaman tentang sistem; serta SIAKAD, BAP, broadcast, kalender, transkrip dan pre-check mahasiswa yang muncul pada materi proyek. Status roadmap atau simulasi tidak boleh dihitung sebagai selesai.
+
+SIAKAD membutuhkan spesifikasi dan akses resmi. Pre-check tidak boleh membocorkan kunci. Indikator kemiripan antarjawaban memerlukan tinjauan dosen dan tidak otomatis menjadi tuduhan plagiarisme.
+
+## 6 Standar teknis dari 14 BAB
+
+| BAB | Standar yang dipertahankan | Bukti yang dibutuhkan |
+|---|---|---|
+| 1 | HTML semantik WAI-ARIA keyboard dan fokus | Pengujian keyboard, dialog dan screen reader |
+| 2 | Tailwind v4 dan tema berbasis token | Tema konsisten pada alur dan status inti |
+| 3 | Komponen reusable dan perilaku aksesibel | Inventaris design system serta uji komponen |
+| 4 | Asinkron lifecycle dan pembatalan | Tes race condition, unmount, reconnect dan cancel |
+| 5 | Strict TypeScript dan validasi runtime | Typecheck dan tes input/output tidak valid |
+| 6 | React dan pembaruan UI yang aman | Status menyimpan/tersimpan benar dan rollback |
+| 7 | Next.js App Router RSC dan proteksi rute | Kesesuaian versi terpasang dan otorisasi server |
+| 8 | Pemisahan state UI dan server | Cache tidak lintas akun dan invalidasi benar |
+| 9 | Toolchain lint dan build | Lockfile, lint, build produksi dan ukuran bundle |
+| 10 | Target LCP ≤ 2,5 s INP ≤ 200 ms CLS ≤ 0,10 | Metode, perangkat dan hasil ukur; lab dipisah dari lapangan |
+| 11 | Keamanan dan SonarQube quality gate | Scan serta baseline coverage ≥ 80 persen, duplikasi ≤ 3 persen |
+| 12 | REST SSE BFF dan kontrak data | Tes integrasi, event parsing, DTO per peran dan error |
+| 13 | CI/CD deployment dan rollback | Workflow berjalan dan bukti deployment |
+| 14 | Traceability dan evaluasi kontrak | Requirement → kode → tes → bukti → status |
+
+Pencapaian yang diklaim laporan, seperti LCP 1,1 detik dan coverage 84,5 persen, tidak boleh disalin sebagai hasil baru tanpa pengukuran. Target teknis tetap ditelusuri; perubahan cara implementasi dicatat beserta alasan dan dampak. Contoh kode lama harus diperiksa terhadap versi dependensi aktual sebelum dipakai.
+
+## 7 Arsitektur revisi NLP LLM dan RAG
+
+### 7.1 Pengolahan acuan dosen
+
+1. Pilih kelas/tugas dan jenis sumber: kunci jawaban atau materi.
+2. Validasi izin, ukuran, tipe berkas sebenarnya dan integritas; simpan sumber asli secara privat.
+3. Ekstrak isi dan struktur melalui worker. Gunakan OCR jika diperlukan. Simpan lokasi halaman PDF, slide PPT, paragraf Word atau baris TXT. Nomor halaman Word tidak boleh dibuat-buat bila parser tidak mempertahankannya.
+4. NLP menormalkan teks tanpa merusak negasi, angka, satuan, rumus, tabel dan kode; petakan bagian ke soal atau konsep. Bahasa Indonesia dan Inggris perlu diuji.
+5. Dosen meninjau hasil ekstraksi, cakupan soal dan konflik antaracuan. Kunci lebih spesifik dapat diprioritaskan sesuai keputusan dosen, bukan asumsi tersembunyi.
+6. Bentuk chunk berdasarkan struktur, buat embedding dan simpan metadata versi. Filter retrieval harus membatasi pemilik, kelas, tugas, versi dan status persetujuan.
+7. Aktifkan acuan setelah langkah wajib selesai. Gagal ekstraksi atau embedding bukan status siap.
+
+Berkas asli disimpan di object storage, metadata/nilai di database relasional dan embedding pada indeks vektor. PostgreSQL dengan ekstensi vektor atau layanan terpisah merupakan keputusan implementasi setelah menilai deployment dan beban. Requirement produknya adalah retrieval relevan, berizin dan terlacak.
+
+### 7.2 Pengolahan jawaban mahasiswa
+
+1. Ambil versi submisi dan snapshot rubrik/acuan yang disetujui.
+2. Ekstrak jawaban dan petakan ke soal. Jawaban merupakan objek koreksi, bukan sumber yang otomatis memperbarui kunci.
+3. Retrieval dipandu soal dan kriteria. Jawaban dapat membantu konteks tetapi tidak memperluas izin sumber.
+4. Ambil bukti dengan ID chunk dan lokasi. Jika sumber tidak memadai, konflik atau ekstraksi rusak, tandai perlu tinjauan.
+5. LLM menghasilkan draf skor per kriteria, alasan singkat yang dapat diperiksa, bukti dari jawaban dan rujukan sumber. Tidak perlu meminta penalaran internal model.
+6. Server memvalidasi ID, rentang skor, struktur dan rujukan, kemudian menghitung total.
+7. Simpan draf serta metadata run; dosen meninjau dan mengesahkan; mahasiswa hanya menerima hasil yang dirilis.
+
+Keluaran minimum: `criterion_id`, `suggested_score`, `max_score`, `feedback`, `student_evidence`, `reference_chunk_ids`, `evidence_status`, `review_flags`. Similarity dipertahankan sebagai metadata retrieval, bukan peluang kebenaran yang belum dikalibrasi.
+
+### 7.3 Konsistensi dan pengamanan
+
+Setiap run menyimpan versi dokumen, rubrik, prompt, LLM, embedding, parser, retrieval dan aturan pembulatan. Gunakan idempotency key agar retry tidak menggandakan pekerjaan. Konfigurasi baru membuat run baru; hasil final lama tidak ditimpa. Temperatur rendah dapat membantu stabilitas tetapi bukan jaminan determinisme.
+
+Pisahkan instruksi sistem dari teks dokumen, batasi tool, validasi output dan pertahankan persetujuan dosen. Prompt atau RAG sendiri tidak menghilangkan prompt injection; jawaban dan dokumen tetap diperlakukan sebagai data tidak tepercaya. [Panduan OWASP](https://cheatsheetseries.owasp.org/cheatsheets/LLM_Prompt_Injection_Prevention_Cheat_Sheet.html).
+
+## 8 Arah UI dan UX dari inspeksi demo
+
+Landing memakai Dexa Assessment, sedangkan login/dashboard masih memakai AI Assessment Copilot. Login menampilkan klaim nol risiko halusinasi dan confidence 99,4 persen. Dashboard menempatkan hero besar, slogan bahasa Inggris, kartu berwarna kuat dan kalender sebelum pekerjaan koreksi. Antrean tinjauan dosen perlu menjadi fokus pertama.
+
+| Area | Arah revisi |
+|---|---|
+| Identitas | Gunakan Dexa Assessment konsisten pada navigasi, judul dan metadata |
+| Dashboard | Utamakan perlu ditinjau, gagal diproses, tenggat dan jumlah hasil final aktual |
+| Navigasi | Kelas → tugas → acuan → submisi → tinjauan → hasil; rubrik dan fungsi baseline tetap tersedia |
+| Persiapan tugas | Detail tugas, unggah acuan, tinjau ekstraksi/kriteria, lalu terbitkan |
+| Acuan | Daftar file dengan tipe, versi, status pemrosesan, cakupan soal dan lihat sumber |
+| Studio koreksi | Jawaban berdampingan dengan skor/feedback; sumber dapat dibuka dan dilacak |
+| Pengesahan | Draf, menyimpan, tersimpan, final dan revisi dibedakan; tombol tinjau dan sahkan jelas |
+| Kegagalan | Pesan spesifik dan tindakan lanjut; error AI bukan nilai nol |
+| Visual | Permukaan netral, satu aksen, warna status secukupnya, tabel ringkas dan tipografi terbaca |
+| Bahasa | Bahasa Indonesia konsisten; hilangkan klaim angka tanpa bukti dan istilah teknis yang tidak membantu dosen |
+| Aksesibilitas | Fokus/label jelas, status bukan hanya warna, live region per tahap atau kalimat, reduced motion |
+| Mobile | Panel jawaban, bukti dan penilaian menjadi tab; pekerjaan panjang tetap dapat dipantau |
+
+Google Classroom menjadi referensi pengelolaan tugas, rubrik dan pengembalian hasil. Dokumentasi resminya mendukung rubrik yang dapat dibuat, digunakan ulang dan disunting guru; pola ini sesuai dengan kendali dosen Dexa Assessment. [Referensi Classroom](https://support.google.com/edu/classroom/answer/9335069?hl=en).
+
+Microsoft Teams dan Dribbble tetap menjadi masukan untuk tahap desain. Referensi visual spesifiknya belum dinilai pada output ini. Pemilihan desain harus membantu koreksi dan peninjauan bukti. Spesifikasi layar lengkap akan diberikan pada output 3.
+
+## 9 Skenario penerimaan untuk PRD
+
+| Skenario | Hasil wajib |
+|---|---|
+| Unggah PDF DOC/DOCX TXT PPT/PPTX | Parser/konversi terdokumentasi dan hasil ekstraksi dapat ditinjau |
+| PDF pindai atau slide dominan gambar | OCR atau status perlu tindakan; tidak dinilai salah karena tidak terbaca |
+| Acuan panjang | Bagian relevan di akhir tetap dapat ditemukan |
+| Materi tanpa kunci | Usulan kriteria/kunci ditinjau dosen sebelum aktif |
+| Embedding/provider gagal | Status teknis gagal, bukan nilai nol atau sukses palsu |
+| Jawaban benar berbentuk parafrasa | Penilaian menurut makna dan kriteria |
+| Jawaban mirip tetapi negasi/angka salah | Kemiripan tidak otomatis menghasilkan skor tinggi |
+| Instruksi manipulatif dalam jawaban | Tidak mengubah aturan atau akses sumber |
+| Bukti tidak cukup | Sistem menandai kekurangan dan tidak mengarang sitasi |
+| Akses mahasiswa | Kunci, embedding, draf AI dan data orang lain tidak terdapat pada payload |
+| Pemicu streaming atau batch | Keduanya memakai layanan dan snapshot acuan yang sama |
+| Cancel atau koneksi putus | Status jelas, reconnect aman dan tidak menggandakan evaluasi |
+| Unggah revisi | Versi baru dibuat; nilai lama tidak ditampilkan sebagai nilai jawaban baru |
+| Perubahan nilai/rubrik | Histori aktor, waktu, alasan dan versi dipertahankan |
+| Ekspor CSV JSON PDF XLSX | File nyata sesuai filter dan izin; status nilai dijelaskan |
+| Keyboard dan mobile | Alur inti selesai tanpa kehilangan kontrol atau informasi |
+| PWA offline | Shell/data yang diizinkan tersedia; pengesahan belum tersimpan tidak tampil sukses |
+
+Evaluasi AI membutuhkan dataset rujukan bernilai dosen: benar, sebagian benar, salah konsep, kosong, parafrasa, bahasa campuran dan adversarial. Ukur selisih skor, kesepakatan antarpenilai, keberhasilan retrieval, ketepatan sitasi, variasi penilaian ulang dan waktu tinjauan. Target numerik pada PRD nanti harus diberi label usulan sampai dikalibrasi; bukan pencapaian yang sudah terjadi.
+
+## 10 Urutan implementasi
+
+1. Bekukan registry seluruh FR dan komitmen tambahan; petakan requirement ke kode, tes dan bukti.
+2. Perbaiki otorisasi, payload, perlindungan kunci dan keterkaitan nilai ke versi jawaban.
+3. Satukan grading, pisahkan kegagalan teknis dari nilai, validasi skor dan hitung total di server.
+4. Bangun penyimpanan dokumen, ekstraksi/OCR, preview, versi, chunking dan retrieval.
+5. Bangun studio koreksi berbukti dengan pengesahan dosen; pertahankan editor rubrik dan override.
+6. Selesaikan baseline: asisten, pembatalan, batch, analisis kode, notifikasi, heartbeat, audit, laporan/ekspor dan PWA.
+7. Terapkan desain bertahap, ganti simulasi dengan fungsi/data nyata dan uji seluruh peran.
+8. Jalankan evaluasi AI, tes akses, pengukuran performa dan quality gate; perbarui dokumentasi sesuai hasil.
+
+Migrasi harus menjaga data existing dan nilai final. Petakan data lama ke versi awal dan sediakan pemulihan. Status baru harus memiliki pemetaan dari SUBMITTED, AI_PROCESSING, AI_REVIEWED dan GRADED yang sudah digunakan.
+
+## 11 Agent dan keluaran berikutnya
+
+Agent pengembang di Antigravity membantu membaca kode, membuat perubahan dan menguji hasil. Agent aplikasi yang membantu koreksi adalah keputusan arsitektur terpisah. Pipeline dengan tahap dan kontrak yang jelas lebih mudah diuji untuk penilaian akademik dibanding agent yang bebas mengambil tindakan.
+
+Agent aplikasi dapat membantu ekstraksi, retrieval dan draf. Pengesahan tetap aksi dosen yang diperiksa server. Dukungan rules, workflows, skills dan agent Antigravity akan dicocokkan dengan dokumentasi resmi sebelum panduan operasional dibuat.
+
+Urutan keluaran sesuai permintaan satu per satu:
+
+1. **Analisis kesesuaian dan arah revisi** — dokumen ini.
+2. **PRD lengkap** — kebutuhan, izin, ID requirement, alur/state, data/API, nonfungsional, penerimaan, metrik, migrasi dan prioritas.
+3. **Spesifikasi UI/UX** — arsitektur informasi, layar, komponen, keadaan gagal, responsivitas dan referensi.
+4. **Panduan agent Antigravity** — setup, aturan proyek dan pembagian tugas agent pengembangan/aplikasi.
+5. **Prompt implementasi Antigravity** — keluaran terakhir yang merangkum analisis dalam tahap implementasi yang dapat diuji tanpa mengurangi baseline.
+
+Output ini menyelesaikan analisis awal. Aplikasi belum diubah, PRD lengkap belum diterbitkan, dan seluruh FR belum dinyatakan lulus.

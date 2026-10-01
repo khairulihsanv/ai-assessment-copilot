@@ -60,7 +60,7 @@ async function main() {
   await prisma.enrollment.create({
     data: {
       classId: sampleClass.id,
-      mahasiswaId: mahasiswa.id,
+      userId: mahasiswa.id,
     },
   });
 
@@ -151,14 +151,14 @@ Referensi:
   const submission = await prisma.submission.create({
     data: {
       assignmentId: assignment.id,
-      mahasiswaId: mahasiswa.id,
+      userId: mahasiswa.id,
       type: SubmissionType.TEXT,
       content: sampleAnswer,
       status: SubmissionStatus.SUBMITTED,
     },
   });
 
-  console.log(`✅ Sample Submission dibuat untuk mahasiswa: ${submission.id}`);
+  console.log(`✅ Sample Submission dibuat untuk user: ${submission.id}`);
   console.log("🎉 Seeding database selesai dengan sukses!");
 }
 

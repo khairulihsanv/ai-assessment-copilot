@@ -27,16 +27,28 @@ export async function GET(
   }
 
   const isDosen = cls.dosenId === session.user.id;
-  const isEnrolled = cls.enrollments.some((e) => e.mahasiswaId === session.user.id);
+  const enrollment = cls.enrollments.find(e => e.userId === session.user.id);
+  const isAssistant = enrollment?.role === "ASSISTANT";
+  const isPrivileged = isDosen || isAssistant;
 
-  if (!isDosen && !isEnrolled) {
+  if (!isPrivileged && !enrollment) {
     return NextResponse.json({ error: "Akses ditolak" }, { status: 403 });
   }
 
   const rubrics = await prisma.rubric.findMany({
     where: { classId },
     include: {
-      criteria: true,
+      criteria: isPrivileged ? true : {
+        select: {
+          id: true,
+          label: true,
+          description: true,
+          maxScore: true,
+          weight: true,
+          expectedAnswer: true,
+          rubricId: true,
+        }
+      },
       _count: { select: { assignments: true } },
     },
     orderBy: { createdAt: "desc" },
