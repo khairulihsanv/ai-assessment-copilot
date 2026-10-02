@@ -53,7 +53,7 @@ export async function GET(
       enrollments: {
         include: { user: { select: { id: true, name: true, email: true } } },
       },
-      assignments: { orderBy: { createdAt: "desc" } },
+      assignments: { where: isPrivileged ? {} : { status: { not: "DRAFT" } }, orderBy: { createdAt: "desc" } },
       rubrics: { 
         select: {
           id: true,
@@ -68,7 +68,7 @@ export async function GET(
               description: true,
               maxScore: true,
               weight: true,
-              expectedAnswer: true,
+              expectedAnswer: isPrivileged,
               rubricId: true,
               answerKey: isPrivileged,
               material: isPrivileged,

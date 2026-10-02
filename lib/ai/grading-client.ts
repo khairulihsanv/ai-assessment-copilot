@@ -178,7 +178,8 @@ Respons HARUS dalam format JSON yang valid sesuai schema.`;
 // ─── Main Client ─── //
 export async function gradeSubmission(
   request: GradingRequest,
-  userId: string
+  userId: string,
+  signal?: AbortSignal
 ): Promise<GradingResult> {
   // Rate limit check
   if (!checkRateLimit(userId)) {
@@ -238,6 +239,11 @@ export async function gradeSubmission(
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 60000);
+      
+      const onAbort = () => controller.abort();
+      if (signal) {
+        signal.addEventListener("abort", onAbort);
+      }
 
       const response = await fetch(GROQ_API_URL, {
         method: "POST",
@@ -259,6 +265,9 @@ export async function gradeSubmission(
       });
 
       clearTimeout(timeoutId);
+      if (signal) {
+        signal.removeEventListener("abort", onAbort);
+      }
 
       // Handle HTTP errors
       if (!response.ok) {
@@ -365,7 +374,10 @@ export async function gradeSubmission(
       lastError = error instanceof Error ? error : new Error(String(error));
 
       // Handle abort/timeout
-      if (lastError.name === "AbortError") {
+      if (lastError.name === "AbortError" || signal?.aborted) {
+        if (signal?.aborted) {
+           throw new GradingError("CANCELLED", "Pekerjaan dibatalkan oleh pengguna.");
+        }
         throw new GradingError(
           "TIMEOUT",
           "AI sedang sibuk. Silakan coba lagi dalam beberapa saat."
@@ -462,6 +474,7 @@ export class GradingError extends Error {
       | "CONFIG_ERROR"
       | "TIMEOUT"
       | "INVALID_RESPONSE"
+      | "CANCELLED"
       | "UNKNOWN",
     message: string
   ) {

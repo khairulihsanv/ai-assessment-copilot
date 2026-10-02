@@ -44,14 +44,15 @@ export default async function GradingStudioHubPage() {
           rubric: { select: { title: true } },
         },
       },
-      grade: true,
-      aiEvaluation: true,
+      grades: { where: { status: "RELEASED" } },
+      evaluations: true,
+      versions: true,
     },
-    orderBy: { submittedAt: "desc" },
+    orderBy: { createdAt: "desc" },
   });
 
-  const pendingSubmissions = submissions.filter((s) => !s.grade);
-  const reviewedSubmissions = submissions.filter((s) => !!s.grade);
+  const pendingSubmissions = submissions.filter((s: any) => !s.grades?.[0]);
+  const reviewedSubmissions = submissions.filter((s: any) => !!s.grades?.[0]);
 
   return (
     <div className="space-y-6 pb-12 animate-in fade-in-50 duration-300">
@@ -105,8 +106,8 @@ export default async function GradingStudioHubPage() {
 
         {submissions.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {submissions.map((sub) => {
-              const isGraded = !!sub.grade;
+            {submissions.map((sub: any) => {
+              const isGraded = !!sub.grades?.[0];
               return (
                 <div
                   key={sub.id}
@@ -145,11 +146,11 @@ export default async function GradingStudioHubPage() {
 
                   <div className="p-3.5 rounded-2xl bg-[#F9FAFB] border border-[#E5E7EB] flex items-center justify-between text-xs">
                     <span className="text-[#6B7280] font-medium">
-                      Diserahkan {formatRelativeTime(sub.submittedAt)}
+                      Diserahkan {formatRelativeTime(sub.createdAt)}
                     </span>
                     <span className="font-mono font-bold text-[#1E4D3B] bg-white px-3 py-1 rounded-full border border-[#E5E7EB] shadow-2xs">
                       {isGraded
-                        ? `Nilai: ${sub.grade?.finalScore}/${sub.assignment.maxScore}`
+                        ? `Nilai: ${sub.grades[0].finalScore}/${sub.assignment.maxScore}`
                         : `Maks: ${sub.assignment.maxScore}`}
                     </span>
                   </div>

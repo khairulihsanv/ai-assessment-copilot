@@ -1,3 +1,4 @@
+import { publicCriterionSelect, publicGradeSelect, withReleasedGrade } from "@/lib/db/public-selects";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/db/prisma";
@@ -34,21 +35,11 @@ export async function GET(
   }
 
   const assignment = await prisma.assignment.findFirst({
-    where: { id: assignmentId, classId },
+    where: { id: assignmentId, classId, ...(isPrivileged ? {} : { status: { not: "DRAFT" } }) },
     include: {
       rubric: {
         include: {
-          criteria: isPrivileged ? true : {
-            select: {
-              id: true,
-              label: true,
-              description: true,
-              maxScore: true,
-              weight: true,
-              expectedAnswer: true,
-              rubricId: true,
-            }
-          }
+          criteria: isPrivileged ? true : { select: publicCriterionSelect }
         },
       },
       class: {
@@ -64,9 +55,10 @@ export async function GET(
           user: {
             select: { id: true, name: true, email: true },
           },
-          grade: true,
+          grades: isPrivileged ? true : { where: { status: "RELEASED" }, select: publicGradeSelect },
+          versions: true,
         },
-        orderBy: { submittedAt: "desc" },
+        orderBy: { createdAt: "desc" },
       },
     },
   });
@@ -75,7 +67,9 @@ export async function GET(
     return NextResponse.json({ error: "Tugas tidak ditemukan" }, { status: 404 });
   }
 
-  return NextResponse.json(assignment);
+  return NextResponse.json(isPrivileged ? assignment : {
+    ...assignment, submissions: assignment.submissions.map(withReleasedGrade),
+  });
 }
 
 // DELETE /api/classes/[classId]/assignments/[assignmentId]
@@ -99,7 +93,7 @@ export async function DELETE(
   }
 
   await prisma.assignment.delete({
-    where: { id: assignmentId },
+    where: { id: assignmentId, classId },
   });
 
   return NextResponse.json({ success: true, message: "Tugas berhasil dihapus" });
@@ -136,13 +130,17 @@ export async function PATCH(
       );
     }
 
+    if (parsed.data.rubricId) {
+      const rubric = await prisma.rubric.findFirst({ where: { id: parsed.data.rubricId, classId }, select: { id: true } });
+      if (!rubric) return NextResponse.json({ error: "Rubrik tidak tersedia di kelas ini" }, { status: 400 });
+    }
     const dataToUpdate: Record<string, unknown> = { ...parsed.data };
     if (dataToUpdate.dueDate) {
       dataToUpdate.dueDate = new Date(dataToUpdate.dueDate as string);
     }
 
     const updated = await prisma.assignment.update({
-      where: { id: assignmentId },
+      where: { id: assignmentId, classId },
       data: dataToUpdate,
       include: {
         rubric: {

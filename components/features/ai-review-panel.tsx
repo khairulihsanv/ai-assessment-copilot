@@ -44,6 +44,8 @@ interface RubricCriterion {
 
 interface AIReviewPanelProps {
   submissionId: string;
+  submissionVersionId: string;
+  releasedGradeId: string | null;
   classId: string;
   assignmentId: string;
   assignmentTitle: string;
@@ -60,17 +62,25 @@ interface AIReviewPanelProps {
     perCriterionScore: CriterionScore[] | unknown;
     tokenUsage?: { promptTokens?: number; completionTokens?: number; totalTokens?: number } | unknown;
   } | null;
+  referenceDocuments?: {
+    id: string;
+    title: string;
+    content: string;
+    matchScore?: number;
+  }[];
   initialGrade?: {
     finalScore: number;
     finalFeedback: string;
     isAIAssisted: boolean;
     editedFromAI: boolean;
-    gradedAt: Date | string;
+    createdAt: Date | string;
   } | null;
 }
 
 export function AIReviewPanel({
   submissionId,
+  submissionVersionId,
+  releasedGradeId,
   classId,
   assignmentId,
   assignmentTitle,
@@ -82,9 +92,10 @@ export function AIReviewPanel({
   rubricCriteria = [],
   initialAIEvaluation,
   initialGrade,
+  referenceDocuments = [],
 }: AIReviewPanelProps) {
   const router = useRouter();
-  const { grading, currentStep, error: aiStreamError, startGrading } = useAIGradingStream();
+  const { grading, currentStep, error: aiStreamError, startGrading, cancelGrading } = useAIGradingStream();
 
   const [aiEvaluation, setAiEvaluation] = useState(initialAIEvaluation);
   const [finalScore, setFinalScore] = useState<number>(
@@ -94,6 +105,7 @@ export function AIReviewPanel({
     initialGrade?.finalFeedback ?? (initialAIEvaluation?.suggestedFeedback ?? "")
   );
   const [copiedFromAI, setCopiedFromAI] = useState(false);
+  const [expectedReleasedGradeId, setExpectedReleasedGradeId] = useState(releasedGradeId);
   const [savingGrade, setSavingGrade] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -158,6 +170,8 @@ export function AIReviewPanel({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          expectedSubmissionVersionId: submissionVersionId,
+          expectedReleasedGradeId,
           finalScore: Number(finalScore),
           finalFeedback: finalFeedback.trim(),
           isAIAssisted,
@@ -170,6 +184,7 @@ export function AIReviewPanel({
         throw new Error(data.error || "Gagal memfinalisasi nilai");
       }
 
+      setExpectedReleasedGradeId(data.grade.id);
       setSaveSuccess(true);
       router.refresh();
     } catch (err: unknown) {
@@ -235,7 +250,16 @@ export function AIReviewPanel({
               <Loader2 className="w-4 h-4 animate-spin text-[#1E4D3B]" />
               Langkah {currentStep.step} dari {currentStep.totalSteps}: {currentStep.message}
             </span>
-            <span className="font-mono text-[11px] text-[#6B7280]">AI Memeriksa Jawaban...</span>
+            <div className="flex items-center gap-4">
+              <span className="font-mono text-[11px] text-[#6B7280]">AI Memeriksa Jawaban...</span>
+              <button 
+                type="button" 
+                onClick={cancelGrading}
+                className="text-[10px] text-rose-600 border border-rose-200 bg-white px-2 py-1 rounded-md hover:bg-rose-50"
+              >
+                Batal
+              </button>
+            </div>
           </div>
           <div className="w-full h-2 bg-white rounded-full overflow-hidden border border-[#E5E3D8]">
             <div
@@ -253,10 +277,10 @@ export function AIReviewPanel({
         </div>
       )}
 
-      {/* Two-Column Layout: Left = Student Submission, Right = AI Draft & Dosen Decision */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left Column: Student Submission Content (5 Cols) */}
-        <div className="lg:col-span-5 space-y-5">
+      {/* Three-Column Layout: Left = Student Submission, Middle = Acuan, Right = AI Draft & Dosen Decision */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
+        {/* Left Column: Student Submission Content */}
+        <div className="space-y-5">
           <div className="p-6 sm:p-7 rounded-3xl border border-[#E5E7EB] bg-white shadow-xs space-y-5">
             <div className="flex items-center justify-between border-b border-[#F3F4F6] pb-4">
               <div className="flex items-center gap-2.5">
@@ -307,8 +331,55 @@ export function AIReviewPanel({
           </div>
         </div>
 
-        {/* Right Column: AI Draft (Warm Cream) & Dosen Final Grade (7 Cols) */}
-        <div className="lg:col-span-7 space-y-6">
+        {/* Middle Column: Bukti Acuan (Reference Documents) */}
+        <div className="space-y-5">
+          <div className="p-6 sm:p-7 rounded-3xl border border-[#E5E7EB] bg-white shadow-xs space-y-5">
+            <div className="flex items-center justify-between border-b border-[#F3F4F6] pb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold">
+                  <FileText className="w-4 h-4" />
+                </div>
+                <h3 className="font-extrabold font-display text-base text-[#111827]">
+                  Bukti Acuan
+                </h3>
+              </div>
+              <Badge variant="outline" className="text-xs">
+                {referenceDocuments.length} Acuan
+              </Badge>
+            </div>
+
+            {referenceDocuments.length > 0 ? (
+              <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
+                {referenceDocuments.map((doc, idx) => (
+                  <div key={doc.id || idx} className="p-4 rounded-2xl bg-[#F9FAFB] border border-[#E5E7EB] space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-[#111827] flex items-center gap-2">
+                        <File className="w-3.5 h-3.5 text-blue-600" />
+                        {doc.title}
+                      </span>
+                      {doc.matchScore && (
+                        <span className="text-[10px] font-mono bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
+                          Match: {doc.matchScore}%
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs text-[#4B5563] leading-relaxed whitespace-pre-wrap line-clamp-6 hover:line-clamp-none transition-all">
+                      {doc.content}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-8 text-center text-[#6B7280] bg-[#F9FAFB] rounded-2xl border border-dashed border-[#E5E7EB]">
+                <FileText className="w-8 h-8 mx-auto text-[#D1D5DB] mb-3" />
+                <p className="text-xs">Tidak ada acuan spesifik yang dipetakan atau diunggah untuk tugas ini.</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right Column: AI Draft (Warm Cream) & Dosen Final Grade */}
+        <div className="space-y-6">
           {/* AI SUGGESTION DRAFT CARD (Dribbble Warm Cream Container #F4F3ED) */}
           {aiEvaluation ? (
             <div className="p-6 sm:p-7 rounded-3xl border border-[#E5E3D8] bg-[#F4F3ED] space-y-5 shadow-xs">

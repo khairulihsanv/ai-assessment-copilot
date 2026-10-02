@@ -1,3 +1,4 @@
+import { publicCriterionSelect } from "@/lib/db/public-selects";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/db/prisma";
@@ -38,17 +39,7 @@ export async function GET(
   const rubrics = await prisma.rubric.findMany({
     where: { classId },
     include: {
-      criteria: isPrivileged ? true : {
-        select: {
-          id: true,
-          label: true,
-          description: true,
-          maxScore: true,
-          weight: true,
-          expectedAnswer: true,
-          rubricId: true,
-        }
-      },
+      criteria: isPrivileged ? true : { select: publicCriterionSelect },
       _count: { select: { assignments: true } },
     },
     orderBy: { createdAt: "desc" },

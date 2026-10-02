@@ -14,8 +14,8 @@ export default async function GradesPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const grades = await prisma.grade.findMany({
-    where: { submission: { userId: session.user.id } },
+  const candidates = await prisma.gradeRevision.findMany({
+    where: { submission: { userId: session.user.id }, status: "RELEASED" },
     include: {
       submission: {
         include: {
@@ -26,8 +26,10 @@ export default async function GradesPage() {
       },
       gradedBy: { select: { name: true } },
     },
-    orderBy: { gradedAt: "desc" },
+    orderBy: { createdAt: "desc" },
   });
+
+  const grades = candidates.filter((grade) => grade.id === grade.submission.releasedGradeId);
 
   return (
     <div className="space-y-6 pb-12 animate-in fade-in-50 duration-300">
@@ -100,7 +102,7 @@ export default async function GradesPage() {
 
         {grades.length > 0 ? (
           <div className="divide-y divide-[#F3F4F6]">
-            {grades.map((g) => (
+            {grades.map((g: any) => (
               <div
                 key={g.id}
                 className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors hover:bg-[#F9FAFB] -mx-3 px-3 rounded-2xl"
@@ -115,7 +117,7 @@ export default async function GradesPage() {
                     </span>
                   </div>
                   <p className="text-xs text-[#6B7280] mt-1">
-                    Disahkan oleh <span className="font-bold text-[#111827]">{g.gradedBy.name}</span> • {formatDate(g.gradedAt)}
+                    Disahkan oleh <span className="font-bold text-[#111827]">{g.gradedBy.name}</span> • {formatDate(g.createdAt)}
                   </p>
                 </div>
                 <div className="sm:text-right">

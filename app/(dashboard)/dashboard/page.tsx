@@ -62,11 +62,12 @@ async function DosenDashboard({ userId, userName }: { userId: string; userName: 
     prisma.submission.count({
       where: {
         assignment: { class: { dosenId: userId } },
-        status: { in: ["SUBMITTED", "AI_REVIEWED"] },
+        activeVersionId: { not: null },
+        releasedGradeId: null,
       },
     }),
-    prisma.grade.count({
-      where: { gradedById: userId },
+    prisma.gradeRevision.count({
+      where: { gradedById: userId, status: "RELEASED" },
     }),
     prisma.submission.findMany({
       where: {
@@ -84,15 +85,17 @@ async function DosenDashboard({ userId, userName }: { userId: string; userName: 
             rubric: { select: { title: true } },
           },
         },
-        grade: true,
+        grades: {
+          where: { status: "RELEASED" }
+        },
       },
-      orderBy: { submittedAt: "desc" },
+      orderBy: { createdAt: "desc" },
       take: 5,
     }),
   ]);
 
-  const totalStudents = classes.reduce((sum, c) => sum + c._count.enrollments, 0);
-  const totalAssignments = classes.reduce((sum, c) => sum + c._count.assignments, 0);
+  const totalStudents = classes.reduce((sum: number, c: any) => sum + c._count.enrollments, 0);
+  const totalAssignments = classes.reduce((sum: number, c: any) => sum + c._count.assignments, 0);
 
   // Fallback demo items if database has no submissions yet
   const demoQueue = [
@@ -306,7 +309,7 @@ async function DosenDashboard({ userId, userName }: { userId: string; userName: 
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {classes.length > 0 ? (
-                classes.slice(0, 4).map((cls) => (
+                classes.slice(0, 4).map((cls: any) => (
                   <div
                     key={cls.id}
                     className="p-5 rounded-2xl bg-[#F9FAFB] border border-[#E5E7EB] hover:border-[#1E4D3B]/40 hover:bg-white transition-all flex flex-col justify-between group"
@@ -380,8 +383,8 @@ async function DosenDashboard({ userId, userName }: { userId: string; userName: 
 
             <div className="space-y-3">
               {recentSubmissions.length > 0 ? (
-                recentSubmissions.map((sub) => {
-                  const score = sub.grade?.finalScore ?? 85;
+                recentSubmissions.map((sub: any) => {
+                  const score = sub.grades?.[0]?.finalScore ?? 85;
                   const confidence = 95;
                   return (
                     <div
@@ -402,7 +405,7 @@ async function DosenDashboard({ userId, userName }: { userId: string; userName: 
                                 {sub.user.email}
                               </span>
                               <span className="font-mono text-[10px] text-[#9CA3AF]">
-                                • {formatRelativeTime(sub.submittedAt)}
+                                • {formatRelativeTime(sub.createdAt)}
                               </span>
                             </div>
                             <p className="text-xs text-[#1E4D3B] font-semibold truncate mt-0.5">
@@ -656,11 +659,11 @@ async function MahasiswaDashboard({ userId, userName }: { userId: string; userNa
       include: {
         class: { select: { id: true, name: true, subject: true } },
         rubric: { select: { title: true } },
-        submissions: { where: { userId: userId }, select: { id: true, status: true } },
+        submissions: { where: { userId: userId }, select: { id: true, releasedGradeId: true } },
       },
     }),
-    prisma.grade.findMany({
-      where: { submission: { userId: userId } },
+    prisma.gradeRevision.findMany({
+      where: { submission: { userId: userId }, status: "RELEASED" },
       include: {
         submission: {
           include: {
@@ -674,7 +677,7 @@ async function MahasiswaDashboard({ userId, userName }: { userId: string; userNa
           },
         },
       },
-      orderBy: { gradedAt: "desc" },
+      orderBy: { createdAt: "desc" },
       take: 4,
     }),
   ]);
@@ -775,7 +778,7 @@ async function MahasiswaDashboard({ userId, userName }: { userId: string; userNa
             </div>
 
             <div className="space-y-3">
-              {upcomingAssignments.map((task) => (
+              {upcomingAssignments.map((task: any) => (
                 <div
                   key={task.id}
                   className="p-4 rounded-2xl bg-[#F9FAFB] border border-[#E5E7EB] flex items-center justify-between gap-4 hover:bg-white hover:border-[#1E4D3B]/30 transition-all"

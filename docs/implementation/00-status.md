@@ -1,5 +1,7 @@
 # Status Implementasi Dexa Assessment
 
+> Pembaruan 2 Oktober 2026: bagian kondisi awal di bawah adalah snapshot historis. Branch kerja saat audit langsung adalah `feat/paket-a-auth` (HEAD `575c84a`) dengan perubahan Paket A/B/C yang belum di-commit. Bukti verifikasi terbaru: 31 tes unit/parser, 12 tes integrasi PostgreSQL 15, build, dan pemeriksaan kesesuaian migrasi/schema lulus secara lokal. Lihat [laporan perbaikan](04-codex-fixes-2026-10-02.md) untuk cakupan dan pekerjaan yang belum selesai.
+
 ## 1. Kondisi Awal dan Snapshot
 - **Branch Aktif**: `master`
 - **Commit Terakhir**: `80b30a7 feat: add PDF/DOCX file upload to extract text for rubric criteria`

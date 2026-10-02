@@ -1,5 +1,5 @@
-import type { NextAuthConfig, DefaultSession } from "next-auth";
 import type { Role } from "@prisma/client";
+import type { DefaultSession, NextAuthConfig } from "next-auth";
 
 declare module "next-auth" {
   interface User {
@@ -15,7 +15,7 @@ declare module "next-auth" {
 
 export const authConfig: NextAuthConfig = {
   trustHost: true,
-  secret: process.env.AUTH_SECRET || "supersecretdevkey1234567890abcdef",
+  secret: process.env.AUTH_SECRET,
   pages: {
     signIn: "/login",
   },
@@ -25,8 +25,7 @@ export const authConfig: NextAuthConfig = {
       const isOnDashboard = nextUrl.pathname.startsWith("/dashboard");
       const isOnClasses = nextUrl.pathname.startsWith("/classes");
       const isOnAuth =
-        nextUrl.pathname.startsWith("/login") ||
-        nextUrl.pathname.startsWith("/register");
+        nextUrl.pathname.startsWith("/login") || nextUrl.pathname.startsWith("/register");
 
       if (isOnDashboard || isOnClasses) {
         return isLoggedIn;

@@ -65,11 +65,11 @@ Pendekatan implementasi: **Data & Otorisasi \u2192 Pipeline Dokumen & RAG \u2192
 
 ---
 
-## Paket Rekomendasi Pertama: Paket A
-Saya merekomendasikan untuk **memulai eksekusi kode di Paket A** setelah mendapat instruksi pengguna.
+## Paket Rekomendasi Berikutnya: Paket E
+Saya merekomendasikan untuk **melanjutkan eksekusi kode ke Paket E** (Studio Koreksi, UX, dan Rilis Nilai) karena Paket C dan Paket D sudah terimplementasi pada level skema, API, pipeline dokumen, dan AbortController untuk AI grading.
 
 **Keputusan yang membutuhkan masukan Anda (User):**
-1. **Peran Asisten (RBAC vs Prisma Enum)**: 
-   Sesuai izin kelas (FR14), seseorang bisa menjadi dosen di Kelas A dan asisten di Kelas B. Apakah diizinkan jika hak akses ini dikelola sebagai relasi di tabel `ClassMembership`/`Enrollment`, bukan sebagai kolom role global `User.role`? (Rekomendasi teknis: **Gunakan ClassMembership**).
-2. **Storage Provider Awal**: 
-   Untuk saat ini abstraksi memakai folder `uploads/` lokal. Apakah ini dapat dipertahankan sebagai MVP, atau Anda punya S3 Bucket mock yang ingin disetel sekarang? (Rekomendasi teknis: **Pertahankan Abstraksi Lokal** untuk mempercepat R0/R1).
+1. **Desain UI Studio Koreksi**: 
+   Sesuai PRD, layout akan menggunakan 3 panel berdampingan atau sistem tab (di layar mobile). Apakah Anda ingin saya membuat prototipe desain awal dengan tailwind di komponen baru, atau memperbarui yang ada (`ai-review-panel.tsx`) untuk mencerminkan layout ini?
+2. **Pustaka UI**:
+   Apakah kita perlu menambahkan pustaka seperti `framer-motion` untuk animasi perpindahan tab/panel, atau cukup Tailwind biasa?

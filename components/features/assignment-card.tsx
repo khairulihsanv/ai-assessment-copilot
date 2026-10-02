@@ -17,11 +17,12 @@ interface AssignmentCardProps {
   submissionCount?: number;
   totalStudents?: number;
   studentSubmission?: {
-    status: "SUBMITTED" | "AI_PROCESSING" | "AI_REVIEWED" | "GRADED";
-    submittedAt: Date | string;
-    grade?: {
+    activeVersionId: string | null;
+    releasedGradeId: string | null;
+    createdAt: Date | string;
+    grades: {
       finalScore: number;
-    } | null;
+    }[];
   } | null;
 }
 
@@ -55,7 +56,7 @@ export function AssignmentCard({
   };
 
   const getStudentStatusBadge = () => {
-    if (!studentSubmission) {
+    if (!studentSubmission || !studentSubmission.activeVersionId) {
       return isPastDue ? (
         <Badge variant="destructive" className="text-xs gap-1">
           <AlertCircle className="w-3 h-3" />
@@ -69,30 +70,21 @@ export function AssignmentCard({
       );
     }
 
-    switch (studentSubmission.status) {
-      case "GRADED":
-        return (
-          <Badge className="text-xs gap-1 bg-emerald-600 hover:bg-emerald-700 text-white">
-            <CheckCircle2 className="w-3 h-3" />
-            Nilai: {studentSubmission.grade?.finalScore ?? "-"} / {maxScore}
-          </Badge>
-        );
-      case "AI_REVIEWED":
-      case "AI_PROCESSING":
-        return (
-          <Badge variant="secondary" className="text-xs gap-1 bg-violet-500/10 text-violet-600 border border-violet-500/20 dark:text-violet-400">
-            <Sparkles className="w-3 h-3" />
-            Menunggu Koreksi Dosen
-          </Badge>
-        );
-      default:
-        return (
-          <Badge variant="secondary" className="text-xs gap-1 bg-primary/10 text-primary border border-primary/20">
-            <CheckCircle2 className="w-3 h-3" />
-            Sudah Terkumpul
-          </Badge>
-        );
+    if (studentSubmission.releasedGradeId && studentSubmission.grades.length > 0) {
+      return (
+        <Badge className="text-xs gap-1 bg-emerald-600 hover:bg-emerald-700 text-white">
+          <CheckCircle2 className="w-3 h-3" />
+          Nilai: {studentSubmission.grades[0]?.finalScore ?? "-"} / {maxScore}
+        </Badge>
+      );
     }
+
+    return (
+      <Badge variant="secondary" className="text-xs gap-1 bg-violet-500/10 text-violet-600 border border-violet-500/20 dark:text-violet-400">
+        <Sparkles className="w-3 h-3" />
+        Menunggu Koreksi Dosen
+      </Badge>
+    );
   };
 
   return (

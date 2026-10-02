@@ -1,3 +1,5 @@
+import { getClassAccess } from "@/lib/auth/class-access";
+import { publicCriterionSelect, publicGradeSelect, withReleasedGrade } from "@/lib/db/public-selects";
 import { auth } from "@/lib/auth/auth";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
@@ -31,6 +33,9 @@ export default async function ClassDetailPage({ params }: ClassDetailPageProps) 
   }
 
   const { classId } = await params;
+  const access = await getClassAccess(classId, session.user.id);
+  if (!access) notFound();
+  const canReview = access.isOwner || access.isAssistant;
 
   const cls = await prisma.class.findUnique({
     where: { id: classId },
@@ -48,16 +53,17 @@ export default async function ClassDetailPage({ params }: ClassDetailPageProps) 
       },
       rubrics: {
         include: {
-          criteria: true,
+          criteria: { select: publicCriterionSelect },
           _count: { select: { assignments: true } },
         },
         orderBy: { createdAt: "desc" },
       },
       assignments: {
-        include: {
+        where: canReview ? {} : { status: { not: "DRAFT" } },        include: {
           submissions: {
-            include: {
-              grade: true,
+            where: canReview ? {} : { userId: session.user.id },            include: {
+              grades: canReview ? true : { where: { status: "RELEASED" }, select: publicGradeSelect },
+              versions: true,
             },
           },
           rubric: true,
@@ -248,7 +254,7 @@ export default async function ClassDetailPage({ params }: ClassDetailPageProps) 
                     isDosen={isDosen}
                     submissionCount={assignment.submissions.length}
                     totalStudents={cls.enrollments.length}
-                    studentSubmission={studentSub}
+                    studentSubmission={studentSub ? withReleasedGrade(studentSub) : null}
                   />
                 );
               })}
@@ -296,7 +302,7 @@ export default async function ClassDetailPage({ params }: ClassDetailPageProps) 
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {cls.rubrics.map((rubric) => (
+              {cls.rubrics.map((rubric: any) => (
                 <div
                   key={rubric.id}
                   className="p-6 rounded-3xl border border-[#E5E7EB] bg-white hover:border-[#C5DDD1] transition-all space-y-4 shadow-xs"
@@ -314,7 +320,7 @@ export default async function ClassDetailPage({ params }: ClassDetailPageProps) 
                   </div>
 
                   <div className="space-y-2 pt-2 border-t border-[#F3F4F6]">
-                    {rubric.criteria.map((crit) => (
+                    {rubric.criteria.map((crit: any) => (
                       <div
                         key={crit.id}
                         className="flex items-center justify-between text-xs bg-[#F9FAFB] p-3 rounded-2xl border border-[#E5E7EB]"
@@ -360,7 +366,7 @@ export default async function ClassDetailPage({ params }: ClassDetailPageProps) 
           ) : (
             <div className="rounded-3xl border border-[#E5E7EB] overflow-hidden bg-white shadow-xs">
               <div className="divide-y divide-[#F3F4F6]">
-                {cls.enrollments.map((enr) => (
+                {cls.enrollments.map((enr: any) => (
                   <div key={enr.id} className="flex items-center justify-between p-4 sm:p-5 hover:bg-[#F9FAFB] transition-colors">
                     <div className="flex items-center gap-3.5">
                       <div className="w-10 h-10 rounded-full bg-[#1E4D3B] text-white font-extrabold flex items-center justify-center text-xs font-mono shadow-2xs">

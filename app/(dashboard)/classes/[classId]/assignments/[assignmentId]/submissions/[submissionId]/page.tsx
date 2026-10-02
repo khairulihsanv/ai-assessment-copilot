@@ -40,12 +40,13 @@ export default async function SubmissionReviewPage({ params }: SubmissionReviewP
           },
         },
       },
-      aiEvaluation: true,
-      grade: true,
+      evaluations: { orderBy: [{ createdAt: "desc" }, { id: "desc" }] },
+      grades: true,
+      versions: true,
     },
   });
 
-  if (!submission || submission.assignmentId !== assignmentId) {
+  if (!submission || submission.assignmentId !== assignmentId || submission.assignment.classId !== classId) {
     notFound();
   }
 
@@ -54,11 +55,16 @@ export default async function SubmissionReviewPage({ params }: SubmissionReviewP
     redirect(`/classes/${classId}/assignments/${assignmentId}`);
   }
 
+  const activeVersion = submission.versions.find(v => v.id === submission.activeVersionId);
+  if (!activeVersion) notFound();
+  const initialAIEvaluation = submission.evaluations.find(e => e.versionId === activeVersion?.id);
+  const initialGrade = submission.grades.find(g => g.id === submission.releasedGradeId && g.versionId === activeVersion.id && g.status === "RELEASED");
+
   // Prepare text content if file
-  let displayContent = submission.content || "";
-  if (!displayContent && submission.fileUrl && (submission.type === "PDF" || submission.type === "DOCX")) {
+  let displayContent = activeVersion?.content || "";
+  if (!displayContent && activeVersion?.fileUrl && (activeVersion.type === "PDF" || activeVersion.type === "DOCX")) {
     try {
-      displayContent = await extractTextFromFile(submission.fileUrl, submission.type);
+      displayContent = await extractTextFromFile(activeVersion.fileUrl, activeVersion.type);
     } catch {
       // ignore extract error on page load, will be handled during grading
     }
@@ -91,19 +97,22 @@ export default async function SubmissionReviewPage({ params }: SubmissionReviewP
       </div>
 
       <AIReviewPanel
+        key={activeVersion.id}
         submissionId={submission.id}
+        submissionVersionId={activeVersion.id}
+        releasedGradeId={submission.releasedGradeId}
         classId={classId}
         assignmentId={assignmentId}
         assignmentTitle={submission.assignment.title}
         maxScore={submission.assignment.maxScore}
         studentName={submission.user.name}
-        submissionType={submission.type}
+        submissionType={activeVersion?.type || "ANY"}
         submissionContent={displayContent}
-        fileName={submission.fileName}
-        fileUrl={submission.fileUrl}
+        fileName={activeVersion?.fileName || ""}
+        fileUrl={activeVersion?.fileUrl || ""}
         rubricCriteria={submission.assignment.rubric?.criteria}
-        initialAIEvaluation={submission.aiEvaluation}
-        initialGrade={submission.grade}
+        initialAIEvaluation={initialAIEvaluation || null}
+        initialGrade={initialGrade || null}
       />
     </div>
   );

@@ -1,3 +1,4 @@
+import { publicCriterionSelect, publicGradeSelect, withReleasedGrade } from "@/lib/db/public-selects";
 import { auth } from "@/lib/auth/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db/prisma";
@@ -61,10 +62,10 @@ export default async function AssignmentsPage() {
           assignments: {
             where: { status: "PUBLISHED" },
             include: {
-              rubric: { include: { criteria: true } },
+              rubric: { include: { criteria: { select: publicCriterionSelect } } },
               submissions: {
                 where: { userId: session.user.id },
-                include: { grade: true },
+                include: { grades: { where: { status: "RELEASED" }, select: publicGradeSelect }, versions: true },
               },
             },
             orderBy: { dueDate: "asc" },
@@ -77,7 +78,7 @@ export default async function AssignmentsPage() {
   return (
     <AssignmentsView
       role="MAHASISWA"
-      enrollments={enrollments}
+      enrollments={enrollments.map((enrollment) => ({ ...enrollment, class: { ...enrollment.class, enrollmentKey: "", assignments: enrollment.class.assignments.map((assignment) => ({ ...assignment, submissions: assignment.submissions.map(withReleasedGrade) })) } }))}
       userId={session.user.id}
     />
   );

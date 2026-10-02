@@ -1,3 +1,5 @@
+import { getClassAccess } from "@/lib/auth/class-access";
+import { publicCriterionSelect } from "@/lib/db/public-selects";
 import { auth } from "@/lib/auth/auth";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
@@ -26,6 +28,7 @@ export default async function AssignmentResultPage({ params }: ResultPageProps) 
   }
 
   const { classId, assignmentId } = await params;
+  if (!(await getClassAccess(classId, session.user.id))) notFound();
 
   const submission = await prisma.submission.findUnique({
     where: {
@@ -35,7 +38,7 @@ export default async function AssignmentResultPage({ params }: ResultPageProps) 
       },
     },
     include: {
-      grade: true,
+      grades: { where: { status: "RELEASED" } },
       assignment: {
         include: {
           class: {
@@ -44,18 +47,20 @@ export default async function AssignmentResultPage({ params }: ResultPageProps) 
             },
           },
           rubric: {
-            include: { criteria: true },
+            include: { criteria: { select: publicCriterionSelect } },
           },
         },
       },
     },
   });
 
-  if (!submission || !submission.grade) {
+  const grade = submission?.assignment.classId === classId
+    ? submission.grades.find((item) => item.id === submission.releasedGradeId) : undefined;
+  if (!submission || !grade) {
     redirect(`/classes/${classId}/assignments/${assignmentId}`);
   }
 
-  const { grade, assignment } = submission;
+  const assignment = submission.assignment;
   const percentage = Math.round((grade.finalScore / assignment.maxScore) * 100);
 
   const getLetterBadge = (pct: number) => {
@@ -122,7 +127,7 @@ export default async function AssignmentResultPage({ params }: ResultPageProps) 
         </div>
 
         <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
-          <span>Dinilai secara resmi pada {formatDateTime(grade.gradedAt)}</span>
+          <span>Dinilai secara resmi pada {formatDateTime(grade.createdAt)}</span>
           {grade.isAIAssisted && (
             <span className="text-[11px] text-accent flex items-center gap-1 font-medium">
               <Sparkles className="w-3.5 h-3.5" />

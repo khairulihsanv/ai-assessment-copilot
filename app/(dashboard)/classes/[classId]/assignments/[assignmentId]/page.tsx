@@ -1,3 +1,5 @@
+import { getClassAccess } from "@/lib/auth/class-access";
+import { publicCriterionSelect, publicGradeSelect, withReleasedGrade } from "@/lib/db/public-selects";
 import { auth } from "@/lib/auth/auth";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
@@ -38,9 +40,12 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
   }
 
   const { classId, assignmentId } = await params;
+  const access = await getClassAccess(classId, session.user.id);
+  if (!access) notFound();
+  const canReview = access.isOwner || access.isAssistant;
 
   const assignment = await prisma.assignment.findFirst({
-    where: { id: assignmentId, classId },
+    where: { id: assignmentId, classId, ...(canReview ? {} : { status: { not: "DRAFT" } }) },
     include: {
       class: {
         include: {
@@ -56,12 +61,13 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
         include: { criteria: true },
       },
       submissions: {
-        include: {
+            where: canReview ? {} : { userId: session.user.id },        include: {
           user: { select: { id: true, name: true, email: true } },
-          grade: true,
-          aiEvaluation: true,
+          grades: canReview ? true : { where: { status: "RELEASED" }, select: publicGradeSelect },
+          evaluations: canReview,
+          versions: true,
         },
-        orderBy: { submittedAt: "desc" },
+        orderBy: { createdAt: "desc" },
       },
     },
   });
@@ -86,8 +92,10 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
 
   const totalEnrollments = assignment.class.enrollments.length;
   const submittedCount = assignment.submissions.length;
-  const gradedCount = assignment.submissions.filter((s) => !!s.grade).length;
-  const pendingCount = assignment.submissions.filter((s) => !s.grade).length;
+  const gradedCount = assignment.submissions.filter((s) => s.releasedGradeId).length;
+  const pendingCount = assignment.submissions.filter((s) => !s.releasedGradeId).length;
+
+  const releasedGrade = !isDosen && studentSubmission ? studentSubmission.grades.find(g => g.id === studentSubmission.releasedGradeId && g.status === "RELEASED") : null;
 
   return (
     <div className="space-y-6 pb-12 animate-in fade-in-50 duration-300">
@@ -195,7 +203,7 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
           </div>
 
           {/* Student Graded Result Card (if graded) */}
-          {!isDosen && studentSubmission?.grade && (
+          {!isDosen && releasedGrade && (
             <div className="p-6 rounded-2xl border border-[#d1fae5] bg-gradient-to-br from-[#f0fdf4] to-white shadow-xs space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-[#065f46] font-bold text-base font-display">
@@ -203,7 +211,7 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
                   <span>Nilai & Evaluasi Akhir</span>
                 </div>
                 <span className="bg-[#10b981] text-white font-mono text-base font-bold px-3 py-1 rounded-xl shadow-xs">
-                  {studentSubmission.grade.finalScore} / {assignment.maxScore}
+                  {releasedGrade.finalScore} / {assignment.maxScore}
                 </span>
               </div>
 
@@ -212,13 +220,13 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
                   Umpan Balik Dosen Pengajar:
                 </p>
                 <p className="text-xs sm:text-sm text-[#0b1c30] whitespace-pre-wrap leading-relaxed">
-                  {studentSubmission.grade.finalFeedback}
+                  {releasedGrade.finalFeedback}
                 </p>
               </div>
 
               <div className="text-xs text-[#737686] flex items-center justify-between pt-1">
-                <span>Dinilai pada {formatDateTime(studentSubmission.grade.gradedAt)}</span>
-                {studentSubmission.grade.isAIAssisted && (
+                <span>Dinilai pada {formatDateTime(releasedGrade.createdAt)}</span>
+                {releasedGrade.isAIAssisted && (
                   <span className="text-[11px] text-[#6a1edb] flex items-center gap-1 font-semibold">
                     <Sparkles className="w-3.5 h-3.5" />
                     Dibantu Asisten AI (Divalidasi Dosen)
@@ -229,12 +237,12 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
           )}
 
           {/* Student Submission Uploader (if not graded) */}
-          {!isDosen && !studentSubmission?.grade && (
+          {!isDosen && !releasedGrade && (
             <SubmissionUploader
               classId={classId}
               assignmentId={assignmentId}
               allowedType={assignment.submissionType}
-              existingSubmission={studentSubmission}
+              existingSubmission={studentSubmission?.versions.find((v: any) => v.id === studentSubmission.activeVersionId) || studentSubmission?.versions[0] || null}
             />
           )}
 
@@ -263,9 +271,12 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
               ) : (
                 <div className="space-y-3">
                   {assignment.submissions.map((sub) => {
-                    const isLate = new Date(sub.submittedAt).getTime() > due.getTime();
-                    const isGraded = sub.status === "GRADED";
-                    const isAIReviewed = sub.status === "AI_REVIEWED";
+                    const isLate = new Date(sub.createdAt).getTime() > due.getTime();
+                    const activeVersion = sub.versions.find(v => v.id === sub.activeVersionId) || sub.versions[0];
+                    const grade = sub.grades.find(g => g.id === sub.releasedGradeId);
+                    const isGraded = !!grade;
+                    const aiEvaluation = sub.evaluations.find(e => e.versionId === activeVersion?.id);
+                    const isAIReviewed = !!aiEvaluation;
 
                     return (
                       <div
@@ -288,11 +299,11 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
                                 </span>
                               )}
                               <span className="font-mono text-[10px] px-2 py-0.2 rounded bg-[#f1f5f9] text-[#434655]">
-                                {sub.type}
+                                {activeVersion?.type || "ANY"}
                               </span>
                             </div>
                             <p className="text-xs text-[#737686] mt-0.5 truncate">
-                              {sub.fileName || "Esai teks"} • Diserahkan {formatRelativeTime(sub.submittedAt)}
+                              {activeVersion?.fileName || "Esai teks"} • Diserahkan {formatRelativeTime(sub.createdAt)}
                             </p>
                           </div>
                         </div>
@@ -303,12 +314,12 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
                           {isGraded ? (
                             <span className="font-mono text-xs font-bold px-2.5 py-1 rounded-xl bg-[#d1fae5] text-[#065f46] flex items-center gap-1">
                               <CheckCircle2 className="w-3.5 h-3.5" />
-                              Nilai: {sub.grade?.finalScore}
+                              Nilai: {grade?.finalScore}
                             </span>
                           ) : isAIReviewed ? (
                             <span className="font-mono text-xs font-bold px-2.5 py-1 rounded-xl bg-[#eaddff] text-[#25005a] flex items-center gap-1">
                               <Sparkles className="w-3.5 h-3.5 text-[#6a1edb]" />
-                              Draft AI: {sub.aiEvaluation?.suggestedTotalScore ?? "-"}
+                              Draft AI: {aiEvaluation?.suggestedTotalScore ?? "-"}
                             </span>
                           ) : (
                             <span className="font-mono text-xs px-2.5 py-1 rounded-xl bg-[#f8f9ff] text-[#737686] border border-[#e2e8f0]">

@@ -151,8 +151,9 @@ export function AssignmentsView({
         t.className.toLowerCase().includes(searchQuery.toLowerCase());
       if (!matchesSearch) return false;
       if (activeTab === "NEED_GRADE") return !t.mySubmission;
-      if (activeTab === "ACTIVE") return t.mySubmission && !t.mySubmission.grade;
-      if (activeTab === "ARCHIVED") return t.mySubmission?.grade;
+      const hasGrade = t.mySubmission?.grades && t.mySubmission.grades.length > 0;
+      if (activeTab === "ACTIVE") return t.mySubmission && !hasGrade;
+      if (activeTab === "ARCHIVED") return hasGrade;
       return true;
     });
 
@@ -228,7 +229,7 @@ export function AssignmentsView({
           >
             <span>Menunggu Penilaian</span>
             <span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-white/20">
-              {studentTasks.filter((t) => t.mySubmission && !t.mySubmission.grade).length}
+              {studentTasks.filter((t) => t.mySubmission && (!t.mySubmission.grades || t.mySubmission.grades.length === 0)).length}
             </span>
           </button>
           <button
@@ -242,7 +243,7 @@ export function AssignmentsView({
           >
             <span>Sudah Dinilai</span>
             <span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-white/20">
-              {studentTasks.filter((t) => t.mySubmission?.grade).length}
+              {studentTasks.filter((t) => t.mySubmission?.grades && t.mySubmission.grades.length > 0).length}
             </span>
           </button>
         </div>
@@ -285,9 +286,9 @@ export function AssignmentsView({
                 <div className="pt-3 border-t border-[#F3F4F6] flex items-center justify-between">
                   <div className="text-[11px] font-mono text-[#6B7280]">
                     {t.mySubmission ? (
-                      t.mySubmission.grade ? (
+                      t.mySubmission.grades && t.mySubmission.grades.length > 0 ? (
                         <span className="font-bold text-[#10B981]">
-                          Nilai: {t.mySubmission.grade.finalScore} / {t.maxScore}
+                          Nilai: {t.mySubmission.grades[0].finalScore} / {t.maxScore}
                         </span>
                       ) : (
                         <span className="text-[#2563EB] font-bold">Menunggu Review</span>

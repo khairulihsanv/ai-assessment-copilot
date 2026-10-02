@@ -1,3 +1,4 @@
+import { publicGradeSelect, withReleasedGrade } from "@/lib/db/public-selects";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/db/prisma";
@@ -30,6 +31,13 @@ export async function GET(
   const isAssistant = enrollment?.role === "ASSISTANT";
   const isPrivileged = isDosen || isAssistant;
 
+  if (!isPrivileged && !enrollment) {
+    return NextResponse.json({ error: "Akses ditolak" }, { status: 403 });
+  }
+  if (!isPrivileged && assignment.status === "DRAFT") {
+    return NextResponse.json({ error: "Tugas tidak ditemukan" }, { status: 404 });
+  }
+
   const submissions = await prisma.submission.findMany({
     where: {
       assignmentId,
@@ -39,13 +47,14 @@ export async function GET(
       user: {
         select: { id: true, name: true, email: true },
       },
-      grade: true,
-      aiEvaluation: isPrivileged,
+      grades: isPrivileged ? true : { where: { status: "RELEASED" }, select: publicGradeSelect },
+      evaluations: isPrivileged,
+      versions: true,
     },
-    orderBy: { submittedAt: "desc" },
+    orderBy: { createdAt: "desc" },
   });
 
-  return NextResponse.json(submissions);
+  return NextResponse.json(isPrivileged ? submissions : submissions.map(withReleasedGrade));
 }
 
 // POST /api/classes/[classId]/assignments/[assignmentId]/submissions — Mahasiswa submits work
@@ -73,7 +82,7 @@ export async function POST(
     },
   });
 
-  if (!enrollment) {
+  if (!enrollment || enrollment.role !== "STUDENT") {
     return NextResponse.json(
       { error: "Anda belum terdaftar di kelas ini" },
       { status: 403 }
@@ -86,6 +95,10 @@ export async function POST(
 
   if (!assignment) {
     return NextResponse.json({ error: "Tugas tidak ditemukan" }, { status: 404 });
+  }
+
+  if (assignment.status !== "PUBLISHED") {
+    return NextResponse.json({ error: "Tugas tidak menerima pengumpulan" }, { status: 403 });
   }
 
   // Check deadline
@@ -169,45 +182,64 @@ export async function POST(
     } else {
       // JSON body for text submission
       const body = await request.json();
-      if (!body.content || !body.content.trim()) {
+      if (typeof body.content !== "string" || !body.content.trim()) {
         return NextResponse.json(
           { error: "Teks jawaban tidak boleh kosong" },
           { status: 400 }
         );
       }
+      if (assignment.submissionType !== "ANY" && assignment.submissionType !== "TEXT") {
+        return NextResponse.json({ error: `Tugas ini hanya menerima format ${assignment.submissionType}` }, { status: 400 });
+      }
       submissionType = "TEXT";
       content = body.content.trim();
     }
 
-    // Upsert submission
-    const submission = await prisma.submission.upsert({
+    let submission = await prisma.submission.findUnique({
       where: {
         assignmentId_userId: {
           assignmentId,
           userId: session.user.id,
         },
       },
-      update: {
-        type: submissionType,
-        content,
-        fileUrl,
-        fileName,
-        submittedAt: now,
-        status: "SUBMITTED",
-      },
-      create: {
-        assignmentId,
-        userId: session.user.id,
-        type: submissionType,
-        content,
-        fileUrl,
-        fileName,
-        submittedAt: now,
-        status: "SUBMITTED",
-      },
+      include: { versions: true }
     });
 
-    return NextResponse.json(submission, { status: 201 });
+    const nextVersionNumber = submission ? submission.versions.length + 1 : 1;
+
+    const result = await prisma.$transaction(async (tx) => {
+      let subId = submission?.id;
+      if (!subId) {
+        const newSub = await tx.submission.create({
+          data: {
+            assignmentId,
+            userId: session.user.id,
+          }
+        });
+        subId = newSub.id;
+      }
+
+      const newVersion = await tx.submissionVersion.create({
+        data: {
+          submissionId: subId,
+          versionNumber: nextVersionNumber,
+          type: submissionType,
+          content,
+          fileUrl,
+          fileName,
+        }
+      });
+
+      const updatedSub = await tx.submission.update({
+        where: { id: subId },
+        data: { activeVersionId: newVersion.id },
+        include: { versions: true }
+      });
+
+      return updatedSub;
+    });
+
+    return NextResponse.json(result, { status: 201 });
   } catch (error) {
     console.error("Submission upload error:", error);
     return NextResponse.json(

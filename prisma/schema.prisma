@@ -40,6 +40,23 @@ enum SubmissionStatus {
   GRADED
 }
 
+enum SourceType {
+  ANSWER_KEY
+  MATERIAL
+}
+
+enum DocumentStatus {
+  UPLOADING
+  UPLOADED
+  EXTRACTING
+  REVIEW_REQUIRED
+  APPROVED
+  INDEXING
+  READY
+  FAILED
+  RETIRED
+}
+
 model User {
   id           String   @id @default(cuid())
   name         String
@@ -53,8 +70,12 @@ model User {
   ownedClasses   Class[]      @relation("DosenClasses")
   enrollments    Enrollment[]
   submissions    Submission[]
-  gradedGrades   Grade[]      @relation("GradedByDosen")
+  gradedGrades   GradeRevision[] @relation("GradedByDosen")
   createdRubrics Rubric[]
+  
+  ownedDocuments Document[]
+  approvedDocuments DocumentVersion[] @relation("DocumentApprovals")
+  approvedReferenceSets ReferenceSetVersion[] @relation("ReferenceSetApprovals")
 
   @@map("users")
 }
@@ -147,60 +168,220 @@ model Assignment {
   rubricId    String?
   rubric      Rubric?      @relation(fields: [rubricId], references: [id], onDelete: SetNull)
   submissions Submission[]
+  
+  documents   Document[]
+  referenceSets ReferenceSetVersion[]
 
   @@map("assignments")
 }
 
 model Submission {
-  id          String           @id @default(cuid())
-  type        SubmissionType
-  content     String? // text content if TEXT submission
-  fileUrl     String? // file path/URL if PDF/DOCX
-  fileName    String?
-  submittedAt DateTime         @default(now())
-  status      SubmissionStatus @default(SUBMITTED)
+  id           String   @id @default(cuid())
+  assignmentId String
+  userId       String   @map("mahasiswaId")
+  createdAt    DateTime @default(now())
+
+  // Pointer ke status dan nilai aktif (Dirilis ke mahasiswa)
+  activeVersionId      String?
+  releasedGradeId      String?
+
+  versions       SubmissionVersion[]
+  evaluations    EvaluationRun[]
+  grades         GradeRevision[]
 
   // Relations
-  assignmentId String
   assignment   Assignment    @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
-  userId       String        @map("mahasiswaId")
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  aiEvaluation AIEvaluation?
-  grade        Grade?
 
   @@unique([assignmentId, userId])
   @@map("submissions")
 }
 
-model AIEvaluation {
-  id                  String   @id @default(cuid())
-  rawModelOutput      Json // full raw JSON from LLM
-  perCriterionScore   Json // [{criterionId, score, reasoning}]
-  suggestedTotalScore Float
-  suggestedFeedback   String
-  tokenUsage          Json? // {promptTokens, completionTokens, totalTokens}
-  createdAt           DateTime @default(now())
-
-  // Relations
-  submissionId String     @unique
+model SubmissionVersion {
+  id           String   @id @default(cuid())
+  submissionId String
   submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  
+  versionNumber Int      // 1, 2, 3...
+  type          SubmissionType
+  content       String?
+  fileUrl       String?
+  fileName      String?
+  submittedAt   DateTime @default(now())
 
-  @@map("ai_evaluations")
+  evaluations   EvaluationRun[]
+  grades        GradeRevision[]
+
+  @@unique([submissionId, versionNumber])
+  @@map("submission_versions")
 }
 
-model Grade {
-  id            String   @id @default(cuid())
-  finalScore    Float
-  finalFeedback String
-  isAIAssisted  Boolean  @default(false)
-  editedFromAI  Boolean  @default(false) // true if dosen modified AI suggestion
-  gradedAt      DateTime @default(now())
+model EvaluationRun {
+  id                  String   @id @default(cuid())
+  submissionId        String
+  submission          Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  versionId           String
+  version             SubmissionVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  
+  // Provenance & Konteks saat dievaluasi
+  rubricVersionSnapshot Json? // Mencatat status rubrik saat dijalankan, agar tidak terpengaruh jika rubrik diubah dosen
+  
+  rawModelOutput      Json 
+  perCriterionScore   Json 
+  suggestedTotalScore Float
+  suggestedFeedback   String
+  tokenUsage          Json? 
+  
+  createdAt           DateTime @default(now())
+  status              String   @default("COMPLETED") // PENDING, COMPLETED, FAILED
+  idempotencyKey      String?  @unique
 
-  // Relations
-  submissionId String     @unique
-  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
-  gradedById   String
-  gradedBy     User       @relation("GradedByDosen", fields: [gradedById], references: [id], onDelete: Cascade)
+  @@map("evaluation_runs")
+}
 
-  @@map("grades")
+model GradeRevision {
+  id              String   @id @default(cuid())
+  submissionId    String
+  submission      Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  versionId       String?
+  version         SubmissionVersion? @relation(fields: [versionId], references: [id], onDelete: SetNull)
+  
+  status          String   @default("DRAFT") // DRAFT, APPROVED, RELEASED, SUPERSEDED, WITHDRAWN
+  finalScore      Float
+  finalFeedback   String
+  isAIAssisted    Boolean  @default(false)
+  editedFromAI    Boolean  @default(false)
+  
+  gradedById      String
+  gradedBy        User     @relation("GradedByDosen", fields: [gradedById], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+  
+  // Audit log
+  changeReason    String?
+  legacyProvenance String? // Untuk data migrasi lama yang tidak diketahui
+
+  @@map("grade_revisions")
+}
+
+model Document {
+  id           String   @id @default(cuid())
+  assignmentId String
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  ownerId      String
+  owner        User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  
+  sourceType   SourceType
+  versions     DocumentVersion[]
+
+  createdAt    DateTime @default(now())
+
+  @@map("documents")
+}
+
+model DocumentVersion {
+  id             String   @id @default(cuid())
+  documentId     String
+  document       Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  
+  versionNumber  Int
+  objectKey      String   // Path in storage
+  mimeType       String
+  checksum       String
+  size           Int
+  
+  extractionStatus DocumentStatus @default(UPLOADED)
+  errorMessage   String?
+  
+  approvedById   String?
+  approvedBy     User?    @relation("DocumentApprovals", fields: [approvedById], references: [id], onDelete: SetNull)
+  approvedAt     DateTime?
+
+  chunks         DocumentChunk[]
+  referenceSets  ReferenceSetDocument[]
+
+  createdAt      DateTime @default(now())
+
+  @@unique([documentId, versionNumber])
+  @@map("document_versions")
+}
+
+model DocumentChunk {
+  id                String   @id @default(cuid())
+  documentVersionId String
+  documentVersion   DocumentVersion @relation(fields: [documentVersionId], references: [id], onDelete: Cascade)
+  
+  rawText           String   @db.Text
+  normalizedText    String?  @db.Text
+  locator           Json     // e.g. { type: "pdf_page", page: 4 }
+  heading           String?
+  language          String?
+  flags             Json?    // e.g. ["TABLE_DETECTED", "UNCLEAR_OCR"]
+  checksum          String
+
+  embeddings        ChunkEmbedding[]
+
+  @@map("document_chunks")
+}
+
+model ChunkEmbedding {
+  id              String   @id @default(cuid())
+  chunkId         String
+  chunk           DocumentChunk @relation(fields: [chunkId], references: [id], onDelete: Cascade)
+  
+  indexGeneration String
+  model           String
+  dimension       Int
+  vector          Json     // Json array for embeddings if not using pgvector native type yet
+  state           String   @default("READY")
+
+  @@map("chunk_embeddings")
+}
+
+model ReferenceSetVersion {
+  id             String   @id @default(cuid())
+  assignmentId   String
+  assignment     Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  
+  versionNumber  Int
+  mapping        Json?    // mapping soal/kriteria
+  visibility     String   @default("PRIVATE")
+  indexGeneration String?
+  manifestHash   String?
+
+  approvedById   String?
+  approvedBy     User?    @relation("ReferenceSetApprovals", fields: [approvedById], references: [id], onDelete: SetNull)
+  approvedAt     DateTime?
+
+  documents      ReferenceSetDocument[]
+  
+  createdAt      DateTime @default(now())
+
+  @@unique([assignmentId, versionNumber])
+  @@map("reference_set_versions")
+}
+
+model ReferenceSetDocument {
+  referenceSetId    String
+  referenceSet      ReferenceSetVersion @relation(fields: [referenceSetId], references: [id], onDelete: Cascade)
+  documentVersionId String
+  documentVersion   DocumentVersion @relation(fields: [documentVersionId], references: [id], onDelete: Cascade)
+
+  @@id([referenceSetId, documentVersionId])
+  @@map("reference_set_documents")
+}
+
+model EvaluatorConfigVersion {
+  id             String   @id @default(cuid())
+  versionNumber  Int
+  provider       String
+  model          String
+  promptVersion  String
+  parameters     Json     // e.g. temperature, max_tokens
+  retrievalConfig Json    // e.g. top_k, hybrid weight
+  parserVersion  String?
+  indexVersion   String?
+
+  createdAt      DateTime @default(now())
+
+  @@map("evaluator_config_versions")
 }
