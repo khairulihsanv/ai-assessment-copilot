@@ -6,11 +6,10 @@ import { GET as getSubmissions } from '@/app/api/classes/[classId]/assignments/[
 import { prisma } from '@/lib/db/prisma';
 import { auth } from '@/lib/auth/auth';
 
+// TEST_DATABASE_URL and DATABASE_URL mapping is handled in vitest.setup.ts
 if (!process.env.TEST_DATABASE_URL) {
   throw new Error("TEST_DATABASE_URL wajib ada. Tes ini tidak boleh berjalan menggunakan database development atau production.");
 }
-
-process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
 
 vi.mock('@/lib/auth/auth', () => ({
   auth: vi.fn(),
