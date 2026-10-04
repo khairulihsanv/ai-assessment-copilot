@@ -52,7 +52,7 @@ const ENTITIES: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"'
 export function decodeXmlEntities(s: string): string {
   return s.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (m, g: string) => {
     if (g[0] === "#") {
-      const code = g[1].toLowerCase() === "x" ? parseInt(g.slice(2), 16) : parseInt(g.slice(1), 10);
+      const code = g.length > 1 && g[1]?.toLowerCase() === "x" ? parseInt(g.slice(2), 16) : parseInt(g.slice(1), 10);
       return Number.isFinite(code) && code > 0 && code < 0x110000 ? String.fromCodePoint(code) : m;
     }
     return ENTITIES[g.toLowerCase()] ?? m;
@@ -133,8 +133,8 @@ async function extractDocx(buffer: Buffer): Promise<ExtractionResult> {
     let m: RegExpExecArray | null;
     let chars = 0;
     while ((m = tokenRe.exec(html))) {
-      const tag = m[1].toLowerCase();
-      const inner = m[2];
+      const tag = (m[1] || "").toLowerCase();
+      const inner = m[2] || "";
       if (tag.startsWith("h")) {
         const t = stripTags(inner);
         if (!t) continue;
@@ -146,12 +146,12 @@ async function extractDocx(buffer: Buffer): Promise<ExtractionResult> {
         if (t) blocks.push({ kind: "paragraph", text: t, locator: locator() });
         chars += t.length;
       } else if (tag === "ul" || tag === "ol") {
-        const items = [...inner.matchAll(/<li\b[^>]*>([\s\S]*?)<\/li>/gi)].map((x) => `• ${stripTags(x[1])}`).filter((x) => x.length > 2);
+        const items = [...inner.matchAll(/<li\b[^>]*>([\s\S]*?)<\/li>/gi)].map((x) => `• ${stripTags(x[1] || "")}`).filter((x) => x.length > 2);
         if (items.length) blocks.push({ kind: "list", text: items.join("\n"), locator: locator() });
         chars += items.join("").length;
       } else if (tag === "table") {
         const rows = [...inner.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)].map((r) =>
-          [...r[1].matchAll(/<t[dh]\b[^>]*>([\s\S]*?)<\/t[dh]>/gi)].map((c) => stripTags(c[1])).join(" | "),
+          [...(r[1] || "").matchAll(/<t[dh]\b[^>]*>([\s\S]*?)<\/t[dh]>/gi)].map((c) => stripTags(c[1] || "")).join(" | "),
         );
         const text = rows.filter(Boolean).join("\n");
         if (text) blocks.push({ kind: "table", text, locator: locator() });
@@ -173,7 +173,7 @@ async function extractDocx(buffer: Buffer): Promise<ExtractionResult> {
 
 function paragraphsFromXml(xml: string): string[] {
   return [...xml.matchAll(/<a:p\b[^>]*>([\s\S]*?)<\/a:p>/g)]
-    .map((p) => decodeXmlEntities([...p[1].matchAll(/<a:t\b[^>]*>([\s\S]*?)<\/a:t>/g)].map((t) => t[1]).join("")).trim())
+    .map((p) => decodeXmlEntities([...(p[1] || "").matchAll(/<a:t\b[^>]*>([\s\S]*?)<\/a:t>/g)].map((t) => t[1] || "").join("")).trim())
     .filter(Boolean);
 }
 
@@ -187,8 +187,8 @@ async function extractPptx(buffer: Buffer): Promise<ExtractionResult> {
   let chars = 0;
   const flags: string[] = [];
   for (const name of slideNames) {
-    const slide = parseInt(name.match(/\d+/)![0], 10);
-    const xml = await zip.files[name].async("string");
+    const slide = parseInt(name.match(/\\d+/)![0] || "0", 10);
+    const xml = await zip.files[name]?.async("string") || "";
     const locator = { type: "pptx_slide", slide };
     for (const sp of xml.split(/<p:sp\b/).slice(1)) {
       const paras = paragraphsFromXml(sp);
@@ -200,7 +200,7 @@ async function extractPptx(buffer: Buffer): Promise<ExtractionResult> {
     }
     const notes = names.find((n) => n === `ppt/notesSlides/notesSlide${slide}.xml`);
     if (notes) {
-      const nparas = paragraphsFromXml(await zip.files[notes].async("string")).filter((t) => !/^\d+$/.test(t));
+      const nparas = paragraphsFromXml(await zip.files[notes]?.async("string") || "").filter((t) => !/^\d+$/.test(t));
       if (nparas.length) blocks.push({ kind: "paragraph", text: nparas.join("\n\n"), locator: { type: "pptx_slide", slide, part: "notes" } });
     }
     if (names.some((n) => n.startsWith("ppt/media/"))) flags.push("CONTAINS_MEDIA_NOT_EXTRACTED");

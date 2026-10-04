@@ -76,6 +76,7 @@ export async function processDocumentVersion(versionId: string) {
     for (let i = 0; i < savedChunks.length; i++) {
       const chunk = savedChunks[i];
       const embeddingResult = embeddings[i];
+      if (!chunk || !embeddingResult) continue;
 
       if (embeddingResult.embedding.length > 0) {
         await upsertChunkEmbeddings(

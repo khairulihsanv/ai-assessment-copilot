@@ -17,8 +17,8 @@ class EmbeddingPipeline {
       }
       this.instance = pipeline(this.task, config.model, {
         // Specify quantized model to reduce memory footprint
-        quantized: true,
-      });
+        dtype: "q8",
+      } as any);
     }
     return this.instance;
   }

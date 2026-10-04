@@ -165,7 +165,7 @@ export async function generateEmbeddings(texts: string[]): Promise<EmbeddingResu
       return validTexts.map((text) => {
         if (!text) return { embedding: [], model: config.model, tokenUsage: 0 };
         return {
-          embedding: localEmbeddings[embeddingIdx++],
+          embedding: localEmbeddings[embeddingIdx++] || [],
           model: config.model,
           tokenUsage: 0,
         };

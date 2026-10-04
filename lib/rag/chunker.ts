@@ -109,10 +109,11 @@ export function chunkBlocks(
   // Group consecutive blocks by unit locator.
   let i = 0;
   while (i < blocks.length) {
-    const unitKey = locatorKey(blocks[i].locator);
-    const unitLocator = blocks[i].locator;
+    const block = blocks[i]!;
+    const unitKey = locatorKey(block.locator);
+    const unitLocator = block.locator;
     const unitBlocks: SourceBlock[] = [];
-    while (i < blocks.length && locatorKey(blocks[i].locator) === unitKey) unitBlocks.push(blocks[i++]);
+    while (i < blocks.length && locatorKey(blocks[i]!.locator) === unitKey) unitBlocks.push(blocks[i++]!);
 
     // Build flat list of (atom, block) in this unit, handling heading updates.
     let current: { atoms: Atom[]; heading: string | null; kinds: Set<BlockKind> } = { atoms: [], heading, kinds: new Set() };
@@ -143,7 +144,7 @@ export function chunkBlocks(
       if (carryOverlap && overlapTokens > 0) {
         let t = 0;
         for (let k = current.atoms.length - 1; k >= 0; k--) {
-          const a = current.atoms[k];
+          const a = current.atoms[k]!;
           if (!a.overlappable || t + a.tokens > overlapTokens) break;
           carry.unshift(a);
           t += a.tokens;
@@ -167,10 +168,10 @@ export function chunkBlocks(
       // A new paragraph/block starts after a blank line unless it is the first atom of a chunk.
       atoms.forEach((a, idx) => {
         const first = idx === 0;
-        if (first && current.atoms.length > 0) a = { ...a, sep: block.kind === "paragraph" || block.kind === "list" ? "\n\n" : "\n\n" };
+        if (first && current.atoms.length > 0) a = { ...a!, sep: block.kind === "paragraph" || block.kind === "list" ? "\n\n" : "\n\n" };
         if (currentTokens() + a.tokens + (a.sep.length ? 1 : 0) > maxTokens && current.atoms.length > 0) {
           flush(true);
-          a = { ...a, sep: "" };
+          a = { ...a!, sep: "" };
         }
         current.atoms.push(a);
         current.kinds.add(block.kind);

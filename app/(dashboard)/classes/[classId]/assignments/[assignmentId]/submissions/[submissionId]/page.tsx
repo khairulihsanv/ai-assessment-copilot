@@ -124,7 +124,14 @@ export default async function SubmissionReviewPage({ params }: SubmissionReviewP
         fileName={activeVersion?.fileName || ""}
         fileUrl={activeVersion?.fileUrl || ""}
         rubricCriteria={submission.assignment.rubric?.criteria}
-        initialAIEvaluation={initialAIEvaluation || null}
+        initialAIEvaluation={
+          initialAIEvaluation
+            ? {
+                ...initialAIEvaluation,
+                suggestedTotalScore: initialAIEvaluation.suggestedTotalScore ?? 0,
+              }
+            : null
+        }
         initialGrade={initialGrade || null}
       />
     </div>
