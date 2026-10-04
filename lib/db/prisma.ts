@@ -5,24 +5,17 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 let databaseUrl = process.env.DATABASE_URL;
-if (!databaseUrl) {
-  throw new Error("DATABASE_URL wajib dikonfigurasi; tidak ada database fallback.");
-}
 
 // CRITICAL FIX: If using Neon pooler, Prisma REQUIRES pgbouncer=true.
 // If the user forgot to add it in Vercel env, it will hang indefinitely.
-if (databaseUrl.includes("-pooler.") && !databaseUrl.includes("pgbouncer=true")) {
+if (databaseUrl && databaseUrl.includes("-pooler.") && !databaseUrl.includes("pgbouncer=true")) {
   databaseUrl += databaseUrl.includes("?") ? "&pgbouncer=true" : "?pgbouncer=true";
 }
 
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
-    datasources: {
-      db: {
-        url: databaseUrl,
-      },
-    },
+    ...(databaseUrl ? { datasources: { db: { url: databaseUrl } } } : {}),
   });
 
 if (process.env.NODE_ENV !== "production") {
