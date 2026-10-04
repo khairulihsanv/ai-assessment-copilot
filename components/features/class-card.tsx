@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { useState } from "react";
 import { Key, Copy, Check, MoreVertical, FolderOpen, TrendingUp, Users } from "lucide-react";
