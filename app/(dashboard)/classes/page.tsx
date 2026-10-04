@@ -93,7 +93,7 @@ export default async function ClassesPage() {
           {isDosen ? <CreateClassModal /> : <JoinClassModal />}
         </div>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-border">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {classes.map((c) => {
             const studentCount = "enrollments" in c._count ? c._count.enrollments : 0;
             const dosenName =
