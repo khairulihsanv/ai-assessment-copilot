@@ -69,9 +69,9 @@ export function AssignmentsView({
       classId: c.id,
       className: c.name,
       classSubject: c.subject,
-      totalStudents: c._count.enrollments || 30,
+      totalStudents: c._count.enrollments || 0,
       submittedCount: a._count?.submissions || 0,
-    }))
+    })),
   );
 
   // Filter assignments
@@ -142,7 +142,7 @@ export function AssignmentsView({
         className: e.class.name,
         subject: e.class.subject,
         mySubmission: a.submissions?.[0],
-      }))
+      })),
     );
 
     const filteredStudentTasks = studentTasks.filter((t) => {
@@ -160,30 +160,35 @@ export function AssignmentsView({
     return (
       <div className="space-y-6 pb-12 animate-in fade-in-50 duration-300">
         {/* Header */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#E5E7EB] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="border-b border-border pb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E2EFE9] border border-[#C5DDD1] mb-2 text-[#1E4D3B]">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-primary/5 border border-border mb-2 text-primary">
               <BookOpen size={13} />
               <span className="font-mono text-[10px] font-bold uppercase tracking-wider">
                 Portal Pembelajaran Mahasiswa
               </span>
             </div>
-            <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#111827]">
-              Tugas & Penugasan Akademik
+            <h1 className="font-display text-2xl sm:text-3xl font-semibold text-foreground">
+              Tugas saya
             </h1>
-            <p className="text-xs sm:text-sm text-[#4B5563] mt-0.5">
-              Pantau seluruh tugas terbit dari kelas perkuliahan Anda, kumpulkan berkas, dan lihat evaluasi AI dosen.
+            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+              Pantau seluruh tugas terbit dari kelas perkuliahan Anda, kumpulkan berkas, dan baca
+              umpan balik yang dirilis dosen.
             </p>
           </div>
 
           <div className="relative w-full md:w-80">
-            <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9CA3AF]" />
+            <Search
+              size={15}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground"
+            />
             <input
               type="text"
+              aria-label="Cari tugas"
               placeholder="Cari tugas atau mata kuliah..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-full bg-[#F9FAFB] border border-[#E5E7EB] text-xs font-medium text-[#111827] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[#1E4D3B] shadow-xs"
+              className="w-full pl-10 pr-4 py-2.5 rounded-md bg-muted/40 border border-border text-xs font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-[#1E4D3B] shadow-none"
             />
           </div>
         </div>
@@ -193,105 +198,115 @@ export function AssignmentsView({
           <button
             type="button"
             onClick={() => setActiveTab("ALL")}
-            className={`px-4 py-2 rounded-full text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+            className={`px-4 py-2 rounded-md text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
               activeTab === "ALL"
-                ? "bg-[#1E4D3B] text-white shadow-xs"
-                : "bg-white text-[#4B5563] hover:bg-[#F3F4F6] border border-[#E5E7EB]"
+                ? "bg-primary text-primary-foreground shadow-none"
+                : "bg-card text-muted-foreground hover:bg-muted border border-border"
             }`}
           >
             <span>Semua</span>
-            <span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-white/20">
+            <span className="font-mono text-[10px] px-2 py-0.5 rounded-md bg-card/20">
               {studentTasks.length}
             </span>
           </button>
           <button
             type="button"
             onClick={() => setActiveTab("NEED_GRADE")}
-            className={`px-4 py-2 rounded-full text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+            className={`px-4 py-2 rounded-md text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
               activeTab === "NEED_GRADE"
-                ? "bg-[#DC2626] text-white shadow-xs"
-                : "bg-white text-[#4B5563] hover:bg-rose-50 border border-[#E5E7EB]"
+                ? "bg-[#DC2626] text-white shadow-none"
+                : "bg-card text-muted-foreground hover:bg-rose-50 border border-border"
             }`}
           >
             <span>Belum Kumpul</span>
-            <span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-white/20">
+            <span className="font-mono text-[10px] px-2 py-0.5 rounded-md bg-card/20">
               {studentTasks.filter((t) => !t.mySubmission).length}
             </span>
           </button>
           <button
             type="button"
             onClick={() => setActiveTab("ACTIVE")}
-            className={`px-4 py-2 rounded-full text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+            className={`px-4 py-2 rounded-md text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
               activeTab === "ACTIVE"
-                ? "bg-[#2563EB] text-white shadow-xs"
-                : "bg-white text-[#4B5563] hover:bg-blue-50 border border-[#E5E7EB]"
+                ? "bg-[#2563EB] text-white shadow-none"
+                : "bg-card text-muted-foreground hover:bg-blue-50 border border-border"
             }`}
           >
             <span>Menunggu Penilaian</span>
-            <span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-white/20">
-              {studentTasks.filter((t) => t.mySubmission && (!t.mySubmission.grades || t.mySubmission.grades.length === 0)).length}
+            <span className="font-mono text-[10px] px-2 py-0.5 rounded-md bg-card/20">
+              {
+                studentTasks.filter(
+                  (t) =>
+                    t.mySubmission &&
+                    (!t.mySubmission.grades || t.mySubmission.grades.length === 0),
+                ).length
+              }
             </span>
           </button>
           <button
             type="button"
             onClick={() => setActiveTab("ARCHIVED")}
-            className={`px-4 py-2 rounded-full text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+            className={`px-4 py-2 rounded-md text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
               activeTab === "ARCHIVED"
-                ? "bg-[#10B981] text-white shadow-xs"
-                : "bg-white text-[#4B5563] hover:bg-emerald-50 border border-[#E5E7EB]"
+                ? "bg-[#10B981] text-white shadow-none"
+                : "bg-card text-muted-foreground hover:bg-emerald-50 border border-border"
             }`}
           >
             <span>Sudah Dinilai</span>
-            <span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-white/20">
-              {studentTasks.filter((t) => t.mySubmission?.grades && t.mySubmission.grades.length > 0).length}
+            <span className="font-mono text-[10px] px-2 py-0.5 rounded-md bg-card/20">
+              {
+                studentTasks.filter(
+                  (t) => t.mySubmission?.grades && t.mySubmission.grades.length > 0,
+                ).length
+              }
             </span>
           </button>
         </div>
 
         {/* Task Cards Grid */}
         {filteredStudentTasks.length === 0 ? (
-          <div className="p-16 text-center bg-white rounded-3xl border border-dashed border-[#E5E7EB] space-y-3">
-            <FileText size={36} className="mx-auto text-[#9CA3AF]" />
-            <h3 className="font-display text-base font-bold text-[#111827]">
+          <div className="p-16 text-center bg-card rounded-lg border border-dashed border-border space-y-3">
+            <FileText size={36} className="mx-auto text-muted-foreground" />
+            <h3 className="font-display text-base font-bold text-foreground">
               Tidak Ada Tugas Ditemukan
             </h3>
-            <p className="text-xs text-[#6B7280] max-w-sm mx-auto">
+            <p className="text-xs text-muted-foreground max-w-sm mx-auto">
               Tidak ada tugas yang sesuai dengan kriteria filter saat ini.
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 gap-3">
             {filteredStudentTasks.map((t) => (
               <div
                 key={t.id}
-                className="bg-white rounded-3xl border border-[#E5E7EB] shadow-xs hover:shadow-md transition-all p-6 flex flex-col justify-between space-y-4 group"
+                className="bg-card rounded-lg border border-border shadow-none hover:shadow-none transition-all p-6 flex flex-col justify-between space-y-4 group"
               >
                 <div className="space-y-2">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="font-mono text-[10px] font-bold px-3 py-1 rounded-full bg-[#E2EFE9] text-[#1E4D3B]">
+                    <span className="font-mono text-[10px] font-bold px-3 py-1 rounded-md bg-primary/5 text-primary">
                       {t.className}
                     </span>
-                    <span className="text-[11px] font-mono text-[#6B7280]">
+                    <span className="text-[11px] font-mono text-muted-foreground">
                       Maks {t.maxScore} Poin
                     </span>
                   </div>
-                  <h3 className="font-display text-base font-bold text-[#111827] group-hover:text-[#1E4D3B] transition line-clamp-2">
+                  <h3 className="font-display text-base font-bold text-foreground group-hover:text-primary transition line-clamp-2">
                     {t.title}
                   </h3>
-                  <p className="text-xs text-[#6B7280] line-clamp-2 leading-relaxed">
+                  <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
                     {t.instructions || "Tugas akademik terstruktur."}
                   </p>
                 </div>
 
-                <div className="pt-3 border-t border-[#F3F4F6] flex items-center justify-between">
-                  <div className="text-[11px] font-mono text-[#6B7280]">
+                <div className="pt-3 border-t border-border flex items-center justify-between">
+                  <div className="text-[11px] font-mono text-muted-foreground">
                     {t.mySubmission ? (
                       t.mySubmission.grades && t.mySubmission.grades.length > 0 ? (
                         <span className="font-bold text-[#10B981]">
                           Nilai: {t.mySubmission.grades[0].finalScore} / {t.maxScore}
                         </span>
                       ) : (
-                        <span className="text-[#2563EB] font-bold">Menunggu Review</span>
+                        <span className="text-primary font-bold">Menunggu Review</span>
                       )
                     ) : (
                       <span className="text-[#DC2626] font-bold">Belum Kumpul</span>
@@ -300,7 +315,7 @@ export function AssignmentsView({
 
                   <Link
                     href={`/classes/${t.classId}/assignments/${t.id}`}
-                    className="px-4 py-2 rounded-full bg-[#1E4D3B] text-white text-xs font-bold hover:bg-[#15392C] transition"
+                    className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-xs font-bold hover:bg-primary/90 transition"
                   >
                     {t.mySubmission ? "Lihat Evaluasi" : "Kumpulkan"}
                   </Link>
@@ -314,30 +329,26 @@ export function AssignmentsView({
   }
 
   // ==========================================
-  // VIEW: DOSEN (Faculty Classwork Hub)
+  // VIEW: DOSEN (Tugas lintas kelas)
   // ==========================================
-  const totalSubmissions = allDosenAssignments.reduce(
-    (sum, a) => sum + (a.submittedCount || 0),
-    0
-  );
+  const totalSubmissions = allDosenAssignments.reduce((sum, a) => sum + (a.submittedCount || 0), 0);
   const totalNeedingGrade = allDosenAssignments.filter((a) => (a.submittedCount || 0) > 0).length;
 
   return (
     <div className="space-y-6 pb-12 animate-in fade-in-50 duration-300">
       {/* ─── 1. TOP HEADER & ACTIONS ─── */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#E5E7EB] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="border-b border-border pb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E2EFE9] text-[#1E4D3B] border border-[#C5DDD1] mb-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-primary/5 text-primary border border-border mb-2">
             <Sparkles size={13} />
             <span className="font-mono text-[10px] font-bold uppercase tracking-wider">
-              Faculty Classwork Hub
+              Tugas lintas kelas
             </span>
           </div>
-          <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#111827]">
-            Manajemen Tugas & Evaluasi Kelas
-          </h1>
-          <p className="text-xs sm:text-sm text-[#4B5563] mt-0.5">
-            Pantau status pengumpulan seluruh kelas, kelola tugas, dan validasi evaluasi AI tanpa kerumitan tabel padat.
+          <h1 className="font-display text-2xl sm:text-3xl font-semibold text-foreground">Tugas</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+            Pantau status pengumpulan seluruh kelas, kelola tugas, dan validasi evaluasi AI dalam
+            satu ruang kerja.
           </p>
         </div>
 
@@ -345,7 +356,7 @@ export function AssignmentsView({
         <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
           <Link
             href="/rubrics"
-            className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-white border border-[#E5E7EB] text-[#1E4D3B] text-xs font-bold rounded-full hover:bg-[#F9FAFB] transition shadow-xs cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-card border border-border text-primary text-xs font-bold rounded-md hover:bg-muted/40 transition shadow-none cursor-pointer"
           >
             <Layers size={14} />
             <span>Kelola Rubrik ({rubrics.length})</span>
@@ -354,85 +365,56 @@ export function AssignmentsView({
           <button
             type="button"
             onClick={() => setShowCreateModal(true)}
-            className="inline-flex items-center gap-1.5 px-6 py-2.5 bg-[#1E4D3B] text-white text-xs font-extrabold rounded-full hover:bg-[#15392C] shadow-sm transition active:scale-[0.98] cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-6 py-2.5 bg-primary text-primary-foreground text-xs font-semibold rounded-md hover:bg-primary/90 shadow-none transition active:scale-[0.98] cursor-pointer"
           >
             <Plus size={15} />
-            <span>+ Buat Tugas Baru</span>
+            <span>Buat tugas</span>
           </button>
         </div>
       </div>
 
-      {/* ─── 2. QUICK METRIC STRIP (Amber, Blue, Purple, Green Cards) ─── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-5 rounded-3xl bg-white border border-[#E5E7EB] shadow-xs flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-2xl bg-[#E2EFE9] text-[#1E4D3B] flex items-center justify-center shrink-0">
-            <FileText size={20} />
-          </div>
-          <div>
-            <span className="text-[11px] font-medium text-[#6B7280] block">Total Tugas</span>
-            <span className="font-display text-2xl font-extrabold text-[#111827]">
-              {allDosenAssignments.length}
-            </span>
-          </div>
+      <section
+        aria-label="Ringkasan tugas"
+        className="grid grid-cols-3 divide-x divide-border border-y border-border"
+      >
+        <div className="px-3 py-4 sm:px-5">
+          <p className="text-xs text-muted-foreground">Total tugas</p>
+          <p className="mt-2 text-2xl font-semibold tabular-nums">{allDosenAssignments.length}</p>
         </div>
-
-        <div className="p-5 rounded-3xl bg-white border border-[#E5E7EB] shadow-xs flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-2xl bg-[#EDE9FE] text-[#7C3AED] flex items-center justify-center shrink-0">
-            <Sparkles size={20} />
-          </div>
-          <div>
-            <span className="text-[11px] font-medium text-[#6B7280] block">Perlu Review</span>
-            <span className="font-display text-2xl font-extrabold text-[#7C3AED]">
-              {totalNeedingGrade}
-            </span>
-          </div>
+        <div className="px-3 py-4 sm:px-5">
+          <p className="text-xs text-muted-foreground">Ada pengumpulan</p>
+          <p className="mt-2 text-2xl font-semibold tabular-nums">{totalNeedingGrade}</p>
         </div>
-
-        <div className="p-5 rounded-3xl bg-white border border-[#E5E7EB] shadow-xs flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-2xl bg-[#FEF3C7] text-[#D97706] flex items-center justify-center shrink-0">
-            <CheckCircle2 size={20} />
-          </div>
-          <div>
-            <span className="text-[11px] font-medium text-[#6B7280] block">Submisi Masuk</span>
-            <span className="font-display text-2xl font-extrabold text-[#D97706]">
-              {totalSubmissions}
-            </span>
-          </div>
+        <div className="px-3 py-4 sm:px-5">
+          <p className="text-xs text-muted-foreground">Jawaban masuk</p>
+          <p className="mt-2 text-2xl font-semibold tabular-nums">{totalSubmissions}</p>
         </div>
-
-        <div className="p-5 rounded-3xl bg-white border border-[#E5E7EB] shadow-xs flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-2xl bg-[#DBEAFE] text-[#2563EB] flex items-center justify-center shrink-0">
-            <Cpu size={20} />
-          </div>
-          <div>
-            <span className="text-[11px] font-medium text-[#6B7280] block">Auto-Grader AI</span>
-            <span className="font-mono text-xs font-bold text-[#2563EB] flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Siap Evaluasi
-            </span>
-          </div>
-        </div>
-      </div>
+      </section>
 
       {/* ─── 3. SEARCH & CLASS FILTER BAR ─── */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-white p-4 rounded-3xl border border-[#E5E7EB] shadow-xs">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-card p-4 rounded-lg border border-border shadow-none">
         <div className="relative flex-1 max-w-md">
-          <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9CA3AF]" />
+          <Search
+            size={15}
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground"
+          />
           <input
             type="text"
+            aria-label="Cari tugas"
             placeholder="Cari judul tugas atau kelas..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-[#F9FAFB] text-[#111827] placeholder:text-[#9CA3AF] text-xs font-medium rounded-full border border-[#E5E7EB] focus:outline-none focus:border-[#1E4D3B] focus:bg-white transition"
+            className="w-full pl-10 pr-4 py-2 bg-muted/40 text-foreground placeholder:text-muted-foreground text-xs font-medium rounded-md border border-border focus:outline-none focus:border-[#1E4D3B] focus:bg-card transition"
           />
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
           {classes.length > 1 && (
             <select
+              aria-label="Filter kelas"
               value={selectedClassFilter}
               onChange={(e) => setSelectedClassFilter(e.target.value)}
-              className="px-4 py-2 rounded-full bg-[#F9FAFB] border border-[#E5E7EB] text-xs font-medium text-[#111827] focus:outline-none focus:border-[#1E4D3B] cursor-pointer"
+              className="px-4 py-2 rounded-md bg-muted/40 border border-border text-xs font-medium text-foreground focus:outline-none focus:border-[#1E4D3B] cursor-pointer"
             >
               <option value="ALL">Semua Kelas Kuliah</option>
               {classes.map((c) => (
@@ -443,14 +425,14 @@ export function AssignmentsView({
             </select>
           )}
 
-          <div className="flex items-center p-1 bg-[#F3F4F6] rounded-full border border-[#E5E7EB]">
+          <div className="flex items-center p-1 bg-muted rounded-md border border-border">
             <button
               type="button"
               onClick={() => setActiveTab("ALL")}
-              className={`px-4 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
+              className={`px-4 py-1.5 rounded-md text-xs font-bold transition cursor-pointer ${
                 activeTab === "ALL"
-                  ? "bg-[#1E4D3B] text-white shadow-xs"
-                  : "text-[#6B7280] hover:text-[#111827]"
+                  ? "bg-primary text-primary-foreground shadow-none"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Semua ({allDosenAssignments.length})
@@ -458,24 +440,24 @@ export function AssignmentsView({
             <button
               type="button"
               onClick={() => setActiveTab("NEED_GRADE")}
-              className={`px-4 py-1.5 rounded-full text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+              className={`px-4 py-1.5 rounded-md text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
                 activeTab === "NEED_GRADE"
-                  ? "bg-[#DC2626] text-white shadow-xs"
-                  : "text-[#6B7280] hover:text-[#DC2626]"
+                  ? "bg-[#DC2626] text-white shadow-none"
+                  : "text-muted-foreground hover:text-[#DC2626]"
               }`}
             >
-              <span>Perlu Dinilai</span>
-              <span className="font-mono text-[10px] px-1.5 py-0.2 rounded-full bg-white/20">
+              <span>Ada pengumpulan</span>
+              <span className="font-mono text-[10px] px-1.5 py-0.2 rounded-md bg-card/20">
                 {totalNeedingGrade}
               </span>
             </button>
             <button
               type="button"
               onClick={() => setActiveTab("ACTIVE")}
-              className={`px-4 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
+              className={`px-4 py-1.5 rounded-md text-xs font-bold transition cursor-pointer ${
                 activeTab === "ACTIVE"
-                  ? "bg-[#1E4D3B] text-white shadow-xs"
-                  : "text-[#6B7280] hover:text-[#111827]"
+                  ? "bg-primary text-primary-foreground shadow-none"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Aktif
@@ -486,25 +468,25 @@ export function AssignmentsView({
 
       {/* ─── 4. CARD GRID ─── */}
       {filteredAssignments.length === 0 ? (
-        <div className="p-16 text-center bg-white rounded-3xl border border-dashed border-[#E5E7EB] space-y-3">
-          <FileText size={40} className="mx-auto text-[#9CA3AF]" />
-          <h3 className="font-display text-lg font-bold text-[#111827]">
+        <div className="p-16 text-center bg-card rounded-lg border border-dashed border-border space-y-3">
+          <FileText size={40} className="mx-auto text-muted-foreground" />
+          <h3 className="font-display text-lg font-bold text-foreground">
             Belum Ada Tugas Ditampilkan
           </h3>
-          <p className="text-xs text-[#6B7280] max-w-sm mx-auto">
-            Buat tugas baru untuk kelas perkuliahan Anda dan tentukan rubrik evaluasi yang diinginkan.
+          <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+            Belum ada tugas yang cocok. Ubah pencarian atau filter, atau buat tugas baru.
           </p>
           <button
             type="button"
             onClick={() => setShowCreateModal(true)}
-            className="mt-2 inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-[#1E4D3B] text-white text-xs font-bold hover:bg-[#15392C] shadow-xs transition"
+            className="mt-2 inline-flex items-center gap-1.5 px-5 py-2.5 rounded-md bg-primary text-primary-foreground text-xs font-bold hover:bg-primary/90 shadow-none transition"
           >
             <Plus size={15} />
             <span>Buat Tugas Baru Sekarang</span>
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 gap-3">
           {filteredAssignments.map((asmt) => {
             const due = new Date(asmt.dueDate);
             const isPastDue = due.getTime() < Date.now();
@@ -516,18 +498,16 @@ export function AssignmentsView({
             return (
               <div
                 key={asmt.id}
-                className="bg-white rounded-3xl border border-[#E5E7EB] shadow-xs hover:shadow-md transition-all flex flex-col justify-between p-6 space-y-4 group"
+                className="bg-card rounded-lg border border-border transition-colors grid gap-5 p-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(220px,0.8fr)_auto] lg:items-center group"
               >
                 <div className="space-y-2">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="font-mono text-[10px] font-bold px-3 py-1 rounded-full bg-[#E2EFE9] text-[#1E4D3B] truncate">
+                    <span className="font-mono text-[10px] font-bold px-3 py-1 rounded-md bg-primary/5 text-primary truncate">
                       {asmt.className}
                     </span>
                     <span
-                      className={`font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 ${
-                        isPastDue
-                          ? "bg-rose-100 text-rose-700"
-                          : "bg-[#F3F4F6] text-[#4B5563]"
+                      className={`font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-md flex items-center gap-1 ${
+                        isPastDue ? "bg-rose-100 text-rose-700" : "bg-muted text-muted-foreground"
                       }`}
                     >
                       <Clock size={11} />
@@ -535,54 +515,55 @@ export function AssignmentsView({
                     </span>
                   </div>
 
-                  <h3 className="font-display text-base font-bold text-[#111827] group-hover:text-[#1E4D3B] transition line-clamp-2">
+                  <h3 className="font-display text-base font-bold text-foreground group-hover:text-primary transition line-clamp-2">
                     {asmt.title}
                   </h3>
 
-                  <p className="text-xs text-[#6B7280] line-clamp-2 leading-relaxed">
-                    {asmt.instructions || "Tugas perkuliahan terstruktur dengan panduan rubrik terstandarisasi."}
+                  <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                    {asmt.instructions ||
+                      "Tugas perkuliahan terstruktur dengan panduan rubrik terstandarisasi."}
                   </p>
                 </div>
 
                 {/* Submission Progress Bar */}
-                <div className="p-3.5 bg-[#F9FAFB] rounded-2xl border border-[#E5E7EB] space-y-2">
+                <div className="p-3.5 bg-muted/40 rounded-lg border border-border space-y-2">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-[#4B5563] font-medium flex items-center gap-1.5">
-                      <Users size={13} className="text-[#6B7280]" />
+                    <span className="text-muted-foreground font-medium flex items-center gap-1.5">
+                      <Users size={13} className="text-muted-foreground" />
                       <span>Pengumpulan</span>
                     </span>
-                    <span className="font-mono font-bold text-[#111827]">
+                    <span className="font-mono font-bold text-foreground">
                       {asmt.submittedCount} / {asmt.totalStudents} Mhs ({submissionPercent}%)
                     </span>
                   </div>
 
-                  <div className="w-full h-2 bg-[#E5E7EB] rounded-full overflow-hidden flex">
+                  <div className="w-full h-2 bg-[#E5E7EB] rounded-md overflow-hidden flex">
                     <div
-                      className="h-full bg-[#1E4D3B] transition-all"
+                      className="h-full bg-primary transition-all"
                       style={{ width: `${Math.min(submissionPercent, 100)}%` }}
                     />
                   </div>
 
-                  <div className="flex items-center justify-between text-[10px] font-mono text-[#6B7280]">
+                  <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground">
                     <span>Maks {asmt.maxScore} Poin</span>
-                    <span className="text-[#1E4D3B] font-semibold truncate max-w-[160px]">
-                      {asmt.rubric?.title ? `Rubrik: ${asmt.rubric.title}` : "Rubrik Bawaan"}
+                    <span className="text-primary font-semibold truncate max-w-[160px]">
+                      {asmt.rubric?.title ? `Rubrik: ${asmt.rubric.title}` : "Belum ada rubrik"}
                     </span>
                   </div>
                 </div>
 
                 {/* Footer Actions */}
-                <div className="pt-3 border-t border-[#F3F4F6] flex items-center justify-between gap-2">
+                <div className="flex items-center justify-between gap-2">
                   <Link
                     href={`/classes/${asmt.classId}/assignments/${asmt.id}`}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-full bg-[#1E4D3B] text-white text-xs font-bold hover:bg-[#15392C] shadow-xs transition"
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-md bg-primary text-primary-foreground text-xs font-bold hover:bg-primary/90 shadow-none transition"
                   >
                     <Sparkles size={13} className="text-emerald-300" />
-                    <span>Buka Studio ({asmt.submittedCount})</span>
+                    <span>Lihat pengumpulan ({asmt.submittedCount})</span>
                   </Link>
                   <Link
                     href={`/classes/${asmt.classId}`}
-                    className="p-2.5 rounded-full bg-[#F3F4F6] text-[#4B5563] hover:text-[#1E4D3B] hover:bg-[#E2EFE9] transition"
+                    className="p-2.5 rounded-md bg-muted text-muted-foreground hover:text-primary hover:bg-primary/5 transition"
                     title="Buka Kelas"
                   >
                     <ChevronRight size={16} />
@@ -597,23 +578,26 @@ export function AssignmentsView({
       {/* ─── CREATE ASSIGNMENT MODAL ─── */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 bg-[#111827]/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl border border-[#E5E7EB] shadow-2xl max-w-lg w-full p-6 space-y-4 animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between pb-3 border-b border-[#F3F4F6]">
+          <div className="bg-card rounded-lg border border-border shadow-2xl max-w-lg w-full max-h-[90dvh] overflow-y-auto p-6 space-y-4 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between pb-3 border-b border-border">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-2xl bg-[#E2EFE9] text-[#1E4D3B] flex items-center justify-center">
+                <div className="w-9 h-9 rounded-lg bg-primary/5 text-primary flex items-center justify-center">
                   <Plus size={18} />
                 </div>
                 <div>
-                  <h3 className="font-display text-base font-extrabold text-[#111827]">
+                  <h3 className="font-display text-base font-semibold text-foreground">
                     Buat Tugas Baru
                   </h3>
-                  <p className="text-xs text-[#6B7280]">Rilis instruksi asesmen untuk kelas Anda</p>
+                  <p className="text-xs text-muted-foreground">
+                    Rilis instruksi asesmen untuk kelas Anda
+                  </p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setShowCreateModal(false)}
-                className="text-[#9CA3AF] hover:text-[#111827] text-sm font-bold cursor-pointer p-1"
+                aria-label="Tutup formulir tugas"
+                className="text-muted-foreground hover:text-foreground text-sm font-bold cursor-pointer p-1"
               >
                 ✕
               </button>
@@ -621,11 +605,11 @@ export function AssignmentsView({
 
             <form onSubmit={handleCreateAssignment} className="space-y-3.5 text-xs">
               <div className="space-y-1">
-                <label className="font-bold text-[#111827]">Pilih Kelas Kuliah</label>
+                <label className="font-bold text-foreground">Pilih Kelas Kuliah</label>
                 <select
                   value={selectedClassId}
                   onChange={(e) => setSelectedClassId(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-full bg-[#F9FAFB] border border-[#E5E7EB] text-xs font-sans text-[#111827] focus:outline-none focus:border-[#1E4D3B]"
+                  className="w-full px-4 py-2.5 rounded-md bg-muted/40 border border-border text-xs font-sans text-foreground focus:outline-none focus:border-[#1E4D3B]"
                 >
                   {classes.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -636,60 +620,60 @@ export function AssignmentsView({
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-[#111827]">Judul Tugas / Proyek</label>
+                <label className="font-bold text-foreground">Judul Tugas / Proyek</label>
                 <input
                   type="text"
                   required
                   placeholder="Contoh: Tugas 4: Implementasi Algoritma Red-Black Tree"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-full bg-[#F9FAFB] border border-[#E5E7EB] text-xs font-sans text-[#111827] focus:outline-none focus:border-[#1E4D3B]"
+                  className="w-full px-4 py-2.5 rounded-md bg-muted/40 border border-border text-xs font-sans text-foreground focus:outline-none focus:border-[#1E4D3B]"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-[#111827]">Petunjuk & Instruksi Penugasan</label>
+                <label className="font-bold text-foreground">Petunjuk & Instruksi Penugasan</label>
                 <textarea
                   rows={3}
                   required
                   placeholder="Jelaskan kriteria pengerjaan, format berkas, dan batasan soal..."
                   value={newInstructions}
                   onChange={(e) => setNewInstructions(e.target.value)}
-                  className="w-full px-4 py-3 rounded-2xl bg-[#F9FAFB] border border-[#E5E7EB] text-xs font-sans text-[#111827] focus:outline-none focus:border-[#1E4D3B] resize-none"
+                  className="w-full px-4 py-3 rounded-lg bg-muted/40 border border-border text-xs font-sans text-foreground focus:outline-none focus:border-[#1E4D3B] resize-none"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="font-bold text-[#111827]">Tenggat Waktu</label>
+                  <label className="font-bold text-foreground">Tenggat Waktu</label>
                   <input
                     type="datetime-local"
                     value={newDueDate}
                     onChange={(e) => setNewDueDate(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-full bg-[#F9FAFB] border border-[#E5E7EB] text-xs font-mono text-[#111827] focus:outline-none focus:border-[#1E4D3B]"
+                    className="w-full px-4 py-2.5 rounded-md bg-muted/40 border border-border text-xs font-mono text-foreground focus:outline-none focus:border-[#1E4D3B]"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="font-bold text-[#111827]">Skor Maksimal</label>
+                  <label className="font-bold text-foreground">Skor Maksimal</label>
                   <input
                     type="number"
                     min={10}
                     max={100}
                     value={newMaxScore}
                     onChange={(e) => setNewMaxScore(Number(e.target.value))}
-                    className="w-full px-4 py-2.5 rounded-full bg-[#F9FAFB] border border-[#E5E7EB] text-xs font-mono text-[#111827] focus:outline-none focus:border-[#1E4D3B]"
+                    className="w-full px-4 py-2.5 rounded-md bg-muted/40 border border-border text-xs font-mono text-foreground focus:outline-none focus:border-[#1E4D3B]"
                   />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-[#111827]">Tautkan Rubrik Evaluasi AI</label>
+                <label className="font-bold text-foreground">Tautkan Rubrik Evaluasi AI</label>
                 <select
                   value={selectedRubricId}
                   onChange={(e) => setSelectedRubricId(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-full bg-[#F9FAFB] border border-[#E5E7EB] text-xs font-sans text-[#111827] focus:outline-none focus:border-[#1E4D3B]"
+                  className="w-full px-4 py-2.5 rounded-md bg-muted/40 border border-border text-xs font-sans text-foreground focus:outline-none focus:border-[#1E4D3B]"
                 >
-                  <option value="">(Gunakan Rubrik Bawaan Capstone)</option>
+                  <option value="">(Gunakan Belum ada rubrik Capstone)</option>
                   {rubrics.map((r: any) => (
                     <option key={r.id} value={r.id}>
                       {r.title} ({r.criteria?.length || 0} kriteria)
@@ -698,18 +682,18 @@ export function AssignmentsView({
                 </select>
               </div>
 
-              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#F3F4F6]">
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-border">
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="px-5 py-2.5 rounded-full bg-[#F3F4F6] text-xs font-bold text-[#4B5563] hover:bg-[#E5E7EB] transition cursor-pointer"
+                  className="px-5 py-2.5 rounded-md bg-muted text-xs font-bold text-muted-foreground hover:bg-[#E5E7EB] transition cursor-pointer"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmittingTask}
-                  className="px-6 py-2.5 rounded-full bg-[#1E4D3B] text-white text-xs font-extrabold hover:bg-[#15392C] shadow-xs transition disabled:opacity-50 cursor-pointer"
+                  className="px-6 py-2.5 rounded-md bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 shadow-none transition disabled:opacity-50 cursor-pointer"
                 >
                   {isSubmittingTask ? "Menyimpan..." : "Publikasikan Tugas"}
                 </button>

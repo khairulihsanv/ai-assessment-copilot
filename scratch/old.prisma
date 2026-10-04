@@ -45,21 +45,6 @@ enum SourceType {
   MATERIAL
 }
 
-enum JobStatus {
-  QUEUED
-  RUNNING
-  SUCCEEDED
-  FAILED
-  CANCEL_REQUESTED
-  CANCELLED
-}
-
-enum JobType {
-  DOCUMENT_EXTRACT
-  DOCUMENT_INDEX
-  EVALUATION
-}
-
 enum DocumentStatus {
   UPLOADING
   UPLOADED
@@ -243,21 +228,14 @@ model EvaluationRun {
   
   rawModelOutput      Json 
   perCriterionScore   Json 
-  suggestedTotalScore Float? // null = belum dapat dinilai (NEEDS_REVIEW), bukan skor 0
+  suggestedTotalScore Float
   suggestedFeedback   String
   tokenUsage          Json? 
   
-  // Provenance RAG (lihat docs/implementation/06-rag-architecture.md)
-  referenceSetVersionId String?
-  jobId                 String?  @unique
-  evaluatorConfig       Json? // provider, model, promptVersion, parameter, retrieval config, index generation
-  evidence              Json? // bukti yang benar-benar dikirim ke LLM (chunkId, locator, teks)
-
   createdAt           DateTime @default(now())
-  status              String   @default("COMPLETED") // COMPLETED, NEEDS_REVIEW, FAILED
+  status              String   @default("COMPLETED") // PENDING, COMPLETED, FAILED
   idempotencyKey      String?  @unique
 
-  @@index([versionId, createdAt])
   @@map("evaluation_runs")
 }
 
@@ -313,15 +291,6 @@ model DocumentVersion {
   
   extractionStatus DocumentStatus @default(UPLOADED)
   errorMessage   String?
-
-  // Provenance ekstraksi & indeks
-  originalName        String?
-  parserVersion       String?
-  extractionMethod    String?
-  pageCount           Int?
-  qualityFlags        Json?
-  activeIndexGeneration String? // generasi indeks aktif; diganti atomik setelah indeks baru valid
-  indexedAt           DateTime?
   
   approvedById   String?
   approvedBy     User?    @relation("DocumentApprovals", fields: [approvedById], references: [id], onDelete: SetNull)
@@ -341,8 +310,6 @@ model DocumentChunk {
   documentVersionId String
   documentVersion   DocumentVersion @relation(fields: [documentVersionId], references: [id], onDelete: Cascade)
   
-  chunkIndex        Int      @default(0)
-  tokenEstimate     Int      @default(0)
   rawText           String   @db.Text
   normalizedText    String?  @db.Text
   locator           Json     // e.g. { type: "pdf_page", page: 4 }
@@ -353,84 +320,21 @@ model DocumentChunk {
 
   embeddings        ChunkEmbedding[]
 
-  @@index([documentVersionId, chunkIndex])
   @@map("document_chunks")
 }
 
-// Embedding native pgvector (dimensi tetap 768; ganti dimensi = migrasi + reindex).
-// Kolom `embedding` hanya ditulis/dibaca lewat SQL berparameter (lib/rag/vector-store.ts).
 model ChunkEmbedding {
   id              String   @id @default(cuid())
   chunkId         String
   chunk           DocumentChunk @relation(fields: [chunkId], references: [id], onDelete: Cascade)
-
-  // Metadata denormalisasi untuk filter retrieval yang selektif dan audit
-  classId           String
-  assignmentId      String
-  documentVersionId String
-  sourceType        SourceType
-  parserVersion     String?
-  checksum          String
-
+  
   indexGeneration String
   model           String
   dimension       Int
-  embedding       Unsupported("vector(768)")?
+  vector          Json     // Json array for embeddings if not using pgvector native type yet
   state           String   @default("READY")
-  createdAt       DateTime @default(now())
 
-  @@unique([chunkId, indexGeneration, model])
-  @@index([assignmentId, indexGeneration, model])
-  @@index([documentVersionId, indexGeneration])
   @@map("chunk_embeddings")
-}
-
-// Cache embedding jawaban/query. scopeKey memisahkan hak akses (mis. sv:<submissionVersionId>);
-// tidak pernah dibagikan lintas mahasiswa.
-model EmbeddingCache {
-  id         String   @id @default(cuid())
-  scopeKey   String
-  checksum   String
-  model      String
-  dimension  Int
-  vectors    Json // number[][] (satu vektor per segmen)
-  hits       Int      @default(0)
-  createdAt  DateTime @default(now())
-  lastUsedAt DateTime @default(now())
-
-  @@unique([scopeKey, checksum, model, dimension])
-  @@map("embedding_cache")
-}
-
-// Antrean durable berbasis PostgreSQL (lease + heartbeat + SKIP LOCKED).
-// Payload hanya berisi ID; tidak boleh berisi isi jawaban atau dokumen.
-model Job {
-  id             String    @id @default(cuid())
-  type           JobType
-  status         JobStatus @default(QUEUED)
-  idempotencyKey String    @unique
-  correlationId  String
-  userId         String
-  classId        String?
-  payload        Json
-  progress       Json?
-  result         Json?
-  errorCode      String?
-  errorMessage   String?
-  attempts       Int       @default(0)
-  maxAttempts    Int       @default(3)
-  runAfter       DateTime  @default(now())
-  leaseOwner     String?
-  leaseExpiresAt DateTime?
-  heartbeatAt    DateTime?
-  createdAt      DateTime  @default(now())
-  startedAt      DateTime?
-  finishedAt     DateTime?
-
-  @@index([status, runAfter])
-  @@index([userId, status])
-  @@index([classId, status])
-  @@map("jobs")
 }
 
 model ReferenceSetVersion {

@@ -13,7 +13,7 @@ interface ThemeState {
 export const useThemeStore = create<ThemeState>()(
   persist(
     (set, get) => ({
-      theme: "system",
+      theme: "light",
       resolvedTheme: "light",
 
       setTheme: (theme: Theme) => {
@@ -32,16 +32,14 @@ export const useThemeStore = create<ThemeState>()(
     {
       name: "aac-theme",
       partialize: (state) => ({ theme: state.theme }),
-    }
-  )
+    },
+  ),
 );
 
 function resolveTheme(theme: Theme): "light" | "dark" {
   if (theme === "system") {
     if (typeof window === "undefined") return "light";
-    return window.matchMedia("(prefers-color-scheme: dark)").matches
-      ? "dark"
-      : "light";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   }
   return theme;
 }
@@ -49,4 +47,5 @@ function resolveTheme(theme: Theme): "light" | "dark" {
 function applyTheme(resolved: "light" | "dark") {
   if (typeof document === "undefined") return;
   document.documentElement.setAttribute("data-theme", resolved);
+  document.documentElement.classList.toggle("dark", resolved === "dark");
 }

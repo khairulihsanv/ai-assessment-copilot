@@ -15,7 +15,7 @@ interface SubmissionReviewPageProps {
 }
 
 export const metadata = {
-  title: "Studio Penilaian AI & Validasi Dosen — AI Assessment Copilot • SV UNS",
+  title: "Studio Penilaian AI & Validasi Dosen — Dexa Assessment",
 };
 
 export default async function SubmissionReviewPage({ params }: SubmissionReviewPageProps) {
@@ -46,7 +46,11 @@ export default async function SubmissionReviewPage({ params }: SubmissionReviewP
     },
   });
 
-  if (!submission || submission.assignmentId !== assignmentId || submission.assignment.classId !== classId) {
+  if (
+    !submission ||
+    submission.assignmentId !== assignmentId ||
+    submission.assignment.classId !== classId
+  ) {
     notFound();
   }
 
@@ -55,14 +59,23 @@ export default async function SubmissionReviewPage({ params }: SubmissionReviewP
     redirect(`/classes/${classId}/assignments/${assignmentId}`);
   }
 
-  const activeVersion = submission.versions.find(v => v.id === submission.activeVersionId);
+  const activeVersion = submission.versions.find((v) => v.id === submission.activeVersionId);
   if (!activeVersion) notFound();
-  const initialAIEvaluation = submission.evaluations.find(e => e.versionId === activeVersion?.id);
-  const initialGrade = submission.grades.find(g => g.id === submission.releasedGradeId && g.versionId === activeVersion.id && g.status === "RELEASED");
+  const initialAIEvaluation = submission.evaluations.find((e) => e.versionId === activeVersion?.id);
+  const initialGrade = submission.grades.find(
+    (g) =>
+      g.id === submission.releasedGradeId &&
+      g.versionId === activeVersion.id &&
+      g.status === "RELEASED",
+  );
 
   // Prepare text content if file
   let displayContent = activeVersion?.content || "";
-  if (!displayContent && activeVersion?.fileUrl && (activeVersion.type === "PDF" || activeVersion.type === "DOCX")) {
+  if (
+    !displayContent &&
+    activeVersion?.fileUrl &&
+    (activeVersion.type === "PDF" || activeVersion.type === "DOCX")
+  ) {
     try {
       displayContent = await extractTextFromFile(activeVersion.fileUrl, activeVersion.type);
     } catch {

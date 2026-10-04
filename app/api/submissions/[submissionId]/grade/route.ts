@@ -118,6 +118,7 @@ export async function POST(
     // No more status updates on submission itself since it's append-only
     const gradingResult = await gradeSubmission(
       {
+        assignmentId: submission.assignmentId,
         assignmentTitle: submission.assignment.title,
         assignmentInstructions: submission.assignment.instructions,
         rubricCriteria,

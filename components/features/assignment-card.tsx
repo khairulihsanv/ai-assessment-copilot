@@ -45,13 +45,38 @@ export function AssignmentCard({
   const getSubmissionTypeBadge = (type: string) => {
     switch (type) {
       case "PDF":
-        return <Badge variant="outline" className="text-xs bg-rose-500/10 text-rose-500 border-rose-500/20">PDF Dokumen</Badge>;
+        return (
+          <Badge
+            variant="outline"
+            className="text-xs bg-rose-500/10 text-rose-500 border-rose-500/20"
+          >
+            PDF Dokumen
+          </Badge>
+        );
       case "DOCX":
-        return <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-500 border-blue-500/20">DOCX Word</Badge>;
+        return (
+          <Badge
+            variant="outline"
+            className="text-xs bg-blue-500/10 text-blue-500 border-blue-500/20"
+          >
+            DOCX Word
+          </Badge>
+        );
       case "TEXT":
-        return <Badge variant="outline" className="text-xs bg-amber-500/10 text-amber-500 border-amber-500/20">Teks Esai</Badge>;
+        return (
+          <Badge
+            variant="outline"
+            className="text-xs bg-amber-500/10 text-amber-500 border-amber-500/20"
+          >
+            Teks Esai
+          </Badge>
+        );
       default:
-        return <Badge variant="outline" className="text-xs bg-muted text-foreground">File / Teks Bebas</Badge>;
+        return (
+          <Badge variant="outline" className="text-xs bg-muted text-foreground">
+            File / Teks Bebas
+          </Badge>
+        );
     }
   };
 
@@ -63,7 +88,10 @@ export function AssignmentCard({
           Terlewat
         </Badge>
       ) : (
-        <Badge variant="outline" className="text-xs gap-1 border-amber-500/40 text-amber-600 bg-amber-500/10 dark:text-amber-400">
+        <Badge
+          variant="outline"
+          className="text-xs gap-1 border-amber-500/40 text-amber-600 bg-amber-500/10 dark:text-amber-400"
+        >
           <Clock className="w-3 h-3" />
           Belum Mengumpulkan
         </Badge>
@@ -80,7 +108,10 @@ export function AssignmentCard({
     }
 
     return (
-      <Badge variant="secondary" className="text-xs gap-1 bg-violet-500/10 text-violet-600 border border-violet-500/20 dark:text-violet-400">
+      <Badge
+        variant="secondary"
+        className="text-xs gap-1 bg-violet-500/10 text-violet-600 border border-violet-500/20 dark:text-violet-400"
+      >
         <Sparkles className="w-3 h-3" />
         Menunggu Koreksi Dosen
       </Badge>
@@ -88,12 +119,15 @@ export function AssignmentCard({
   };
 
   return (
-    <Card className="hover:border-primary/40 hover:shadow-md transition-all duration-200 border-border/70 flex flex-col justify-between">
+    <Card className="hover:border-primary/40 hover:shadow-none transition-all duration-200 border-border/70 flex flex-col justify-between">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between gap-2 flex-wrap mb-2">
           {getSubmissionTypeBadge(submissionType)}
           {isDosen ? (
-            <Badge variant="outline" className="text-xs bg-muted/60 text-muted-foreground font-mono">
+            <Badge
+              variant="outline"
+              className="text-xs bg-muted/60 text-muted-foreground font-mono"
+            >
               Maks. {maxScore} Poin
             </Badge>
           ) : (
@@ -102,21 +136,21 @@ export function AssignmentCard({
         </div>
 
         <CardTitle className="text-lg font-bold font-display group-hover:text-primary transition-colors">
-          <Link href={`/classes/${classId}/assignments/${id}`}>
-            {title}
-          </Link>
+          <Link href={`/classes/${classId}/assignments/${id}`}>{title}</Link>
         </CardTitle>
 
-        <p className="text-xs text-muted-foreground line-clamp-2 mt-1.5">
-          {instructions}
-        </p>
+        <p className="text-xs text-muted-foreground line-clamp-2 mt-1.5">{instructions}</p>
       </CardHeader>
 
       <CardContent className="pb-4">
         <div className="flex items-center gap-4 text-xs text-muted-foreground">
-          <div className={`flex items-center gap-1.5 ${isPastDue ? "text-destructive font-medium" : ""}`}>
+          <div
+            className={`flex items-center gap-1.5 ${isPastDue ? "text-destructive font-medium" : ""}`}
+          >
             <Calendar className="w-3.5 h-3.5" />
-            <span>Tenggat: {formatDateTime(due)} ({formatRelativeTime(due)})</span>
+            <span>
+              Tenggat: {formatDateTime(due)} ({formatRelativeTime(due)})
+            </span>
           </div>
         </div>
 
@@ -134,10 +168,13 @@ export function AssignmentCard({
         <span className="text-xs text-muted-foreground font-medium">
           {isDosen ? "Kelola & Koreksi" : "Buka Tugas"}
         </span>
-        <Button size="sm" variant="ghost" asChild className="h-8 text-xs font-semibold text-primary">
-          <Link href={`/classes/${classId}/assignments/${id}`}>
-            Detail Tugas →
-          </Link>
+        <Button
+          size="sm"
+          variant="ghost"
+          asChild
+          className="h-8 text-xs font-semibold text-primary"
+        >
+          <Link href={`/classes/${classId}/assignments/${id}`}>Detail Tugas →</Link>
         </Button>
       </CardFooter>
     </Card>

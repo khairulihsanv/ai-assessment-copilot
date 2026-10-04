@@ -8,7 +8,7 @@ interface NewAssignmentPageProps {
 }
 
 export const metadata = {
-  title: "Buat Tugas Baru — AI Assessment Copilot • SV UNS",
+  title: "Buat Tugas Baru — Dexa Assessment",
 };
 
 export default async function NewAssignmentPage({ params }: NewAssignmentPageProps) {
