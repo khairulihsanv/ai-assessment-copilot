@@ -16,12 +16,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
   };
 
   return (
-<<<<<<< HEAD
     <div className="flex min-h-screen bg-[#F3F4F6] text-[#111827]">
       <SessionGuard />
-=======
-    <div className="flex min-h-screen bg-background text-foreground">
->>>>>>> ae00f9107d7769e123788769c9123652bf66f60a
       <DashboardSidebar user={userData} />
       <div className="flex-1 flex flex-col min-w-0">
         <DashboardTopbar user={userData} />

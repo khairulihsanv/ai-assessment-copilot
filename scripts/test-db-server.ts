@@ -11,8 +11,11 @@
  * Usage: npx tsx scripts/test-db-server.ts   (port TEST_DB_PORT, default 54329)
  * URL:   postgresql://test_user:test_password@127.0.0.1:54329/test_db?schema=public
  */
+// @ts-ignore
 import { PGlite } from "@electric-sql/pglite";
+// @ts-ignore
 import { vector } from "@electric-sql/pglite-pgvector";
+// @ts-ignore
 import { PGLiteSocketServer } from "@electric-sql/pglite-socket";
 
 const port = Number(process.env.TEST_DB_PORT ?? 54329);

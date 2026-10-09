@@ -193,15 +193,6 @@ model Assignment {
 }
 
 model Submission {
-<<<<<<< HEAD
-  id          String           @id @default(cuid())
-  type        SubmissionType   @default(TEXT)
-  content     String?          // text content if TEXT submission
-  fileUrl     String?          // file path/URL if PDF/DOCX
-  fileName    String?
-  submittedAt DateTime         @default(now())
-  status      SubmissionStatus @default(SUBMITTED)
-=======
   id           String   @id @default(cuid())
   assignmentId String
   userId       String   @map("mahasiswaId")
@@ -214,7 +205,6 @@ model Submission {
   versions       SubmissionVersion[]
   evaluations    EvaluationRun[]
   grades         GradeRevision[]
->>>>>>> ae00f9107d7769e123788769c9123652bf66f60a
 
   // Relations
   assignment   Assignment    @relation(fields: [assignmentId], references: [id], onDelete: Cascade)

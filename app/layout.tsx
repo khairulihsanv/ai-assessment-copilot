@@ -21,7 +21,6 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-<<<<<<< HEAD
     default: "Dexa Assessment | Intelligent Evaluation Platform",
     template: "%s | Dexa Assessment",
   },
@@ -34,14 +33,6 @@ export const metadata: Metadata = {
     "Rubrik Penilaian",
     "LMS",
   ],
-=======
-    default: "Dexa Assessment | Ruang kerja penilaian",
-    template: "%s | Dexa Assessment",
-  },
-  description:
-    "Ruang kerja tugas dan penilaian berbantuan AI. Tinjau jawaban, berikan feedback, dan tetapkan nilai akhir oleh dosen.",
-  keywords: ["Dexa Assessment", "Penilaian akademik", "Rubrik", "Feedback mahasiswa"],
->>>>>>> ae00f9107d7769e123788769c9123652bf66f60a
 };
 
 export default function RootLayout({

@@ -2,12 +2,11 @@
  * Local embedding using Transformers.js with Xenova/multilingual-e5-base.
  * We use the singleton pattern to load the model only once.
  */
-import { pipeline, type FeatureExtractionPipeline } from "@huggingface/transformers";
 import { embeddingConfig } from "@/lib/config/rag-config";
 
 class EmbeddingPipeline {
   static task = "feature-extraction" as const;
-  static instance: Promise<FeatureExtractionPipeline> | null = null;
+  static instance: Promise<any> | null = null;
 
   static async getInstance() {
     if (this.instance === null) {
@@ -15,6 +14,8 @@ class EmbeddingPipeline {
       if (config.kind !== "local") {
         throw new Error("EmbeddingProvider is not set to 'local' in config");
       }
+      // @ts-ignore
+      const { pipeline } = await import("@huggingface/transformers");
       this.instance = pipeline(this.task, config.model, {
         // Specify quantized model to reduce memory footprint
         dtype: "q8",

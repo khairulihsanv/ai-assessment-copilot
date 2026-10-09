@@ -1,7 +1,7 @@
 "use client";
-import { Suspense, useEffect, useState } from "react";
+
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-<<<<<<< HEAD
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Eye,
@@ -31,26 +31,9 @@ function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
-=======
-import { useSearchParams } from "next/navigation";
-import { Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
-import { signIn } from "next-auth/react";
-
-function LoginForm() {
-  const params = useSearchParams();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [show, setShow] = useState(false);
->>>>>>> ae00f9107d7769e123788769c9123652bf66f60a
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  function fillDemo(role: string) {
-    setEmail(role === "DOSEN" ? "dosen.demo@example.com" : "mahasiswa.demo@example.com");
-    setPassword(role === "DOSEN" ? "Dosen@12345" : "Mhs@12345");
-    setError("");
-  }
+
   useEffect(() => {
-<<<<<<< HEAD
     const roleParam = searchParams.get("role");
     const demoParam = searchParams.get("demo");
     const emailParam = searchParams.get("email");
@@ -118,33 +101,11 @@ function LoginForm() {
     } catch (err: unknown) {
       console.error("Login error:", err);
       setError("Gagal menghubungi server autentikasi. Silakan periksa koneksi Anda.");
-=======
-    if (params.get("demo") === "true")
-      fillDemo(params.get("role")?.toUpperCase() === "DOSEN" ? "DOSEN" : "MAHASISWA");
-  }, [params]);
-  async function submit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setLoading(true);
-    setError("");
-    try {
-      const result = await signIn("credentials", { redirect: false, email, password });
-      if (result?.ok) {
-        const callback = params.get("callbackUrl");
-        window.location.assign(
-          callback?.startsWith("/") && !callback.startsWith("//") ? callback : "/dashboard",
-        );
-      } else {
-        setError("Email atau kata sandi tidak cocok. Silakan periksa kembali.");
-        setLoading(false);
-      }
-    } catch {
-      setError("Tidak dapat menghubungi server. Silakan coba lagi.");
->>>>>>> ae00f9107d7769e123788769c9123652bf66f60a
       setLoading(false);
     }
   }
+
   return (
-<<<<<<< HEAD
     <div className="space-y-6 animate-in fade-in-50 duration-500">
       <div className="text-center space-y-1 pb-2">
         <h2 className="text-2xl font-display font-extrabold text-[#111827] tracking-tight">
@@ -267,32 +228,20 @@ function LoginForm() {
               {role === "DOSEN" ? "@staff.uns.ac.id" : "@student.uns.ac.id"}
             </span>
           </div>
-=======
-    <div>
-      <p className="dexa-eyebrow text-primary">Selamat datang kembali</p>
-      <h2 className="mt-3 text-3xl font-semibold tracking-tight">Masuk ke ruang kerja</h2>
-      <p className="mt-3 text-sm leading-6 text-muted-foreground">
-        Lanjutkan tugas dan penilaian Anda di Dexa Assessment.
-      </p>
-      <form onSubmit={submit} className="mt-8 space-y-5" aria-busy={loading}>
-        <div>
-          <label htmlFor="email" className="mb-2 block text-sm font-medium">
-            Email
-          </label>
->>>>>>> ae00f9107d7769e123788769c9123652bf66f60a
           <input
             id="email"
-            name="email"
             type="email"
-            autoComplete="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="nama@kampus.ac.id"
-            className="w-full border px-3 py-3"
+            placeholder={
+              role === "DOSEN"
+                ? "nama.dosen@staff.uns.ac.id"
+                : "mhs.vokasi@student.uns.ac.id"
+            }
+            className="w-full px-4 py-2.5 rounded-full bg-white border border-[#E5E7EB] text-xs font-sans text-[#111827] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[#1E4D3B] focus:ring-2 focus:ring-[#1E4D3B]/20 transition-all shadow-xs"
           />
         </div>
-<<<<<<< HEAD
 
         {/* Password */}
         <div className="space-y-1.5">
@@ -309,41 +258,25 @@ function LoginForm() {
             </button>
           </div>
           <div className="relative flex items-center">
-=======
-        <div>
-          <label htmlFor="password" className="mb-2 block text-sm font-medium">
-            Kata sandi
-          </label>
-          <div className="relative">
->>>>>>> ae00f9107d7769e123788769c9123652bf66f60a
             <input
               id="password"
-              name="password"
-              type={show ? "text" : "password"}
-              autoComplete="current-password"
+              type={showPassword ? "text" : "password"}
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full border py-3 pl-3 pr-12"
+              placeholder="••••••••"
+              className="w-full pl-4 pr-11 py-2.5 rounded-full bg-white border border-[#E5E7EB] text-xs font-sans text-[#111827] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[#1E4D3B] focus:ring-2 focus:ring-[#1E4D3B]/20 transition-all shadow-xs"
             />
             <button
               type="button"
-<<<<<<< HEAD
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-3.5 text-[#9CA3AF] hover:text-[#111827] transition cursor-pointer"
               aria-label={showPassword ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
-=======
-              aria-label={show ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
-              aria-pressed={show}
-              onClick={() => setShow(!show)}
-              className="absolute right-1 top-1 flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground hover:bg-muted"
->>>>>>> ae00f9107d7769e123788769c9123652bf66f60a
             >
-              {show ? <EyeOff size={18} /> : <Eye size={18} />}
+              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
         </div>
-<<<<<<< HEAD
 
         {/* Remember me & Auto-logout preference */}
         <div className="space-y-1 pt-1">
@@ -365,83 +298,73 @@ function LoginForm() {
         </div>
 
         {/* Submit Button (Forest Green Pill) */}
-=======
-        {error && (
-          <p
-            role="alert"
-            className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive"
-          >
-            {error}
-          </p>
-        )}
->>>>>>> ae00f9107d7769e123788769c9123652bf66f60a
         <button
           type="submit"
           disabled={loading}
-          className="dexa-link dexa-link-primary w-full disabled:opacity-60"
+          className="w-full py-3 px-4 mt-2 rounded-full bg-[#1E4D3B] hover:bg-[#15392C] text-white text-xs font-extrabold flex items-center justify-center gap-2 shadow-sm hover:shadow transition-all disabled:opacity-70 cursor-pointer"
         >
           {loading ? (
             <>
-              <Loader2 size={17} className="animate-spin" />
-              Sedang masuk…
+              <Loader2 size={16} className="animate-spin" />
+              <span>Mengautentikasi Sesi...</span>
             </>
           ) : (
             <>
-              Masuk <ArrowRight size={17} />
+              <span>Masuk ke Portal Akademik</span>
+              <ArrowRight size={15} />
             </>
           )}
         </button>
       </form>
-      <details className="mt-5 text-sm">
-        <summary className="min-h-10 py-2 text-muted-foreground">Lupa kata sandi?</summary>
-        <p className="pb-3 text-sm leading-6 text-muted-foreground">
-          Hubungi pengelola aplikasi untuk bantuan pemulihan akun. Pemulihan mandiri belum tersedia.
-        </p>
-      </details>
-      <div className="mt-5 border-t pt-6 text-sm text-muted-foreground">
-        Belum punya akun?{" "}
-        <Link
-          className="font-semibold text-primary underline underline-offset-4"
-          href={`/register?role=${params.get("role")?.toUpperCase() === "MAHASISWA" ? "MAHASISWA" : "DOSEN"}`}
+
+      {/* Divider */}
+      <div className="relative my-4 text-center">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-[#E5E7EB]" />
+        </div>
+        <span className="relative px-3 bg-white text-[10px] font-mono text-[#9CA3AF] uppercase tracking-wider font-semibold">
+          atau masuk via
+        </span>
+      </div>
+
+      {/* SSO Campus Integration */}
+      <div className="grid grid-cols-2 gap-2.5">
+        <button
+          type="button"
+          onClick={() => alert("SSO Google Workspace UNS terintegrasi. Silakan masuk via form di atas untuk demo.")}
+          className="flex items-center justify-center gap-2 py-2 px-3 rounded-full bg-[#F9FAFB] hover:bg-[#F3F4F6] border border-[#E5E7EB] text-xs font-bold text-[#374151] transition cursor-pointer"
         >
-          Daftar sekarang
+          <Building2 size={15} className="text-[#1E4D3B]" />
+          <span>Workspace UNS</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => alert("SSO Akademik UNS terintegrasi. Silakan masuk via form di atas untuk demo.")}
+          className="flex items-center justify-center gap-2 py-2 px-3 rounded-full bg-[#F9FAFB] hover:bg-[#F3F4F6] border border-[#E5E7EB] text-xs font-bold text-[#374151] transition cursor-pointer"
+        >
+          <School size={15} className="text-[#F59E0B]" />
+          <span>SSO Akademik</span>
+        </button>
+      </div>
+
+      {/* Security badge */}
+      <div className="pt-2 flex items-center justify-center gap-1.5 text-center text-[#6B7280] font-mono text-[10px]">
+        <Lock size={12} className="text-emerald-600" />
+        <span>256-bit Enkripsi Akademik & AI Safety Guardrails</span>
+      </div>
+
+      <div className="text-center pt-1">
+        <Link href="/register" className="text-xs font-medium text-[#4B5563] hover:text-[#1E4D3B] transition-colors">
+          Belum punya akun? <strong className="text-[#1E4D3B] underline underline-offset-4">Daftar sekarang</strong>
         </Link>
       </div>
-      <details className="mt-6 rounded-lg border bg-muted/40 px-4 text-sm">
-        <summary className="py-3 font-medium">Coba akun demo</summary>
-        <p className="pb-3 text-xs leading-5 text-muted-foreground">
-          Isi kredensial akun contoh, lalu tekan Masuk. Akun demo harus tersedia pada lingkungan
-          aplikasi ini.
-        </p>
-        <div className="mb-4 flex flex-wrap gap-2">
-          <button
-            className="rounded-lg border bg-card px-3 text-xs font-medium hover:bg-muted"
-            type="button"
-            onClick={() => fillDemo("DOSEN")}
-          >
-            Isi demo dosen
-          </button>
-          <button
-            className="rounded-lg border bg-card px-3 text-xs font-medium hover:bg-muted"
-            type="button"
-            onClick={() => fillDemo("MAHASISWA")}
-          >
-            Isi demo mahasiswa
-          </button>
-        </div>
-      </details>
     </div>
   );
 }
+
 export default function LoginPage() {
   return (
-    <Suspense
-      fallback={
-        <p role="status" className="py-8 text-center text-sm text-muted-foreground">
-          Memuat formulir masuk…
-        </p>
-      }
-    >
+    <Suspense fallback={<div className="p-12 text-center flex flex-col items-center justify-center space-y-4"><Loader2 size={32} className="animate-spin text-[#1E4D3B]" /><span className="text-xs font-mono text-[#6B7280]">Memuat Portal Masuk...</span></div>}>
       <LoginForm />
     </Suspense>
   );
