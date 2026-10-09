@@ -7,8 +7,9 @@ async function main() {
   console.log("🌱 Memulai seeding database AI Assessment Copilot...");
 
   // 1. Clean existing records
-  await prisma.grade.deleteMany();
-  await prisma.aIEvaluation.deleteMany();
+  await prisma.gradeRevision.deleteMany();
+  await prisma.evaluationRun.deleteMany();
+  await prisma.submissionVersion.deleteMany();
   await prisma.submission.deleteMany();
   await prisma.assignment.deleteMany();
   await prisma.rubricCriterion.deleteMany();
@@ -60,7 +61,7 @@ async function main() {
   await prisma.enrollment.create({
     data: {
       classId: sampleClass.id,
-      mahasiswaId: mahasiswa.id,
+      userId: mahasiswa.id,
     },
   });
 
@@ -148,17 +149,27 @@ Referensi:
 - Newman, S. (2021). Building Microservices: Designing Fine-Grained Systems (2nd ed.). O'Reilly Media.
 - Fowler, M. (2014). Microservices: a definition of this new architectural term. martinfowler.com.`;
 
-  const submission = await prisma.submission.create({
+  const sub1 = await prisma.submission.create({
     data: {
       assignmentId: assignment.id,
-      mahasiswaId: mahasiswa.id,
-      type: SubmissionType.TEXT,
-      content: sampleAnswer,
-      status: SubmissionStatus.SUBMITTED,
+      userId: mahasiswa.id,
+      versions: {
+        create: [{
+          versionNumber: 1,
+          type: SubmissionType.TEXT,
+          content: sampleAnswer,
+        }]
+      }
     },
+    include: { versions: true }
   });
 
-  console.log(`✅ Sample Submission dibuat untuk mahasiswa: ${submission.id}`);
+  const submission = await prisma.submission.update({
+    where: { id: sub1.id },
+    data: { activeVersionId: sub1.versions[0]!.id }
+  });
+
+  console.log(`✅ Sample Submission dibuat untuk user: ${submission.id}`);
   console.log("🎉 Seeding database selesai dengan sukses!");
 }
 

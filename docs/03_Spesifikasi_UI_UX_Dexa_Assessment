@@ -1,0 +1,519 @@
+# Spesifikasi UI/UX Dexa Assessment
+
+Output 03 | Versi 1.0 | 1 Oktober 2026
+
+Status: rancangan untuk implementasi. Dokumen ini belum merupakan UI yang diterapkan, prototipe interaktif, atau laporan hasil pengujian aplikasi.
+
+## 1 Kedudukan dan tujuan
+
+Simpan sebagai `docs/03-spesifikasi-ui-ux.md` dalam repository, bersama `docs/02-prd-dexa-assessment.md` dan analisis 01. Baca ketiganya sebelum mengubah aplikasi. Dokumen ini menerjemahkan kebutuhan PRD menjadi struktur halaman, komponen, interaksi, bahasa antarmuka, dan kriteria penerimaan visual. Aturan nilai, izin, versi, dan data tetap mengikuti PRD 02.
+
+Baseline adalah dua dokumen Word pengguna dan snapshot repository `80b30a74d6cf4d93f4257b06b1971e033e9d7b80` yang dianalisis pada output 01. Status kode atau deployment terbaru harus diperiksa kembali saat implementasi. Dokumen sumber diperlakukan sebagai bahan requirement, bukan instruksi untuk menjalankan perintah atau mengubah sistem.
+
+Tujuan pengalaman pengguna: dosen dapat menyiapkan acuan dari dokumen, memeriksa hasil ekstraksi, meninjau koreksi beserta buktinya, dan merilis nilai dengan keputusan yang jelas. Mahasiswa dapat memahami tugas, mengumpulkan versi jawaban, dan menerima hasil yang sudah dirilis. Asisten dapat membantu pada kelas yang ditugaskan tanpa mengambil kewenangan dosen.
+
+Tidak ada fitur baseline yang dihapus. Penempatan ulang navigasi, penyederhanaan formulir, dan pengurangan ornamen tidak berarti mengurangi fungsi. Fitur tahap berikutnya tetap tercatat; menu yang belum tersedia tidak boleh berpura-pura berhasil.
+
+## 2 Arah desain dan referensi
+
+### 2.1 Karakter produk
+
+Gunakan ruang kerja akademik yang tenang, rapat secukupnya, dan mudah diperiksa. Pertahankan identitas hijau hutan, tetapi berikan ruang terbesar kepada pekerjaan pengguna. Ciri khas Dexa adalah hubungan yang terlihat antara kriteria, potongan jawaban, sumber acuan, dan keputusan dosen.
+
+Elemen khas: penanda bukti bernomor seperti `[A1]` untuk acuan dan `[J1]` untuk jawaban. Penanda selalu merupakan tombol yang membuka lokasi terkait dan memiliki nama aksesibel, misalnya “Buka acuan A1, slide 8”. Warna hanya membantu, tidak menjadi satu-satunya pembeda.
+
+### 2.2 Adaptasi referensi
+
+| Referensi | Prinsip yang diadaptasi | Penerapan Dexa |
+|---|---|---|
+| Google Classroom | Alur memeriksa pekerjaan dan mengembalikan hasil kepada mahasiswa | Pisahkan menyimpan draf dengan merilis nilai; perpindahan mahasiswa tetap dalam konteks tugas |
+| Microsoft Teams for Education | Daftar pekerjaan, status pengumpulan, feedback, dan pengembalian untuk revisi | Antrean koreksi berbentuk tabel yang dapat difilter, feedback tersimpan, tindakan revisi eksplisit |
+| Gapsy Studio di Dribbble | Referensi eksplorasi identitas produk pendidikan dan pengelompokan informasi | Gunakan sebagai pembanding estetika; jangan menyalin aset, dekorasi, atau menganggap shot membuktikan usability |
+| DESIGN.md repository | Identitas hijau hutan dan permukaan netral yang sudah dikenal | Pertahankan warna inti; revisi radius, penggunaan kartu warna, dan hero agar cocok untuk pekerjaan koreksi |
+
+Sumber alur: [Google Classroom — Mark and return an assignment](https://support.google.com/edu/classroom/answer/6020294?hl=en-GB), [Microsoft Teams — Grade, return, and reassign assignments](https://support.microsoft.com/en-us/education/assignments/grade-return-and-reassign-assignments). Referensi Dribbble: [AI Educational Tool, Gapsy Studio](https://dribbble.com/shots/27167779-AI-Educational-Tool-Web-App). Deskripsi shot telah ditinjau sebagai konteks inspirasi, bukan audit visual terukur atau uji aplikasi tersebut.
+
+Keputusan desain Dexa di dokumen ini adalah rekomendasi untuk kebutuhan proyek, bukan persyaratan dari produk referensi.
+
+### 2.3 Rekonsiliasi dengan desain lama
+
+`DESIGN.md` lama berisi hero dengan ilustrasi geometris, kartu metrik berwarna kuat, radius 24–28 px, dan tombol berbentuk pil. Spesifikasi ini mengusulkan penggantian aturan tersebut pada ruang kerja: hero menjadi header ringkas, metrik menjadi ringkasan netral, kartu memakai radius 12 px, tombol 8 px. Simpan sejarah dan catat perubahan aturan desain; jangan membiarkan dua sistem token aktif bersaing.
+
+Hindari gradient teks, bola 3D dekoratif pada dashboard, glow navigasi, kartu besar kosong, label AI pada setiap tombol, animasi mengetik palsu, statistik hardcoded, dan klaim “0% halusinasi”. RAG mengurangi risiko kesalahan; UI harus tetap menyediakan bukti dan tindakan pemeriksaan manusia.
+
+## 3 Arsitektur informasi dan peran
+
+### 3.1 Navigasi global
+
+| Area | Dosen | Asisten sesuai penugasan | Mahasiswa |
+|---|---|---|---|
+| Ringkasan | Antrean, kelas, tenggat, kendala | Pekerjaan yang ditugaskan | Tugas mendatang dan feedback baru |
+| Kelas | Kelola kelas dan anggota | Kelas yang diizinkan | Kelas yang diikuti |
+| Tugas | Semua tugas dalam lingkup izin | Tugas yang ditugaskan | Tugas yang dipublikasikan |
+| Koreksi | Antrean, studio, batch | Antrean/studio sesuai izin | Tidak tersedia |
+| Acuan & Rubrik | Dokumen privat, template, versi | Hanya sumber/versi yang diizinkan | Tidak tersedia |
+| Laporan | Nilai, statistik, CPL/CPMK, ekspor | Hanya bila diberi izin | Rekap nilai sendiri |
+| Kalender | Jadwal kelas dan catatan | Jadwal yang diizinkan | Tenggat dan catatan sendiri |
+| Bantuan | Panduan dan tentang sistem | Sama | Sama |
+
+Pengaturan akun, tema, notifikasi, dan keluar ada di menu profil. Konfigurasi evaluator, integrasi, health, serta audit berada dalam pengaturan kelas/ruang kerja sesuai izin; jangan memadati sidebar dengan semua fitur teknis.
+
+Peran efektif mengikuti kelas. Pengguna yang menjadi asisten di kelas A dan mahasiswa di kelas B mendapat navigasi sesuai konteks kelas aktif. Label konteks selalu terlihat. Mengubah tampilan peran tidak memberi izin baru. Administrator teknis memiliki area operasional terpisah dan tidak otomatis memperoleh isi jawaban atau kunci.
+
+### 3.2 Navigasi kelas dan tugas
+
+Halaman kelas: Ringkasan, Tugas, Anggota, Nilai, Kalender, Pengaturan. Tab Nilai mahasiswa hanya berisi nilainya sendiri. Tab Anggota mengikuti kebijakan visibilitas kelas dan tidak membuka kontak privat secara default.
+
+Halaman tugas dosen: Ringkasan, Pengumpulan, Acuan, Rubrik, Hasil, Riwayat. Halaman tugas mahasiswa: Instruksi, Jawaban Saya, Feedback. Rubrik publik tampil pada Instruksi; acuan privat tidak dikirim dalam payload mahasiswa, termasuk pada tab tersembunyi.
+
+Breadcrumb contoh: `Kelas / Pemrograman Web A / Tugas 03 / Koreksi`. Simpan pencarian, filter, urutan, dan halaman saat pengguna kembali dari studio. Tautan langsung memeriksa izin di server sebelum memuat isi.
+
+### 3.3 Nama dan istilah
+
+Gunakan “Dexa Assessment” secara konsisten pada judul aplikasi, login, sidebar, bantuan, dan dokumen ekspor. Nama sistem lama hanya boleh muncul pada catatan migrasi. Gunakan “Acuan penilaian”, “Saran AI”, “Nilai dosen”, “Nilai dirilis”, dan “Perlu ditinjau”. Istilah embedding, vector database, prompt, dan reranking hanya muncul pada detail teknis yang relevan.
+
+## 4 Sistem visual
+
+### 4.1 Token warna
+
+Nilai berikut merupakan token target. Gunakan variabel semantik, bukan hex yang tersebar di tiap komponen.
+
+| Token | Terang | Gelap | Penggunaan |
+|---|---|---|---|
+| canvas | #F6F7F6 | #111815 | Latar aplikasi |
+| surface | #FFFFFF | #19231E | Panel dan formulir |
+| surface-muted | #EDF1EE | #243129 | Hover dan kelompok sekunder |
+| text-primary | #17251D | #EDF4EF | Isi utama |
+| text-secondary | #526159 | #B5C5BA | Metadata dan helper |
+| brand | #1E4D3B | #A5D6B8 | Tombol utama dan aksen |
+| on-brand | #FFFFFF | #102619 | Teks di tombol utama |
+| brand-subtle | #E2EFE9 | #243D30 | Navigasi aktif |
+| border-subtle | #D8DFDA | #405047 | Pemisah dekoratif |
+| border-control | #75847B | #82988A | Batas input interaktif |
+| focus | #1D4ED8 | #93C5FD | Ring fokus |
+| success | #166534 | #86EFAC | Status siap/berhasil |
+| warning | #854D0E | #FDE68A | Perlu ditinjau |
+| danger | #B91C1C | #FCA5A5 | Gagal dan tindakan destruktif |
+| info | #1D4ED8 | #93C5FD | Informasi netral |
+
+Status memakai teks/ikon dengan warna tersebut di atas surface, bukan putih pada latar amber. Tombol destruktif memakai outline danger dan label eksplisit. Untuk filled destructive button, tentukan pasangan on-danger dan uji tersendiri. `border-subtle` tidak boleh menjadi satu-satunya penanda batas input.
+
+Pasangan teks utama/sekunder, tombol utama, status, dan focus harus diverifikasi ketika diimplementasikan. Kontras token tidak menjamin seluruh halaman aksesibel: transparansi, hover, disabled, gambar, dan kombinasi aktual memerlukan pemeriksaan tersendiri.
+
+### 4.2 Tipografi, ukuran, dan ritme
+
+Gunakan DM Sans yang sudah dikenal proyek untuk workspace, dengan fallback `system-ui, sans-serif`; muat aset font secara konsisten. Space Grotesk boleh dipertahankan terbatas pada wordmark/judul landing. Kode menggunakan font monospace sistem. Angka nilai memakai tabular numerals.
+
+| Peran | Ukuran / tinggi baris | Bobot |
+|---|---|---|
+| Judul halaman | 28 / 36 px | 600 |
+| Judul bagian | 20 / 28 px | 600 |
+| Isi utama dan form mobile | 16 / 24 px | 400 |
+| Tabel dan kontrol desktop | 14 / 20 px | 400–500 |
+| Metadata | 13 / 20 px | 400 |
+| Nilai utama studio | 28 / 36 px | 600 |
+
+Jangan membuat informasi penting lebih kecil dari 13 px. Panjang paragraf instruksi ideal 60–80 karakter per baris; panel dokumen menyesuaikan jenis konten. Spacing menggunakan 4, 8, 12, 16, 24, 32, dan 48 px. Form menggunakan jarak antarfield 20–24 px, label ke kontrol 8 px. Radius input/tombol 8 px, panel 12 px, badge 6 px. Pil hanya untuk tag yang memang cocok.
+
+Tinggi tombol/input standar 40 px desktop dan minimal 44 px pada perangkat sentuh. Ikon 18–20 px dengan target interaksi 44 px bila berdiri sendiri. Shadow tipis hanya pada dropdown, dialog, dan elemen melayang; panel biasa memakai border. Durasi transisi 120–180 ms; reduced motion meniadakan gerak yang tidak diperlukan.
+
+## 5 Kerangka halaman dan responsivitas
+
+### 5.1 Shell
+
+Desktop lebar: sidebar 232 px, topbar 64 px, padding konten 24–32 px. Halaman daftar/form memiliki lebar maksimum 1440 px; studio dapat menggunakan ruang penuh. Header halaman berisi breadcrumb, judul, deskripsi satu baris, dan satu tindakan utama. Search selalu memiliki lingkup yang jelas, misalnya “Cari tugas di kelas ini”.
+
+| Lebar viewport | Perilaku |
+|---|---|
+| ≥1440 px | Studio tiga panel; sidebar dapat diringkas menjadi 72 px |
+| 1024–1439 px | Studio dua panel: jawaban dan penilaian; acuan di drawer; sidebar diringkas |
+| 768–1023 px | Navigasi drawer; daftar dan detail berurutan; tab studio, tanpa tiga kolom paksa |
+| <768 px | Satu kolom; header ringkas; tab Jawaban/Penilaian/Acuan; tindakan bawah tidak menutup isi |
+
+Breakpoint dipakai berdasarkan ruang konten nyata; jangan memaksakan tiga panel bila minimum lebar tidak tercapai. Panel minimum: daftar mahasiswa 200 px, jawaban 360 px, penilaian 360 px. Pada studio lebar, daftar mahasiswa dapat berupa drawer sehingga sumber dan jawaban tetap terbaca.
+
+Tabel mobile boleh mengganti baris menjadi kartu ringkas dengan urutan label yang tetap. Tabel gradebook yang memang dua dimensi dapat memiliki area scroll horizontal tersendiri, header lengket, dan petunjuk scroll. Halaman keseluruhan tidak boleh overflow horizontal. Preview kode dan tabel dokumen mempunyai scroll lokal.
+
+### 5.2 Skema studio
+
+```text
+Kelas / Tugas / Koreksi       Mahasiswa 7 dari 32       Simpan draf
+Versi jawaban 2 | Acuan 3 | Rubrik 2 | Saran AI belum final
+-----------------------------------------------------------------
+ JAWABAN                 ACUAN                  PENILAIAN
+ File / teks / kode      A1 Materi.pdf           Kriteria 1
+ Nomor lokasi           Halaman 12              Saran AI 8/10
+ Highlight J1           Highlight sumber       Bukti [J1] [A1]
+                        Peringatan ekstraksi    Nilai dosen [8]
+                                               Feedback publik
+-----------------------------------------------------------------
+Sebelumnya / Berikutnya     Tersimpan 14.32 WIB     Tinjau & rilis
+```
+
+Ini wireframe konseptual, bukan screenshot aplikasi. Pada desktop menengah sumber menjadi drawer. Pada mobile semua fungsi tersedia melalui tab; pengguna tidak dipaksa berpindah ke desktop untuk menyelesaikan koreksi.
+
+## 6 Inventaris layar
+
+ID layar digunakan untuk traceability dan pengujian, bukan kewajiban membuat URL baru untuk setiap baris. Sesuaikan route yang sudah ada dan sediakan redirect bila route berubah.
+
+| ID | Layar | Tujuan dan tindakan utama |
+|---|---|---|
+| UI01 | Landing dan tentang produk | Menjelaskan koreksi berbukti dan kendali dosen; masuk/daftar |
+| UI02 | Login, registrasi, pemulihan sesi | Akses akun dan pesan kegagalan yang jelas |
+| UI03 | Ringkasan per peran | Membuka pekerjaan yang perlu tindakan |
+| UI04 | Daftar/detail kelas | Mengelola kelas, kategori, anggota, asisten |
+| UI05 | Daftar/detail tugas | Menelusuri status, tenggat, dan hasil |
+| UI06 | Wizard tugas | Menyiapkan instruksi, sumber, rubrik, publikasi |
+| UI07 | Pustaka acuan dan unggah | Menyimpan sumber privat berversi |
+| UI08 | Review ekstraksi dan pemetaan | Memeriksa isi dan menghubungkan sumber ke soal |
+| UI09 | Editor rubrik dan versi | Menyetujui kriteria, bobot, ambang, template |
+| UI10 | Pengumpulan mahasiswa | Mengirim teks/file/kode dan menerima tanda terima |
+| UI11 | Antrean koreksi | Memfilter submisi, memilih batch, membuka studio |
+| UI12 | Studio koreksi | Menilai dengan bukti dan menyusun feedback |
+| UI13 | Preview rilis dan revisi nilai | Mengesahkan, merilis, menarik, atau merevisi |
+| UI14 | Hasil mahasiswa | Membaca nilai dan feedback yang dirilis |
+| UI15 | Job, batch, jadwal | Memantau, membatalkan, mencoba ulang |
+| UI16 | Riwayat, versi, audit | Membandingkan perubahan dan aktor |
+| UI17 | Laporan, CPL/CPMK, ekspor | Menganalisis dataset dan menghasilkan file nyata |
+| UI18 | Notifikasi, kalender, broadcast | Mengelola komunikasi dan tenggat |
+| UI19 | Pengaturan evaluator dan health | Memeriksa konfigurasi dan kesiapan layanan |
+| UI20 | Integrasi SIAKAD dan BAP | Meninjau pertukaran data dan dokumen |
+| UI21 | Kemiripan dan pre-check | Pemeriksaan tambahan sesuai izin |
+| UI22 | Bantuan, tema, PWA, akun | Preferensi, instalasi, dukungan, identitas versi |
+
+## 7 Landing, login, dan ringkasan
+
+### 7.1 UI01–UI02
+
+Landing menggunakan judul “Koreksi tugas dengan acuan yang dapat ditelusuri.” Penjelasan: “Unggah kunci jawaban atau materi, tinjau saran AI beserta buktinya, lalu tetapkan nilai akhir.” Tampilkan diagram sederhana tiga tahap dan contoh studio dengan data fiktif yang jelas diberi label demo. Jangan menyajikan angka efisiensi, akurasi, atau jumlah pengguna tanpa pengukuran.
+
+Navigasi: Cara kerja, Fitur, Bantuan, Masuk. Daftar hanya ditampilkan bila alur registrasi memang tersedia. Footer privasi/bantuan harus menuju halaman nyata. Keterangan tahun mengikuti data aplikasi. Demo menggunakan lingkungan dan data yang terpisah; jangan memberikan akses demonstrasi ke data mahasiswa produksi.
+
+Login memiliki label email dan kata sandi, kontrol tampilkan kata sandi, dukungan password manager/paste, error dekat form, dan fokus ke ringkasan error. Tombol menunjukkan proses sebenarnya dan mencegah pengiriman ganda. Pemulihan akun hanya ditampilkan jika backend mendukung; fitur yang direncanakan tidak boleh berakhir sebagai alert sukses.
+
+### 7.2 UI03
+
+Dosen melihat header “Ringkasan” dan pemilih semester/kelas. Di bawahnya ada ringkasan angka aktual: perlu ditinjau, sudah dirilis, dan proses bermasalah. Antrean “Perlu tindakan” tampil sebelum grafik sekunder. Setiap angka merupakan link ke daftar dengan filter yang sama. Tampilkan waktu pembaruan dan lingkup angka.
+
+Asisten melihat pekerjaan yang ditugaskan dan status draf yang menunggu dosen. Mahasiswa melihat tugas terdekat, pengumpulan yang perlu diperbaiki, dan feedback baru. Kalender kecil boleh ada setelah prioritas pekerjaan; tanggal/tenggat bersumber dari server.
+
+Tidak ada hero besar di dashboard. Jika belum ada data, tampilkan “Belum ada tugas pada semester ini” dan tindakan sesuai peran. Nol adalah jumlah valid bila query sukses; kegagalan query tampil “Data belum dapat dimuat”, bukan nol. Penghematan waktu hanya tampil jika baseline dan metode ukur tersedia.
+
+## 8 Kelas, tugas, dan wizard persiapan
+
+### 8.1 UI04–UI05
+
+Daftar kelas menampilkan nama, kode, semester, peran, jumlah anggota sesuai izin, dan status arsip. Kartu kelas boleh dipakai pada jumlah kecil; tampilan tabel tersedia untuk banyak kelas. Detail kelas memiliki daftar tugas dengan kategori, tenggat, jumlah pengumpulan, status acuan, dan status koreksi.
+
+Manajemen anggota membedakan mahasiswa, dosen, dan asisten. Saat memberi akses asisten, tampilkan lingkup tugas dan izin aktual. Perubahan akses mencatat aktor/waktu; pencabutan akses membatalkan kemampuan memuat ulang konten privat. UI tidak menampilkan tombol finalisasi untuk asisten, dan server tetap harus menolaknya.
+
+Tugas memiliki status Draf, Dipublikasikan, Ditutup, Diarsipkan. Penutupan dan pembukaan ulang menjelaskan dampak terhadap pengumpulan. Arsip tidak menghapus nilai/histori. Aksi menghapus mengikuti dependensi data; jika sudah dipakai, tawarkan arsip atau versi baru sesuai aturan produk.
+
+### 8.2 UI06 — Wizard lima tahap
+
+| Tahap | Isi | Syarat lanjut |
+|---|---|---|
+| 1 Detail tugas | Judul, kelas, kategori, instruksi publik, jenis jawaban, tenggat/timezone, nilai maksimum, kebijakan revisi | Field wajib valid dan izin kelas benar |
+| 2 Unggah acuan | Pilih kunci jawaban/materi, unggah beberapa file, beri nama dan visibilitas | File tersimpan atau pengguna sengaja menyimpan draf untuk melanjutkan nanti |
+| 3 Tinjau isi | Preview ekstraksi, OCR, pemetaan soal/kriteria, konflik sumber | Dosen menyelesaikan masalah sumber yang ingin disetujui |
+| 4 Rubrik | Usulan dari acuan, edit manual/template, bobot, ambang, CPL/CPMK | Kriteria valid; bobot 100%; versi disetujui oleh dosen |
+| 5 Periksa & terbitkan | Preview mahasiswa, ringkasan sumber privat, rubrik publik, kesiapan AI | Persyaratan publikasi terpenuhi dan server menerima |
+
+Wizard menyimpan draf ke server dengan status “Menyimpan…”, “Tersimpan”, atau “Gagal menyimpan”. Berpindah langkah mempertahankan data. Pesan keluar dengan perubahan belum tersimpan menawarkan Tetap di halaman atau Keluar; tidak mengklaim draf aman sebelum acknowledgement server.
+
+Publikasi tugas dan kesiapan AI dipisahkan. Tugas dapat dipublikasikan dengan rubrik publik sesuai PRD meskipun indeks belum READY; tampilkan “Tugas dapat dikumpulkan. Koreksi AI menunggu acuan siap.” Jangan mengaktifkan Mulai koreksi AI sampai rubrik, sumber, dan indeks siap. Penilaian manual tetap dapat tersedia.
+
+Materi tanpa kunci memunculkan “Sistem dapat mengusulkan konsep jawaban dan rubrik dari materi. Periksa dan setujui sebelum digunakan.” Usulan tidak pernah otomatis menjadi standar aktif.
+
+## 9 Acuan, ekstraksi, dan rubrik
+
+### 9.1 UI07 — Unggah dokumen
+
+Dropzone menyediakan tombol “Pilih berkas” yang dapat digunakan keyboard. Tampilkan format PDF, DOC, DOCX, TXT, PPT, PPTX; jenis yang belum lulus implementasi diberi status belum tersedia, bukan diterima lalu diam-diam diabaikan. Batas awal mengikuti PRD: 25 MiB per acuan, 20 berkas per tugas, 200 halaman/slide per sumber; nilai aktual diambil dari konfigurasi server.
+
+Daftar upload menampilkan nama, jenis, ukuran, kategori sumber, versi, status, dan tindakan. Progress byte upload hanya untuk transfer; ekstraksi dan pengindeksan adalah tahapan terpisah. Upload 100% tidak berarti siap dinilai. File duplikat ditandai lewat checksum dan menawarkan gunakan versi yang sama atau buat revisi bila memang berbeda.
+
+Acuan privat diberi label “Hanya dosen dan asisten berizin”. Jangan menyediakan toggle publik yang tanpa sengaja menerbitkan seluruh kunci. Materi pembelajaran publik adalah objek/publikasi eksplisit dengan preview dan izin sendiri. Penghapusan versi yang dipakai penilaian harus menjaga keterlacakan sesuai kebijakan retensi PRD.
+
+### 9.2 UI08 — Review ekstraksi
+
+Desktop memakai dua panel: dokumen asli dan teks hasil ekstraksi. Mobile menggunakan tab. Tampilkan peringatan tabel, rumus, gambar, slide kosong, atau OCR yang perlu dicek. Teks dapat diperbaiki dalam draf baru dengan alasan dan jejak aktor; file asli tidak ditimpa.
+
+Locator wajib sesuai format: PDF halaman; PPT/PPTX slide; DOC/DOCX paragraf atau tabel yang benar-benar tersedia; TXT nomor baris. Jangan mengarang nomor halaman Word. Klik kutipan membuka versi sumber yang digunakan run, bukan selalu versi terbaru.
+
+Pemetaan menghubungkan potongan acuan dengan soal dan kriteria melalui daftar/checkbox yang aksesibel; drag-and-drop hanya alternatif. Tampilkan bagian belum dipetakan dan konflik antaracuan. Jika isi tidak dapat dibaca, jelaskan lokasi dan tindakan: unggah ulang, lakukan OCR, perbaiki ekstraksi, atau ganti sumber.
+
+Ringkasan persetujuan menyebut jumlah sumber, versi, pemetaan, dan masalah tersisa. “Setujui acuan” mengesahkan isi; “Siap digunakan” hanya muncul setelah indeks berhasil. Detail teknis opsional menampilkan model embedding, versi indeks, dan waktu pemrosesan tanpa membebani alur utama.
+
+### 9.3 UI09 — Editor rubrik
+
+Rubrik terdiri dari nama kriteria, deskripsi publik, skor maksimum, bobot, ambang jika digunakan, konsep/acuan privat, dan CPL/CPMK opsional. Pisahkan field publik dan privat secara visual serta pada kontrak data. Sediakan “Lihat sebagai mahasiswa” yang benar-benar menggunakan representasi publik.
+
+Tindakan: buat dari acuan, tambah manual, gunakan template, duplikasi versi, ubah urutan, edit, hapus dari draf. Kemampuan manual dipertahankan sebagai alat penyempurnaan. Ringkasan bobot selalu terlihat: “Total bobot 90% — tambahkan 10% untuk menyetujui”. Kesalahan ditautkan ke kriteria terkait.
+
+Versi disetujui bersifat read-only. Tombol “Buat versi baru” membuat draf; perubahan tidak mengubah evaluasi lama. Bandingkan versi menampilkan perubahan deskripsi, bobot, konsep, dan sumber. Tampilkan dampak: “Evaluasi berikutnya memakai versi baru. Hasil sebelumnya tetap menyimpan versi 2.”
+
+## 10 Pengumpulan dan hasil mahasiswa
+
+### 10.1 UI10
+
+Instruksi menampilkan tenggat dengan timezone, aturan revisi, format/batas aktual, nilai maksimum, dan rubrik publik. Mahasiswa dapat memasukkan teks atau berkas sesuai jenis tugas. Mode kode menyediakan struktur berkas dan preview; tidak menjalankan kode yang diunggah.
+
+Batas awal: berkas jawaban 10 MiB/100 halaman, teks 100.000 karakter; arsip kode 10 MiB terkompresi dengan batas ekstraksi server 50 MiB/200 berkas dan tanpa arsip bersarang. Form menjelaskan batas yang relevan, tidak semua batas teknis sekaligus. Validasi klien membantu; hasil validasi server tetap menentukan.
+
+Sebelum kirim, tampilkan nama file, preview singkat, dan tugas tujuan. Setelah berhasil, tampilkan tanda terima dengan ID pengumpulan, versi, timestamp server, dan status terlambat bila berlaku. “Terkirim” hanya setelah server menyimpan. Timeout menawarkan “Periksa status pengumpulan” sebelum mengirim ulang agar tidak membuat versi ganda.
+
+Revisi menciptakan versi baru. Riwayat menampilkan waktu tiap versi dan versi yang dinilai. Jika nilai sebelumnya sudah dirilis, mahasiswa tetap dapat melihat kaitannya dengan versi lama; jangan mengganti nilainya dengan draf AI baru. Kebijakan tenggat dan revisi ditentukan server.
+
+### 10.2 UI14
+
+Sebelum rilis: “Jawaban sudah diterima. Nilai belum dirilis.” Jangan menampilkan skor AI, proses internal retrieval, flags privat, atau kutipan kunci. Setelah rilis, tampilkan nilai final, rubrik publik, feedback yang disetujui, waktu rilis, versi jawaban, dan nama/peran pengesah sesuai kebijakan institusi.
+
+Feedback memuat yang sudah benar, bagian yang perlu diperbaiki, dan langkah belajar berikutnya. Kutipan acuan privat tidak ikut diterbitkan otomatis. Sumber publik dapat ditautkan bila memang disetujui untuk mahasiswa. Perubahan nilai menampilkan nilai terbaru dan riwayat publik yang diizinkan dengan alasan; hasil yang ditarik tidak ditampilkan seolah masih berlaku.
+
+Voice feedback, bila tersedia, dibuat dari teks yang sudah disetujui. Sediakan Play/Pause/Stop, durasi, dan teks yang sama. Tidak autoplay. Gagal audio tidak menghalangi akses feedback teks. Rekap lintas tugas diberi label “Rekap nilai aplikasi”, bukan transkrip resmi tanpa otorisasi.
+
+## 11 Antrean dan studio koreksi
+
+### 11.1 UI11
+
+Tabel menampilkan mahasiswa, tugas, versi jawaban, waktu pengumpulan, status evaluasi, isu, status review, dan nilai dirilis jika ada. Filter: kelas, tugas, kategori, status, terlambat, versi, reviewer. Default menonjolkan yang perlu tindakan tanpa menyembunyikan seluruh data lainnya.
+
+Pilihan massal membedakan “Pilih 25 pada halaman ini” dengan “Pilih seluruh 132 hasil filter”. Saat membuka konfirmasi batch, bekukan lingkup ID/versi sesuai PRD dan tampilkan jumlah. Pergantian filter tidak boleh diam-diam mengubah batch yang sudah dijadwalkan. Aksi utama baris adalah “Tinjau”, bukan “Setujui otomatis”.
+
+### 11.2 UI12 — Panel jawaban dan bukti
+
+Header studio menunjukkan mahasiswa, kelas/tugas, versi jawaban, rubrik, set acuan, dan status nilai. Jawaban menampilkan teks/file/kode yang benar-benar disimpan. Teks sumber tidak diperlakukan sebagai HTML aktif. Preview kode memiliki nomor baris, syntax highlighting, pencarian, dan daftar temuan static analysis dengan tool/version serta lokasi.
+
+Panel penilaian menampilkan kartu ringkas per kriteria: nama, bobot, maksimum, saran AI, alasan, bukti jawaban, bukti acuan, status kecukupan bukti, nilai dosen, dan feedback. Membuka bukti menyorot lokasi dan mempertahankan kriteria aktif. “Kembali ke kriteria” mengembalikan fokus.
+
+Gunakan status “Bukti tersedia”, “Perlu ditinjau”, atau “Belum dapat dinilai”. Jangan mengubah cosine similarity menjadi probabilitas kebenaran atau menampilkan confidence 95% tanpa kalibrasi. Sumber relevan tidak otomatis membuktikan jawaban benar; dosen tetap memeriksa kesimpulan.
+
+Kriteria tanpa bukti memadai menampilkan `—` dengan alasan, bukan 0. Total saran AI juga `—` bila ada skor null. Jangan menjumlahkan bagian yang lengkap dan menampilkannya sebagai total penuh. Nilai dosen tetap dapat diisi manual dengan alasan dan penanganan flags.
+
+### 11.3 Mengedit nilai dan feedback
+
+Pisahkan kolom “Saran AI” dan input “Nilai dosen”. Tombol “Gunakan saran untuk draf” menyalin rekomendasi yang valid dan tidak merilis nilai. Jelaskan kriteria yang belum memiliki saran. Dosen dapat mengubah tiap skor; perubahan terhadap saran menyimpan alasan sesuai PRD.
+
+Total dihitung server dari bobot dan skor per kriteria. Contoh fixture desain: bobot 40/40/20, maksimum masing-masing 10, skor 8/6/9, maksimum tugas 100 menghasilkan 74. Tampilkan komponen hitungan melalui “Lihat perhitungan”. Pembulatan dan ambang mengikuti PRD, bukan kalkulasi berbeda di komponen.
+
+Jika mode penyesuaian total dipakai, tampilkan “Total perhitungan 74” dan “Nilai akhir penyesuaian 78”, alasan wajib, serta label TOTAL_OVERRIDE pada detail audit. Jangan mengubah skor per kriteria diam-diam supaya tampak cocok. Seluruh kriteria tetap harus lengkap.
+
+Pisahkan “Catatan internal” dan “Feedback mahasiswa”. Panel preview publik menunjukkan persis field yang akan diterima mahasiswa. Menyisipkan kutipan privat memerlukan tindakan publikasi sumber yang eksplisit; jangan menganggap menyalin feedback AI sama dengan menyetujui publikasi kunci.
+
+### 11.4 Streaming, versi, dan konflik
+
+Saat AI berjalan, tampilkan tahap sebenarnya dan feedback sementara berlabel “Sedang disusun — belum tervalidasi”. Token/chunk yang masuk tidak diumumkan satu per satu oleh screen reader; live region mengumumkan perubahan tahap dan ringkasan selesai. Hindari auto-scroll yang menarik pengguna dari bagian yang sedang dibaca.
+
+Jawaban, acuan, rubrik, atau konfigurasi evaluator yang berubah memunculkan banner “Hasil ini menggunakan versi sebelumnya” dengan rincian dan tindakan yang diizinkan. Penanda usang berbeda dari status job. Rilis diblokir sampai target versi dikonfirmasi menurut aturan PRD. Evaluasi ulang tidak menghapus nilai final yang sudah dirilis.
+
+Jika server mengembalikan konflik versi, hentikan autosave dan tampilkan perbandingan draf lokal dengan versi server beserta aktor/waktu bila berizin. Tawarkan muat versi terbaru atau salin perubahan untuk diterapkan ulang; jangan menimpa otomatis. Data belum tersimpan boleh dipertahankan di memori tab, bukan otomatis di localStorage/offline cache yang berisi materi privat.
+
+## 12 Persetujuan, rilis, dan revisi nilai
+
+UI13 adalah langkah review nyata, bukan dialog “Apakah Anda yakin?” tanpa konteks. Tampilkan mahasiswa/tugas/versi, nilai final, perubahan dari saran AI, flags yang ditangani, feedback publik, dan penerima. Tombol akhir bernama “Sahkan dan rilis nilai”.
+
+Syarat rilis: peran dosen sah; seluruh skor final valid; alasan wajib tersedia; flags selesai atau disertai keputusan manual; target versi terkonfirmasi; preview publik lolos; row version masih cocok. Daftar masalah memuat link ke lokasi koreksi. Jangan menambahkan checkbox formal yang tidak memeriksa data nyata.
+
+Menyimpan draf tidak menerbitkan. Status Disahkan/APPROVED yang belum dirilis tetap tidak terlihat mahasiswa. Aksi gabungan Sahkan dan rilis dapat menjalankan kedua transisi secara atomik; sukses hanya setelah server mengonfirmasi. Kegagalan atau timeout menyediakan pemeriksaan status, bukan klik ulang buta.
+
+Revisi nilai membuat versi baru dengan alasan dan perbandingan sebelum/sesudah. Nilai lama tetap tersedia di audit. Penarikan nilai meminta alasan dan menjelaskan dampak pada tampilan mahasiswa serta laporan. Jangan menyamakan tarik nilai dengan hapus riwayat. Notifikasi dikirim setelah transaksi berhasil dan tidak ganda pada retry.
+
+Rilis massal, bila diimplementasikan, tetap menampilkan daftar per mahasiswa, versi, nilai, dan kelayakan; hanya hasil yang benar-benar telah ditinjau dosen dapat dipilih. Jangan menjadikan selesai AI sebagai persetujuan manusia massal.
+
+## 13 Job, batch, dan status sistem
+
+### 13.1 UI15
+
+Daftar job memperlihatkan tugas, pemicu, jadwal/timezone, jumlah target, antrean, berjalan, selesai, perlu tinjau, gagal, dan dibatalkan. Kategori ringkasan tidak tumpang tindih; total sama dengan jumlah target. Progress batch dapat memakai jumlah terminal/total, dengan rincian kegagalan; 100% berarti pemrosesan berakhir, bukan semua sukses.
+
+Detail run menunjukkan timeline tahap, durasi, attempt, error yang aman, dan runId. Token/biaya tampil pada detail teknis jika datanya tersedia; biaya tidak dikarang saat tarif/provider tidak diketahui. Jadwal memakai waktu absolut dan timezone, misalnya “2 Okt 2026, 08.00 Asia/Jakarta”. Pembatalan jadwal berbeda dari pembatalan run aktif.
+
+Saat Cancel dipilih: “Permintaan pembatalan dikirim”, kemudian “Dibatalkan” setelah server mengonfirmasi. Putus koneksi SSE tidak otomatis membatalkan job. Reconnect menempel ke job yang sama. Retry subset gagal menyebut item yang dicoba ulang dan tidak menjalankan ulang seluruh batch tanpa keputusan eksplisit.
+
+### 13.2 Kamus status
+
+| Objek / status backend | Label pengguna | Tindakan |
+|---|---|---|
+| Document UPLOADING / UPLOADED | Mengunggah / Berkas diterima | Batalkan transfer bila tersedia; tunggu proses |
+| EXTRACTING / REVIEW_REQUIRED | Membaca dokumen / Periksa hasil baca | Buka preview dan perbaiki |
+| APPROVED / INDEXING / READY | Isi disetujui / Menyiapkan acuan / Siap digunakan | Pantau atau gunakan |
+| FAILED / RETIRED | Pemrosesan gagal / Versi diarsipkan | Lihat sebab/coba ulang; buka histori |
+| Submission RECEIVED / EXTRACTING / READY | Diterima / Membaca jawaban / Siap ditinjau | Lihat tanda terima/status |
+| Submission UNREADABLE | Jawaban belum dapat dibaca | Perbaiki atau tinjau manual |
+| Run QUEUED / EXTRACTING / RETRIEVING | Dalam antrean / Membaca jawaban / Mencari acuan | Pantau/cancel sesuai izin |
+| GENERATING / VALIDATING | Menyusun saran / Memeriksa hasil | Tampilkan output sementara secara jelas |
+| READY_FOR_REVIEW / NEEDS_REVIEW | Saran siap ditinjau / Perlu pemeriksaan khusus | Buka studio |
+| CANCEL_REQUESTED / CANCELLED / FAILED | Membatalkan / Dibatalkan / Evaluasi gagal | Pantau atau coba ulang sesuai izin |
+| Grade DRAFT / APPROVED / RELEASED | Draf / Disahkan, belum dirilis / Dirilis | Edit draf atau review rilis |
+| SUPERSEDED / WITHDRAWN | Digantikan versi baru / Ditarik | Buka riwayat sesuai izin |
+| STALE flag | Menggunakan versi sebelumnya | Bandingkan dan konfirmasi target |
+
+Reference set DRAFT/APPROVED/READY/RETIRED dan rubric DRAFT/APPROVED/RETIRED memakai label sesuai objek; jangan memaksakan status pengindeksan pada rubrik. Label status tidak boleh diturunkan hanya dari ada/tidaknya nilai.
+
+## 14 Laporan, komunikasi, dan fitur tambahan
+
+### 14.1 UI16–UI17
+
+Riwayat dapat difilter berdasarkan kelas, tugas, aktor, tindakan, dan rentang waktu. Perbandingan versi memuat sebelum/sesudah, alasan, timestamp, serta snapshot rubrik/acuan/evaluator. Tampilkan hanya audit yang berizin. Pengguna tidak dapat mengedit log audit melalui UI.
+
+Laporan menyediakan harian, mingguan, bulanan, dan rentang kustom; timezone selalu jelas. Statistik final dan draf dipisahkan. Rata-rata, median, distribusi, dan kelulusan dihitung dari seluruh dataset terfilter, bukan halaman yang terlihat. Tampilkan denominator dan penanganan nilai belum tersedia. Chart memiliki tabel data alternatif serta label/legend yang tidak mengandalkan warna.
+
+CPL/CPMK memiliki editor pemetaan ke kriteria dan ringkasan bobot. Tanpa pemetaan, tampil “Pemetaan CPL/CPMK belum tersedia”; jangan mengganti dengan hasil simulasi. Klik agregat membuka komponen yang menyusunnya sesuai izin.
+
+Ekspor CSV, JSON, PDF, XLSX menampilkan format, filter, jumlah baris, lingkup field, dan waktu pembuatan. Ekspor besar menjadi job dengan status dan unduhan berizin. Field privat mengikuti peran; ekspor mahasiswa hanya data miliknya yang dirilis. File gagal dibuat tidak boleh memunculkan toast sukses.
+
+### 14.2 UI18
+
+Notifikasi dalam aplikasi memiliki jenis, kelas/tugas, waktu, status dibaca, dan tautan tujuan berizin. Push meminta opt-in setelah penjelasan manfaat; jika ditolak, notifikasi aplikasi tetap berfungsi. Payload push tidak menyertakan jawaban, kunci, atau nilai sensitif pada lock screen.
+
+Kalender memakai jadwal persisten dan timezone; event dapat dibuka ke tugas sumber. Catatan tersimpan dengan status save nyata. Broadcast dosen memuat preview isi, penerima dalam lingkup kelas, jumlah, kanal, lalu tombol kirim eksplisit. Status per pengiriman membedakan berhasil/gagal; retry tidak mengirim duplikat ke penerima sukses.
+
+### 14.3 UI19–UI21
+
+Pengaturan evaluator menampilkan provider/model, versi konfigurasi, parameter yang diperbolehkan, dan riwayat. Simpan perubahan membuat draf konfigurasi; aktivasi mengikuti evaluasi/regresi PRD. API key tidak pernah dibaca kembali utuh oleh frontend. Ketersediaan adapter cloud/lokal ditampilkan sesuai kemampuan yang sudah diverifikasi.
+
+Health memisahkan provider, worker, storage, dan retrieval; tampilkan last checked dan status siap/terganggu/tidak diketahui. Lampu hijau statis dilarang. Anggaran habis memberi alasan job baru diblokir dan tindakan yang sesuai izin, tanpa mengubah jawaban menjadi nilai nol.
+
+Integrasi SIAKAD: koneksi → pemetaan identitas → dry run → preview nilai dirilis → kirim → rekonsiliasi. Jika API resmi belum tersedia, label “Belum terhubung” dan penjelasan; jangan menampilkan sinkronisasi palsu. BAP: pilih kelas/pertemuan → isi data yang tercatat → preview → unduh. Data kehadiran kosong tetap kosong atau diberi keterangan belum tersedia.
+
+Kemiripan menampilkan pasangan jawaban dan potongan yang mirip kepada dosen berizin. Label “Kemiripan teks” disertai konteks; tidak otomatis menuduh plagiarisme atau memberi penalti. Pre-check mahasiswa hanya tampil jika diaktifkan per tugas; jelaskan batas percobaan, bahwa hasil tidak memengaruhi nilai, serta hanya menggunakan rubrik/materi publik. Pre-check tidak boleh membuka acuan privat melalui feedback.
+
+## 15 Komponen dan perilaku bersama
+
+| Komponen | Kontrak perilaku |
+|---|---|
+| Button | Satu CTA dominan per konteks; label verba; loading mencegah submit ganda; nama aksesibel untuk ikon |
+| Field | Label persisten, helper, required, error spesifik; validasi tidak menghapus input |
+| Select/combobox | Keyboard, pencarian bila daftar panjang, pilihan tetap terbaca pada mobile |
+| Data table | Header semantik, sort diumumkan, pagination/filter server, empty/error/loading berbeda |
+| Status badge | Teks + ikon opsional, warna semantik, tidak memalsukan status lokal |
+| File row | Nama panjang dapat dibaca, ukuran, versi, status, akses unduh berizin |
+| Evidence link | Buka snapshot/lokasi yang tepat, kembali ke konteks, error bila sumber tidak tersedia |
+| Score input | Min/max/increment jelas, validasi server, total tidak langsung dipercaya dari browser |
+| Dialog | Judul/deskripsi, fokus awal aman, trap focus, Escape sesuai konteks, fokus kembali |
+| Drawer | Sama dengan dialog bila modal; konten panjang scroll tanpa menutupi tindakan |
+| Toast | Hanya konfirmasi ringan; error penting juga tampil menetap dekat konteks |
+| Tabs | Pola keyboard standar; panel berlabel; tidak mengambil data terlarang untuk tab tersembunyi |
+| Skeleton | Sesuai bentuk konten; tidak menampilkan metrik palsu; reduced motion dihormati |
+| Progress | Persen hanya bila denominator diketahui; tahap indeterminate untuk proses yang tak terukur |
+| Empty state | Menjelaskan kosong karena belum ada data atau filter; satu tindakan relevan |
+
+Autosave menunggu debounce yang sesuai dan konfirmasi server. “Tersimpan” menampilkan waktu nyata. Perpindahan antar mahasiswa mempertahankan filter dan posisi antrean; perubahan yang belum tersimpan harus ditangani sebelum pindah. Tidak ada hotkey yang langsung merilis nilai.
+
+## 16 Pesan, kegagalan, dan pemulihan
+
+| Keadaan | Contoh pesan | Pemulihan |
+|---|---|---|
+| File terenkripsi | “Dokumen dilindungi kata sandi sehingga belum dapat dibaca.” | Unggah salinan yang dapat dibaca |
+| OCR bermasalah | “Sebagian teks pada halaman 4 perlu diperiksa.” | Buka lokasi dan perbaiki ekstraksi |
+| Acuan belum siap | “Koreksi AI menunggu acuan disetujui dan selesai diproses.” | Buka acuan; penilaian manual bila berizin |
+| Bukti kurang | “Saran untuk kriteria ini belum dapat diberikan dari acuan yang tersedia.” | Lengkapi acuan atau nilai manual dengan alasan |
+| Provider gagal | “Evaluasi belum selesai. Jawaban Anda tetap tersimpan.” | Lihat run; coba ulang berizin |
+| Offline | “Anda sedang offline. Perubahan belum dapat disimpan.” | Sambungkan kembali; jangan tampilkan sukses |
+| Sesi berakhir | “Sesi berakhir. Masuk kembali untuk melanjutkan.” | Login, periksa versi server sebelum lanjut |
+| Konflik draf | “Draf telah diperbarui oleh pengguna lain.” | Bandingkan, muat ulang, terapkan perubahan secara sadar |
+| Anggaran habis | “Batas penggunaan kelas tercapai. Evaluasi baru belum dapat dimulai.” | Lihat penggunaan atau hubungi pengelola berizin |
+| Tidak berizin | “Anda tidak memiliki akses ke halaman ini.” | Kembali ke kelas; jangan tampilkan isi objek |
+| Unduh gagal | “Berkas belum dapat diunduh.” | Periksa izin/status atau buat tautan baru |
+| Hasil usang | “Saran ini memakai acuan versi 2; versi aktif adalah 3.” | Bandingkan dan tentukan target sebelum rilis |
+
+Error menampilkan requestId/runId yang aman untuk bantuan, bukan stack trace, prompt, kunci API, atau isi sumber privat. Pesan harus membedakan operasi gagal, masih berjalan, dan status belum diketahui.
+
+## 17 Aksesibilitas, PWA, dan privasi antarmuka
+
+Target proyek adalah WCAG 2.2 AA pada alur inti. Gunakan landmark, urutan heading, skip link, label form, keyboard penuh, fokus terlihat/tidak tertutup, dan pengumuman status yang terkendali. Target kontras teks biasa minimal 4,5:1, teks besar 3:1, serta komponen/fokus relevan 3:1. Uji zoom 200%, reflow pada lebar ekuivalen 320 CSS px, dan target minimum WCAG dengan pengecualiannya; desain produk memilih target sentuh 44 px. [WCAG 2.2](https://www.w3.org/TR/WCAG22/).
+
+Pengujian manual mencakup NVDA atau screen reader setara, alur tanpa mouse, perubahan tema, reduced motion, urutan fokus dialog/drawer, tabel, dan pembaruan asinkron. Automated checker membantu menemukan masalah; tidak cukup untuk menyatakan seluruh aplikasi lulus.
+
+PWA menyediakan instalasi pada browser pendukung dan tetap berfungsi sebagai web biasa. UI22 menampilkan bantuan instalasi sesuai kemampuan browser, indikator offline, dan pemberitahuan versi baru. Pembaruan aplikasi tidak memaksa reload ketika ada perubahan belum tersimpan.
+
+Cache offline default hanya shell, aset umum, dan bantuan. Jangan menyimpan sumber privat, jawaban, nilai, token sesi, atau payload grading di service worker/localStorage. Keluar atau berpindah akun membersihkan cache memori query yang terikat akun. Setelah online/login ulang, ambil versi server dan periksa konflik sebelum menyimpan. Halaman privat offline menampilkan keterbatasan, bukan isi pengguna sebelumnya.
+
+Privasi harus diuji pada network response, server rendering, ekspor, URL unduh, dan cache. Menyembunyikan komponen bukan proteksi data. Preview “sebagai mahasiswa” harus menggunakan skema publik yang sama dengan pengalaman mahasiswa sebenarnya.
+
+## 18 Kriteria penerimaan dan skenario uji
+
+Seluruh skenario di bawah adalah rencana uji; belum dinyatakan PASS. Gunakan fixture sintetis berlabel, bukan data akademik produksi.
+
+| Test ID | Skenario | Bukti penerimaan |
+|---|---|---|
+| UX01 | Unggah keenam format acuan | Status tiap tahap benar; locator dapat dibuka; error tidak dianggap siap |
+| UX02 | Materi tanpa kunci | Konsep/rubrik tetap draf sampai persetujuan dosen |
+| UX03 | Bobot 90%, skor melewati maksimum | Error spesifik, link ke field, persetujuan/rilis diblokir |
+| UX04 | Mahasiswa membuka tugas | Rubrik publik tersedia; network/RSC tidak membawa kunci atau draf internal |
+| UX05 | Submisi dan revisi | Tanda terima nyata; versi lama tetap dapat ditelusuri |
+| UX06 | Studio tiga/dua/satu panel | Bukti tetap dapat diakses di 1440, 1280, 1024, 768, 390, dan 320 px |
+| UX07 | Bukti kurang/provider gagal | Skor null ditampilkan sebagai belum dapat dinilai; tidak menjadi nol |
+| UX08 | Koreksi manual dan override | Total server benar; alasan/riwayat tersimpan; preview publik sesuai |
+| UX09 | Save versus release | Draf tidak terlihat mahasiswa; hanya dosen berizin dapat rilis |
+| UX10 | Dua tab mengedit | Konflik tidak menimpa diam-diam; perubahan dapat diperiksa |
+| UX11 | Versi acuan/jawaban berubah | Banner usang dan blok rilis sesuai PRD; nilai lama tidak hilang |
+| UX12 | SSE putus/cancel/retry | Reconnect job sama; status pembatalan benar; hasil terlambat tidak aktif |
+| UX13 | Batch sebagian gagal | Jumlah status cocok; retry hanya subset terpilih |
+| UX14 | Filter dataset multipage | Angka dashboard, chart, tabel, dan ekspor cocok untuk seluruh filter |
+| UX15 | Keyboard/screen reader | Wizard, studio, dialog rilis, upload alternatif, dan tabel dapat digunakan |
+| UX16 | Tema/zoom/reflow | Kontras pasangan aktual lulus; fokus terlihat; aksi tidak tertutup |
+| UX17 | Offline/login ulang/akun lain | Tidak ada sukses palsu, cache privat, atau kebocoran akun sebelumnya |
+| UX18 | Revisi/penarikan nilai | Status publik, histori, dan notifikasi konsisten |
+| UX19 | Semua tombol fitur tambahan | Tidak ada alert simulasi; unavailable jelas atau operasi nyata terverifikasi |
+| UX20 | Kode/static analysis | Preview aman, nomor baris tepat, bahasa unsupported jelas |
+| UX21 | Perubahan izin asisten | Akses efektif berubah di server dan UI; finalisasi tetap ditolak |
+| UX22 | Landing/login/empty state | Brand konsisten, tanpa metrik palsu dan tautan kosong |
+
+Uji usability awal yang disarankan: beberapa dosen, mahasiswa, dan asisten menyelesaikan tugas terarah tanpa instruksi langkah demi langkah. Ukur keberhasilan menyelesaikan tugas, kesalahan rilis, kemampuan menemukan bukti, dan waktu yang diperlukan. Jumlah peserta serta target numerik ditetapkan dalam rencana riset; jangan mengklaim peningkatan waktu sebelum dibandingkan dengan baseline.
+
+Screenshot penerimaan mencakup data normal, kosong, gagal, izin terbatas, teks panjang, skor null, dan hasil usang. Catat commit, browser, viewport, tema, fixture, dan hasil. Tidak cukup menguji hanya dashboard desktop dengan data demo.
+
+## 19 Pemetaan requirement ke UI
+
+Tabel ini menjaga cakupan. Kemunculan requirement pada layar tidak membuktikan implementasi backend selesai. FR6 dan FR7 masing-masing mempertahankan kedua definisi baseline.
+
+| Requirement PRD | Layar / perilaku |
+|---|---|
+| FR1, FR2 | UI10, UI16 — pengumpulan, versi, tanda terima |
+| FR3, FR4 | UI03, UI09, UI12, UI17 — ringkasan aktual dan ambang |
+| FR5 | UI12, UI15 — streaming sementara yang dibedakan dari hasil tersimpan |
+| FR6a, FR6b | UI12, UI13, UI16 — revisi, konflik, flags dan review |
+| FR7a, FR7b | UI12, UI15 — static analysis dan batch terjadwal |
+| FR8, FR9 | UI15 — log run dan pembatalan |
+| FR10, FR11 | UI17, UI12 — agregasi seluruh filter dan preview kode |
+| FR12, FR16 | UI09 — CRUD/template dan validasi bobot |
+| FR13, FR14 | UI02, UI04, UI12, UI13 — sesi dan peran per kelas |
+| FR15, FR17 | UI19 — konfigurasi evaluator dan health nyata |
+| FR18, FR19 | UI04, UI05, UI11, UI16 — kelas/kategori/review/versi |
+| FR20, FR21 | UI17 — periode laporan dan CSV/JSON |
+| FR22, FR23 | Semua layar, UI22 — tema, aksesibilitas, PWA |
+| FR24 | UI16 — audit append-only bagi pengguna aplikasi |
+| DX01, DX02, DX03, DX04 | UI07, UI08 — format, provenance, ekstraksi, koreksi |
+| DX05, DX06, DX07 | UI06, UI08, UI09 — pemetaan, usulan rubrik, persetujuan/kesiapan |
+| DX08, DX09, DX10 | UI08, UI12, UI19 — locator, kesiapan indeks, lingkup bukti; verifikasi backend tetap wajib |
+| DX11, DX12, DX13, DX14 | UI12, UI13 — evaluator konsisten, bukti, abstain, nilai deterministik |
+| DX15, DX16, DX17 | UI10–UI16 — job persisten, DTO privat/publik, versi dan stale |
+| DX18, DX19 | UI12, UI17, UI19 — studio dan metrik aktual |
+| DX20 | UI19 — status evaluasi perubahan evaluator; uji regresi bukan tanggung jawab visual semata |
+| DX21 | UI16, UI22 — riwayat/migrasi terbaca; verifikasi pemulihan mengikuti PRD |
+| DX22 | UI08, UI12 — teks bermakna, angka/negasi/kode utuh; evaluasi NLP di backend |
+| EXT01, EXT11 | UI09, UI17 — PDF/XLSX dan CPL/CPMK |
+| EXT02, EXT07, EXT08 | UI18 — notifikasi, broadcast, kalender |
+| EXT03, EXT09 | UI14, UI17 — audio feedback dan rekap aplikasi |
+| EXT04, EXT10 | UI21 — kemiripan dan pre-check terpisah |
+| EXT05, EXT06 | UI20 — SIAKAD dan BAP |
+| EXT12, EXT13 | UI22, UI19 — bantuan/versi dan kemampuan provider |
+| NFR01, NFR06, NFR09, NFR10, NFR16 | Status/izin/angka yang jujur; integritas, recovery, log, anggaran, agregasi harus dibuktikan server |
+| NFR02, NFR03, NFR04, NFR05, NFR07, NFR08 | Loading, progress dan kapasitas daftar; target waktu/ketersediaan tetap diukur sesuai profil PRD |
+| NFR11, NFR14 | Bagian 17–18 — aksesibilitas, responsivitas, browser/PWA |
+| NFR12, NFR13, NFR15 | Quality gate, backup, dan pemeliharaan mengikuti PRD; desain tidak menggantikan tes tersebut |
+
+## 20 Urutan implementasi dan definisi selesai
+
+1. Inventaris route/komponen serta peran aktual; cocokkan dengan UI01–UI22 dan requirement. Perbaiki batas data/otorisasi sebelum menambahkan preview acuan ke frontend.
+2. Terapkan token, typography, shell, komponen form/tabel/status, tema, dan penamaan Dexa Assessment. Rekonsiliasi DESIGN.md lama dengan catatan perubahan.
+3. Bangun alur prioritas dosen: tugas → unggah → review ekstraksi → rubrik → kesiapan AI. Selaraskan endpoint dan state machine dengan PRD.
+4. Bangun alur mahasiswa dan studio: pengumpulan berversi → bukti → draf → review publik → rilis. Selesaikan stale, konflik, dan izin asisten dalam paket yang sama.
+5. Lengkapi batch, laporan, audit, health, ekspor, aksesibilitas, serta PWA sesuai fase PRD. Pertahankan backlog fitur tambahan hingga benar-benar selesai.
+6. Verifikasi seluruh route, CTA, states, responsive, dan kontras. Catat bukti UX01–UX22 serta pengujian backend yang terkait. Hapus simulasi sukses dari alur produksi.
+
+Implementasi selesai bila alur benar-benar tersambung ke data persisten, otorisasi dan versi benar, fitur baseline tetap tersedia, semua kondisi penting dapat dipahami, dan hasil uji memiliki bukti. Screenshot yang menarik tanpa fungsi, tombol dengan alert, nilai dummy, atau status AI yang tidak benar tidak memenuhi definisi selesai.
+
+Dokumen ini menjadi input untuk panduan agent pada output 04 dan prompt implementasi pada output 05. Jangan menafsirkan spesifikasi ini sebagai bukti aplikasi sudah diperbaiki atau izin menghapus data, mereset database, dan menerbitkan perubahan di luar proses proyek.

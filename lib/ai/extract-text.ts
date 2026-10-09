@@ -1,15 +1,15 @@
-import { PDFParse } from "pdf-parse";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import mammoth from "mammoth";
-import { readFile } from "fs/promises";
-import { join } from "path";
 
 export async function extractTextFromFile(
   filePath: string,
-  fileType: "PDF" | "DOCX"
+  fileType: "PDF" | "DOCX",
 ): Promise<string> {
-  const absolutePath = filePath.startsWith("/") || filePath.includes(":")
-    ? filePath
-    : join(process.cwd(), "uploads", filePath);
+  const absolutePath =
+    filePath.startsWith("/") || filePath.includes(":")
+      ? filePath
+      : join(process.cwd(), "uploads", filePath);
 
   const buffer = await readFile(absolutePath);
 
@@ -23,7 +23,10 @@ export async function extractTextFromFile(
   }
 }
 
-export async function extractTextFromBuffer(buffer: Buffer, fileType: "PDF" | "DOCX"): Promise<string> {
+export async function extractTextFromBuffer(
+  buffer: Buffer,
+  fileType: "PDF" | "DOCX",
+): Promise<string> {
   switch (fileType) {
     case "PDF":
       return extractFromPDF(buffer);
@@ -35,8 +38,9 @@ export async function extractTextFromBuffer(buffer: Buffer, fileType: "PDF" | "D
 }
 
 async function extractFromPDF(buffer: Buffer): Promise<string> {
+  const { PDFParse } = await import("pdf-parse");
+  const parser = new PDFParse({ data: buffer });
   try {
-    const parser = new PDFParse({ data: buffer });
     const result = await parser.getText();
     const text = (result.text || "").trim();
     if (!text) {
@@ -48,8 +52,10 @@ async function extractFromPDF(buffer: Buffer): Promise<string> {
       throw error;
     }
     throw new Error(
-      `Gagal mengekstrak teks dari PDF: ${error instanceof Error ? error.message : "Unknown error"}`
+      `Gagal mengekstrak teks dari PDF: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
+  } finally {
+    await parser.destroy();
   }
 }
 
@@ -66,7 +72,7 @@ async function extractFromDOCX(buffer: Buffer): Promise<string> {
       throw error;
     }
     throw new Error(
-      `Gagal mengekstrak teks dari DOCX: ${error instanceof Error ? error.message : "Unknown error"}`
+      `Gagal mengekstrak teks dari DOCX: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
   }
 }

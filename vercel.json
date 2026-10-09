@@ -1,0 +1,7 @@
+{
+  "git": {
+    "deploymentEnabled": {
+      "feat/paket-a-auth": false
+    }
+  }
+}

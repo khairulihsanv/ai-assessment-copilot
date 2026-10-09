@@ -16,9 +16,7 @@ import {
 } from "lucide-react";
 import { formatRelativeTime } from "@/lib/utils";
 
-export const metadata = {
-  title: "Studio Penilaian AI & Validasi Dosen — AI Assessment Copilot",
-};
+export const metadata = { title: "Studio penilaian | Dexa Assessment" };
 
 export default async function GradingStudioHubPage() {
   const session = await auth();
@@ -33,7 +31,7 @@ export default async function GradingStudioHubPage() {
       assignment: { class: { dosenId: session.user.id } },
     },
     include: {
-      mahasiswa: { select: { id: true, name: true, email: true } },
+      user: { select: { id: true, name: true, email: true } },
       assignment: {
         select: {
           id: true,
@@ -44,155 +42,94 @@ export default async function GradingStudioHubPage() {
           rubric: { select: { title: true } },
         },
       },
-      grade: true,
-      aiEvaluation: true,
+      grades: { where: { status: "RELEASED" } },
+      evaluations: true,
+      versions: true,
     },
-    orderBy: { submittedAt: "desc" },
+    orderBy: { createdAt: "desc" },
   });
 
-  const pendingSubmissions = submissions.filter((s) => !s.grade);
-  const reviewedSubmissions = submissions.filter((s) => !!s.grade);
-
+  const rows = submissions.map((s) => ({
+    ...s,
+    released: s.grades.find((g) => g.id === s.releasedGradeId),
+    hasDraft: s.evaluations.some((e) => e.versionId === s.activeVersionId),
+  }));
+  const pending = rows.filter((s) => !s.released);
   return (
-    <div className="space-y-6 pb-12 animate-in fade-in-50 duration-300">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 pb-5 border-b border-[#E5E7EB]">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#E2EFE9] text-[#1E4D3B]">
-              Human-in-the-Loop Studio
-            </span>
-            <span className="font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#F3F4F6] text-[#374151] border border-[#E5E7EB]">
-              v2.4-Turbo
-            </span>
-          </div>
-          <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#111827] mt-1.5 flex items-center gap-2.5">
-            <Sparkles className="text-[#1E4D3B]" size={28} />
-            <span>Studio Penilaian AI & Validasi</span>
-          </h1>
-          <p className="text-xs text-[#6B7280] mt-1 max-w-2xl leading-relaxed">
-            Periksa draf penilaian cerdas dari AI, sesuaikan nilai kriteria, dan validasi sebelum rilis resmi ke mahasiswa.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <div className="p-4 rounded-3xl bg-white border border-[#E5E7EB] text-right shadow-xs min-w-[140px]">
-            <span className="font-mono text-[10px] font-bold text-[#6B7280] block uppercase tracking-wider mb-1">
-              Menunggu Review
-            </span>
-            <span className="font-display text-2xl font-extrabold text-[#F59E0B]">
-              {pendingSubmissions.length}{" "}
-              <span className="text-xs font-semibold text-[#6B7280]">Submisi</span>
-            </span>
-          </div>
-          <div className="p-4 rounded-3xl bg-[#E2EFE9] border border-[#C5DDD1] text-right shadow-xs min-w-[140px]">
-            <span className="font-mono text-[10px] font-bold text-[#1E4D3B] block uppercase tracking-wider mb-1">
-              Selesai Validasi
-            </span>
-            <span className="font-display text-2xl font-extrabold text-[#1E4D3B]">
-              {reviewedSubmissions.length}{" "}
-              <span className="text-xs font-semibold text-[#1E4D3B]/80">Submisi</span>
-            </span>
-          </div>
-        </div>
+    <div className="space-y-7 pb-10">
+      <header className="border-b border-border pb-6">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-[.14em] text-muted-foreground">
+          Koreksi & umpan balik
+        </p>
+        <h1 className="text-3xl font-semibold tracking-tight">Studio penilaian</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Periksa jawaban dan saran AI. Rilis nilai setelah Anda yakin.
+        </p>
+      </header>
+      <div className="flex flex-wrap gap-6 text-sm">
+        <span>
+          <strong className="mr-2 text-2xl tabular-nums">{pending.length}</strong>
+          menunggu keputusan
+        </span>
+        <span className="text-muted-foreground">
+          <strong className="mr-2 text-2xl tabular-nums">{rows.length - pending.length}</strong>
+          nilai dirilis
+        </span>
       </div>
-
-      {/* Submissions List */}
-      <div className="space-y-4 pt-1">
-        <h2 className="font-display text-base font-extrabold text-[#111827]">
-          Antrean Penyerahan Tugas Mahasiswa
-        </h2>
-
-        {submissions.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {submissions.map((sub) => {
-              const isGraded = !!sub.grade;
-              return (
-                <div
-                  key={sub.id}
-                  className="p-6 rounded-3xl bg-white border border-[#E5E7EB] shadow-xs hover:border-[#C5DDD1] hover:shadow-sm transition-all flex flex-col justify-between space-y-5"
-                >
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="font-mono text-[10px] font-bold px-3 py-1 rounded-full bg-[#E2EFE9] text-[#1E4D3B]">
-                        {sub.assignment.class.name}
-                      </span>
-                      <span
-                        className={`font-mono text-[10px] font-bold px-3 py-1 rounded-full border ${
-                          isGraded
-                            ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                            : "bg-amber-50 text-amber-800 border-amber-200"
-                        }`}
-                      >
-                        {isGraded ? "✓ Nilai Resmi Rilis" : "Draft AI Siap Review"}
-                      </span>
-                    </div>
-
-                    <h3 className="font-display text-base font-bold text-[#111827] leading-snug">
-                      {sub.assignment.title}
-                    </h3>
-
-                    <div className="flex items-center gap-2.5 text-xs text-[#6B7280]">
-                      <div className="w-8 h-8 rounded-full bg-[#1E4D3B] text-white font-extrabold flex items-center justify-center text-[11px] shadow-2xs">
-                        {sub.mahasiswa.name.slice(0, 2).toUpperCase()}
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="font-bold text-[#111827]">{sub.mahasiswa.name}</span>
-                        <span className="text-[11px] text-[#6B7280]">{sub.mahasiswa.email}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-3.5 rounded-2xl bg-[#F9FAFB] border border-[#E5E7EB] flex items-center justify-between text-xs">
-                    <span className="text-[#6B7280] font-medium">
-                      Diserahkan {formatRelativeTime(sub.submittedAt)}
-                    </span>
-                    <span className="font-mono font-bold text-[#1E4D3B] bg-white px-3 py-1 rounded-full border border-[#E5E7EB] shadow-2xs">
-                      {isGraded
-                        ? `Nilai: ${sub.grade?.finalScore}/${sub.assignment.maxScore}`
-                        : `Maks: ${sub.assignment.maxScore}`}
-                    </span>
-                  </div>
-
-                  <Link
-                    href={`/classes/${sub.assignment.classId}/assignments/${sub.assignment.id}/submissions/${sub.id}`}
-                    className={`w-full flex items-center justify-center gap-2 py-3 px-5 rounded-full font-extrabold text-xs transition-all active:scale-[0.99] cursor-pointer ${
-                      isGraded
-                        ? "bg-white border border-[#E5E7EB] text-[#1E4D3B] hover:bg-[#E2EFE9] hover:border-[#C5DDD1] shadow-2xs"
-                        : "bg-[#1E4D3B] hover:bg-[#15392C] text-white shadow-xs hover:shadow"
-                    }`}
-                  >
-                    {!isGraded && <Sparkles size={14} className="text-[#FFA07A]" />}
-                    <span>{isGraded ? "Lihat Hasil Koreksi" : "Buka Studio Penilaian"}</span>
-                    <ArrowRight size={14} />
-                  </Link>
+      <section className="overflow-hidden rounded-lg border border-border bg-card">
+        <div className="border-b border-border px-5 py-4 text-sm font-semibold">
+          Semua pengumpulan
+        </div>
+        {rows.length ? (
+          <div className="divide-y divide-border">
+            {[...pending, ...rows.filter((s) => s.released)].map((s) => (
+              <Link
+                key={s.id}
+                href={`/classes/${s.assignment.classId}/assignments/${s.assignment.id}/submissions/${s.id}`}
+                className="grid gap-3 p-5 transition-colors hover:bg-muted/50 sm:grid-cols-[1fr_1.2fr_auto] sm:items-center"
+              >
+                <div>
+                  <p className="text-sm font-semibold">{s.user.name}</p>
+                  <p className="mt-1 break-all text-xs text-muted-foreground">{s.user.email}</p>
                 </div>
-              );
-            })}
+                <div>
+                  <p className="text-sm font-medium">{s.assignment.title}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {s.assignment.class.name} · {formatRelativeTime(s.createdAt)}
+                  </p>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <span
+                    className={`rounded-md border px-2.5 py-1 text-xs font-medium ${s.released ? "border-primary/20 bg-primary/5 text-primary" : "border-border text-muted-foreground"}`}
+                  >
+                    {s.released
+                      ? `Dirilis · ${s.released.finalScore}/${s.assignment.maxScore}`
+                      : s.hasDraft
+                        ? "Saran AI tersedia"
+                        : "Belum dikoreksi"}
+                  </span>
+                  <ArrowRight size={16} className="text-primary" />
+                </div>
+              </Link>
+            ))}
           </div>
         ) : (
-          <div className="p-16 text-center bg-white rounded-3xl border border-dashed border-[#E5E7EB] space-y-4 shadow-xs">
-            <div className="w-16 h-16 rounded-2xl bg-[#E2EFE9] text-[#1E4D3B] flex items-center justify-center mx-auto mb-2">
-              <Sparkles size={30} className="text-[#1E4D3B]" />
-            </div>
-            <h3 className="font-display text-base font-extrabold text-[#111827]">
-              Antrean Koreksi Kosong
-            </h3>
-            <p className="text-xs text-[#6B7280] max-w-sm mx-auto leading-relaxed">
-              Saat ini belum ada tugas baru yang dikumpulkan oleh mahasiswa. Anda dapat membuat tugas atau merilis rubrik baru.
+          <div className="px-6 py-16 text-center">
+            <FileText className="mx-auto mb-4 text-primary" size={28} />
+            <h2 className="text-lg font-semibold">Belum ada jawaban untuk dikoreksi</h2>
+            <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+              Pengumpulan mahasiswa akan muncul di sini. Siapkan tugas dan acuan penilaian terlebih
+              dahulu.
             </p>
-            <div className="pt-2">
-              <Link
-                href="/assignments"
-                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#1E4D3B] hover:bg-[#15392C] text-white text-xs font-extrabold shadow-xs transition active:scale-[0.98]"
-              >
-                <span>Manajemen Tugas</span>
-                <ArrowRight size={15} />
-              </Link>
-            </div>
+            <Link
+              href="/assignments"
+              className="mt-6 inline-flex rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground"
+            >
+              Kelola tugas
+            </Link>
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }

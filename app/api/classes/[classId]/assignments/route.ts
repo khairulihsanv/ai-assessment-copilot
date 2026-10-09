@@ -1,3 +1,4 @@
+import { publicCriterionSelect, publicGradeSelect, withReleasedGrade } from "@/lib/db/public-selects";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/db/prisma";
@@ -15,16 +16,37 @@ export async function GET(
 
   const { classId } = await params;
 
+  const cls = await prisma.class.findUnique({
+    where: { id: classId },
+    include: { enrollments: { where: { userId: session.user.id } } }
+  });
+
+  if (!cls) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  const isDosen = cls.dosenId === session.user.id;
+  const enrollment = cls.enrollments[0];
+  const isAssistant = enrollment?.role === "ASSISTANT";
+  const isPrivileged = isDosen || isAssistant;
+
+  if (!isPrivileged && !enrollment) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const assignments = await prisma.assignment.findMany({
-    where: { classId },
+    where: { classId, ...(isPrivileged ? {} : { status: { not: "DRAFT" } }) },
     include: {
       rubric: {
-        include: { criteria: true },
+        include: {
+          criteria: isPrivileged ? true : { select: publicCriterionSelect }
+        },
       },
       submissions: {
-        where: session.user.role === "MAHASISWA" ? { mahasiswaId: session.user.id } : undefined,
+        where: isPrivileged ? undefined : { userId: session.user.id },
         include: {
-          grade: true,
+          grades: isPrivileged ? true : { where: { status: "RELEASED" }, select: publicGradeSelect },
+          versions: true,
         },
       },
       _count: {
@@ -34,7 +56,9 @@ export async function GET(
     orderBy: { dueDate: "asc" },
   });
 
-  return NextResponse.json(assignments);
+  return NextResponse.json(isPrivileged ? assignments : assignments.map((assignment) => ({
+    ...assignment, submissions: assignment.submissions.map(withReleasedGrade),
+  })));
 }
 
 // POST /api/classes/[classId]/assignments

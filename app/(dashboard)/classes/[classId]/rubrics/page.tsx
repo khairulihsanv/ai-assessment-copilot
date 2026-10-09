@@ -8,7 +8,7 @@ interface RubricsPageProps {
 }
 
 export const metadata = {
-  title: "Manajemen Rubrik Penilaian — AI Assessment Copilot • SV UNS",
+  title: "Manajemen Rubrik Penilaian — Dexa Assessment",
 };
 
 export default async function RubricsPage({ params }: RubricsPageProps) {
@@ -43,11 +43,7 @@ export default async function RubricsPage({ params }: RubricsPageProps) {
 
   return (
     <div className="animate-in fade-in-50 duration-300">
-      <RubricManagementView
-        classId={cls.id}
-        className={cls.name}
-        initialRubrics={rubrics}
-      />
+      <RubricManagementView classId={cls.id} className={cls.name} initialRubrics={rubrics} />
     </div>
   );
 }

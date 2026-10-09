@@ -26,14 +26,14 @@ export async function GET(
           },
         },
       },
-      mahasiswa: {
+      user: {
         select: { id: true, name: true },
       },
     },
   });
 
-  if (!submission || submission.assignment.class.dosenId !== session.user.id) {
-    return new Response("Not found or forbidden", { status: 404 });
+  if (!submission || !submission.activeVersionId || submission.assignment.class.dosenId !== session.user.id) {
+    return new Response("Not found, no active version, or forbidden", { status: 404 });
   }
 
   const encoder = new TextEncoder();
@@ -53,21 +53,29 @@ export async function GET(
           message: "Memuat dokumen jawaban mahasiswa...",
         });
 
+        const activeVersion = await prisma.submissionVersion.findUnique({
+          where: { id: submission.activeVersionId! }
+        });
+
+        if (!activeVersion) {
+          throw new Error("Versi jawaban tidak ditemukan");
+        }
+
         // 1. Text extraction
         let studentAnswer = "";
-        if (submission.type === "TEXT") {
-          studentAnswer = submission.content || "";
-        } else if (submission.type === "PDF" || submission.type === "DOCX") {
+        if (activeVersion.type === "TEXT") {
+          studentAnswer = activeVersion.content || "";
+        } else if (activeVersion.type === "PDF" || activeVersion.type === "DOCX") {
           sendEvent("status", {
             step: 2,
             totalSteps: 4,
-            message: `Mengekstrak teks dari dokumen ${submission.type}...`,
+            message: `Mengekstrak teks dari dokumen ${activeVersion.type}...`,
           });
 
-          if (!submission.fileUrl) {
+          if (!activeVersion.fileUrl) {
             throw new Error("File dokumen tidak ditemukan di server");
           }
-          studentAnswer = await extractTextFromFile(submission.fileUrl, submission.type);
+          studentAnswer = await extractTextFromFile(activeVersion.fileUrl, activeVersion.type);
         }
 
         if (!studentAnswer.trim()) {
@@ -108,45 +116,35 @@ export async function GET(
           message: "Memproses evaluasi dengan AI Copilot (Groq)...",
         });
 
-        await prisma.submission.update({
-          where: { id: submissionId },
-          data: { status: "AI_PROCESSING" },
-        });
-
         const gradingResult = await gradeSubmission(
           {
+            assignmentId: submission.assignmentId,
             assignmentTitle: submission.assignment.title,
             assignmentInstructions: submission.assignment.instructions,
             rubricCriteria,
             studentAnswer,
             maxScore: submission.assignment.maxScore,
           },
-          session.user.id
+          session.user.id,
+          request.signal
         );
 
-        // 4. Save AIEvaluation
-        const aiEvaluation = await prisma.aIEvaluation.upsert({
-          where: { submissionId },
-          update: {
-            rawModelOutput: gradingResult.rawOutput as object,
-            perCriterionScore: gradingResult.response.perCriterion as object,
-            suggestedTotalScore: gradingResult.response.suggestedTotalScore,
-            suggestedFeedback: gradingResult.response.suggestedFeedback,
-            tokenUsage: gradingResult.tokenUsage as object,
-          },
-          create: {
-            submissionId,
-            rawModelOutput: gradingResult.rawOutput as object,
-            perCriterionScore: gradingResult.response.perCriterion as object,
-            suggestedTotalScore: gradingResult.response.suggestedTotalScore,
-            suggestedFeedback: gradingResult.response.suggestedFeedback,
-            tokenUsage: gradingResult.tokenUsage as object,
-          },
-        });
+        if (request.signal.aborted) {
+          throw new Error("Pekerjaan dibatalkan oleh pengguna (Cancel)");
+        }
 
-        await prisma.submission.update({
-          where: { id: submissionId },
-          data: { status: "AI_REVIEWED" },
+        // 4. Save EvaluationRun
+        const aiEvaluation = await prisma.evaluationRun.create({
+          data: {
+            submissionId,
+            versionId: activeVersion.id,
+            rawModelOutput: gradingResult.rawOutput as object,
+            perCriterionScore: gradingResult.response.perCriterion as object,
+            suggestedTotalScore: gradingResult.response.suggestedTotalScore,
+            suggestedFeedback: gradingResult.response.suggestedFeedback,
+            tokenUsage: gradingResult.tokenUsage as object,
+            status: "COMPLETED",
+          }
         });
 
         sendEvent("done", {
@@ -156,11 +154,6 @@ export async function GET(
 
         controller.close();
       } catch (err) {
-        await prisma.submission.update({
-          where: { id: submissionId },
-          data: { status: "SUBMITTED" },
-        });
-
         const errorMsg =
           err instanceof GradingError
             ? err.message
@@ -168,10 +161,17 @@ export async function GET(
             ? err.message
             : "Terjadi kesalahan saat memproses penilaian AI";
 
-        sendEvent("error", { message: errorMsg });
-        controller.close();
+        if (request.signal.aborted) {
+          console.log(`[Stream] Job aborted by client for submission ${submissionId}`);
+        } else {
+          sendEvent("error", { message: errorMsg });
+          controller.close();
+        }
       }
     },
+    cancel() {
+      // Stream cancelled by client
+    }
   });
 
   return new Response(stream, {

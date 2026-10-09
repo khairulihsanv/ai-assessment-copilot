@@ -116,6 +116,7 @@ async function runTests() {
       const startTime = performance.now();
       const result = await gradeSubmission(
         {
+          assignmentId: "test-assignment",
           assignmentTitle: "Uji Coba AI Grading",
           assignmentInstructions: "Jawablah dengan tepat sesuai instruksi.",
           studentAnswer: tc.studentAnswer,

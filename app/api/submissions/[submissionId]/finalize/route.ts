@@ -4,6 +4,8 @@ import { prisma } from "@/lib/db/prisma";
 import { z } from "zod";
 
 const finalizeSchema = z.object({
+  expectedSubmissionVersionId: z.string().min(1),
+  expectedReleasedGradeId: z.string().min(1).nullable(),
   finalScore: z.number().min(0, "Skor minimal 0"),
   finalFeedback: z.string().min(3, "Umpan balik wajib diisi minimal 3 karakter"),
   isAIAssisted: z.boolean().default(false),
@@ -16,7 +18,8 @@ export async function POST(
   { params }: { params: Promise<{ submissionId: string }> }
 ) {
   const session = await auth();
-  if (!session?.user || session.user.role !== "DOSEN") {
+  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (session.user.role !== "DOSEN") {
     return NextResponse.json(
       { error: "Hanya dosen yang dapat memfinalisasi nilai" },
       { status: 403 }
@@ -59,7 +62,11 @@ export async function POST(
       );
     }
 
-    const { finalScore, finalFeedback, isAIAssisted, editedFromAI } = parsed.data;
+    const { finalScore, finalFeedback, isAIAssisted, editedFromAI, expectedSubmissionVersionId, expectedReleasedGradeId } = parsed.data;
+
+    if (submission.activeVersionId !== expectedSubmissionVersionId || submission.releasedGradeId !== expectedReleasedGradeId) {
+      return NextResponse.json({ error: "Jawaban atau nilai telah berubah. Muat ulang sebelum merilis." }, { status: 409 });
+    }
 
     if (finalScore > submission.assignment.maxScore) {
       return NextResponse.json(
@@ -68,39 +75,41 @@ export async function POST(
       );
     }
 
-    // Upsert Grade in transaction & update submission status
     const result = await prisma.$transaction(async (tx) => {
-      const grade = await tx.grade.upsert({
-        where: { submissionId },
-        update: {
-          finalScore,
-          finalFeedback,
-          isAIAssisted,
-          editedFromAI,
-          gradedAt: new Date(),
-          gradedById: session.user.id,
-        },
-        create: {
+      const grade = await tx.gradeRevision.create({
+        data: {
           submissionId,
+          versionId: expectedSubmissionVersionId,
+          status: "RELEASED",
           finalScore,
           finalFeedback,
           isAIAssisted,
           editedFromAI,
-          gradedAt: new Date(),
           gradedById: session.user.id,
         },
       });
 
-      await tx.submission.update({
-        where: { id: submissionId },
-        data: { status: "GRADED" },
+      const changed = await tx.submission.updateMany({
+        where: { id: submissionId, activeVersionId: expectedSubmissionVersionId, releasedGradeId: expectedReleasedGradeId },
+        data: { releasedGradeId: grade.id },
       });
+      if (changed.count !== 1) throw new Error("GRADE_CONFLICT");
+      if (expectedReleasedGradeId) {
+        await tx.gradeRevision.updateMany({
+          where: { id: expectedReleasedGradeId, submissionId, status: "RELEASED" },
+          data: { status: "SUPERSEDED" },
+        });
+      }
 
       return grade;
     });
 
     return NextResponse.json({ success: true, grade: result });
   } catch (error) {
+    if (error instanceof SyntaxError) return NextResponse.json({ error: "JSON tidak valid" }, { status: 400 });
+    if (error instanceof Error && error.message === "GRADE_CONFLICT") {
+      return NextResponse.json({ error: "Jawaban atau nilai telah berubah. Muat ulang sebelum merilis." }, { status: 409 });
+    }
     console.error("Finalize grade error:", error);
     return NextResponse.json(
       { error: "Gagal memfinalisasi nilai tugas" },

@@ -23,7 +23,7 @@ export async function GET() {
         orderBy: { createdAt: "desc" },
       })
     : await prisma.class.findMany({
-        where: { enrollments: { some: { mahasiswaId: session.user.id } } },
+        where: { enrollments: { some: { userId: session.user.id } } },
         include: {
           _count: { select: { enrollments: true, assignments: true } },
           dosen: { select: { name: true } },

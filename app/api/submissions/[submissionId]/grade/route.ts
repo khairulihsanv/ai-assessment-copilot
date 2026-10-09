@@ -30,15 +30,15 @@ export async function POST(
           },
         },
       },
-      mahasiswa: {
+      user: {
         select: { id: true, name: true },
       },
     },
   });
 
-  if (!submission) {
+  if (!submission || !submission.activeVersionId) {
     return NextResponse.json(
-      { error: "Pengumpulan tugas tidak ditemukan" },
+      { error: "Pengumpulan tugas tidak ditemukan atau belum memiliki versi" },
       { status: 404 }
     );
   }
@@ -52,19 +52,27 @@ export async function POST(
   }
 
   try {
-    // 1. Extract text from submission
+    const activeVersion = await prisma.submissionVersion.findUnique({
+      where: { id: submission.activeVersionId }
+    });
+    
+    if (!activeVersion) {
+      return NextResponse.json({ error: "Versi jawaban tidak ditemukan" }, { status: 404 });
+    }
+
+    // 1. Extract text from submission version
     let studentAnswer = "";
 
-    if (submission.type === "TEXT") {
-      studentAnswer = submission.content || "";
-    } else if (submission.type === "PDF" || submission.type === "DOCX") {
-      if (!submission.fileUrl) {
+    if (activeVersion.type === "TEXT") {
+      studentAnswer = activeVersion.content || "";
+    } else if (activeVersion.type === "PDF" || activeVersion.type === "DOCX") {
+      if (!activeVersion.fileUrl) {
         return NextResponse.json(
           { error: "File dokumen tidak ditemukan di server" },
           { status: 400 }
         );
       }
-      studentAnswer = await extractTextFromFile(submission.fileUrl, submission.type);
+      studentAnswer = await extractTextFromFile(activeVersion.fileUrl, activeVersion.type);
     }
 
     if (!studentAnswer.trim()) {
@@ -107,13 +115,10 @@ export async function POST(
     }
 
     // 3. Call AI Grading Client (with vector embedding similarity)
-    await prisma.submission.update({
-      where: { id: submissionId },
-      data: { status: "AI_PROCESSING" },
-    });
-
+    // No more status updates on submission itself since it's append-only
     const gradingResult = await gradeSubmission(
       {
+        assignmentId: submission.assignmentId,
         assignmentTitle: submission.assignment.title,
         assignmentInstructions: submission.assignment.instructions,
         rubricCriteria,
@@ -123,30 +128,18 @@ export async function POST(
       session.user.id
     );
 
-    // 4. Save AIEvaluation to DB
-    const aiEvaluation = await prisma.aIEvaluation.upsert({
-      where: { submissionId },
-      update: {
-        rawModelOutput: gradingResult.rawOutput as object,
-        perCriterionScore: gradingResult.response.perCriterion as unknown as object,
-        suggestedTotalScore: gradingResult.response.suggestedTotalScore,
-        suggestedFeedback: gradingResult.response.suggestedFeedback,
-        tokenUsage: gradingResult.tokenUsage as object,
-      },
-      create: {
+    // 4. Save EvaluationRun to DB
+    const aiEvaluation = await prisma.evaluationRun.create({
+      data: {
         submissionId,
+        versionId: activeVersion.id,
         rawModelOutput: gradingResult.rawOutput as object,
         perCriterionScore: gradingResult.response.perCriterion as unknown as object,
         suggestedTotalScore: gradingResult.response.suggestedTotalScore,
         suggestedFeedback: gradingResult.response.suggestedFeedback,
         tokenUsage: gradingResult.tokenUsage as object,
-      },
-    });
-
-    // 5. Update submission status to AI_REVIEWED
-    await prisma.submission.update({
-      where: { id: submissionId },
-      data: { status: "AI_REVIEWED" },
+        status: "COMPLETED",
+      }
     });
 
     return NextResponse.json({
@@ -154,12 +147,6 @@ export async function POST(
       aiEvaluation,
     });
   } catch (error) {
-    // Revert status to SUBMITTED if failed
-    await prisma.submission.update({
-      where: { id: submissionId },
-      data: { status: "SUBMITTED" },
-    });
-
     console.error("AI Grading error:", error);
     if (error instanceof GradingError) {
       return NextResponse.json({ error: error.message, code: error.code }, { status: 400 });

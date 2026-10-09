@@ -2,17 +2,24 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [vector]
 }
 
 enum Role {
   DOSEN
   MAHASISWA
+}
+
+enum ClassRole {
+  STUDENT
+  ASSISTANT
 }
 
 enum SubmissionType {
@@ -35,6 +42,38 @@ enum SubmissionStatus {
   GRADED
 }
 
+enum SourceType {
+  ANSWER_KEY
+  MATERIAL
+}
+
+enum JobStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+  CANCEL_REQUESTED
+  CANCELLED
+}
+
+enum JobType {
+  DOCUMENT_EXTRACT
+  DOCUMENT_INDEX
+  EVALUATION
+}
+
+enum DocumentStatus {
+  UPLOADING
+  UPLOADED
+  EXTRACTING
+  REVIEW_REQUIRED
+  APPROVED
+  INDEXING
+  READY
+  FAILED
+  RETIRED
+}
+
 model User {
   id           String   @id @default(cuid())
   name         String
@@ -45,11 +84,15 @@ model User {
   createdAt    DateTime @default(now())
 
   // Relations
-  ownedClasses  Class[]      @relation("DosenClasses")
-  enrollments   Enrollment[]
-  submissions   Submission[]
-  gradedGrades  Grade[]      @relation("GradedByDosen")
+  ownedClasses   Class[]      @relation("DosenClasses")
+  enrollments    Enrollment[]
+  submissions    Submission[]
+  gradedGrades   GradeRevision[] @relation("GradedByDosen")
   createdRubrics Rubric[]
+  
+  ownedDocuments Document[]
+  approvedDocuments DocumentVersion[] @relation("DocumentApprovals")
+  approvedReferenceSets ReferenceSetVersion[] @relation("ReferenceSetApprovals")
 
   @@map("users")
 }
@@ -74,16 +117,17 @@ model Class {
 }
 
 model Enrollment {
-  id       String   @id @default(cuid())
-  joinedAt DateTime @default(now())
+  id       String    @id @default(cuid())
+  role     ClassRole @default(STUDENT)
+  joinedAt DateTime  @default(now())
 
   // Relations
-  classId     String
-  class       Class  @relation(fields: [classId], references: [id], onDelete: Cascade)
-  mahasiswaId String
-  mahasiswa   User   @relation(fields: [mahasiswaId], references: [id], onDelete: Cascade)
+  classId String
+  class   Class  @relation(fields: [classId], references: [id], onDelete: Cascade)
+  userId  String @map("mahasiswaId")
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([classId, mahasiswaId])
+  @@unique([classId, userId])
   @@map("enrollments")
 }
 
@@ -93,29 +137,29 @@ model Rubric {
   createdAt DateTime @default(now())
 
   // Relations
-  classId    String
-  class      Class            @relation(fields: [classId], references: [id], onDelete: Cascade)
+  classId     String
+  class       Class             @relation(fields: [classId], references: [id], onDelete: Cascade)
   createdById String
-  createdBy  User             @relation(fields: [createdById], references: [id], onDelete: Cascade)
-  criteria   RubricCriterion[]
+  createdBy   User              @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  criteria    RubricCriterion[]
   assignments Assignment[]
 
   @@map("rubrics")
 }
 
 model RubricCriterion {
-  id          String @id @default(cuid())
-  label       String
-  description String?
-  maxScore    Float
-  weight      Float  // percentage, all criteria in a rubric should sum to 100
+  id             String  @id @default(cuid())
+  label          String
+  description    String?
+  maxScore       Float
+  weight         Float // percentage, all criteria in a rubric should sum to 100
   expectedAnswer String? // Legacy: keyword matching (kept for backward compat)
 
   // Vector-based grading fields
-  answerKey          String?  @db.Text // Full answer key from dosen
-  material           String?  @db.Text // Reference material/materi from dosen
-  answerKeyEmbedding Json?    // Embedding vector for answer key (Float[])
-  materialEmbedding  Json?    // Embedding vector for material (Float[])
+  answerKey          String? @db.Text // Full answer key from dosen
+  material           String? @db.Text // Reference material/materi from dosen
+  answerKeyEmbedding Json? // Embedding vector for answer key (Float[])
+  materialEmbedding  Json? // Embedding vector for material (Float[])
 
   // Relations
   rubricId String
@@ -125,27 +169,31 @@ model RubricCriterion {
 }
 
 model Assignment {
-  id               String           @id @default(cuid())
-  title            String
-  instructions     String
-  submissionType   SubmissionType   @default(ANY)
-  dueDate          DateTime
-  maxScore         Float            @default(100)
-  allowLateSubmission Boolean       @default(false)
-  status           AssignmentStatus @default(DRAFT)
-  createdAt        DateTime         @default(now())
+  id                  String           @id @default(cuid())
+  title               String
+  instructions        String
+  submissionType      SubmissionType   @default(ANY)
+  dueDate             DateTime
+  maxScore            Float            @default(100)
+  allowLateSubmission Boolean          @default(false)
+  status              AssignmentStatus @default(DRAFT)
+  createdAt           DateTime         @default(now())
 
   // Relations
-  classId    String
-  class      Class       @relation(fields: [classId], references: [id], onDelete: Cascade)
-  rubricId   String?
-  rubric     Rubric?     @relation(fields: [rubricId], references: [id], onDelete: SetNull)
+  classId     String
+  class       Class        @relation(fields: [classId], references: [id], onDelete: Cascade)
+  rubricId    String?
+  rubric      Rubric?      @relation(fields: [rubricId], references: [id], onDelete: SetNull)
   submissions Submission[]
+  
+  documents   Document[]
+  referenceSets ReferenceSetVersion[]
 
   @@map("assignments")
 }
 
 model Submission {
+<<<<<<< HEAD
   id          String           @id @default(cuid())
   type        SubmissionType   @default(TEXT)
   content     String?          // text content if TEXT submission
@@ -153,48 +201,295 @@ model Submission {
   fileName    String?
   submittedAt DateTime         @default(now())
   status      SubmissionStatus @default(SUBMITTED)
+=======
+  id           String   @id @default(cuid())
+  assignmentId String
+  userId       String   @map("mahasiswaId")
+  createdAt    DateTime @default(now())
+
+  // Pointer ke status dan nilai aktif (Dirilis ke mahasiswa)
+  activeVersionId      String?
+  releasedGradeId      String?
+
+  versions       SubmissionVersion[]
+  evaluations    EvaluationRun[]
+  grades         GradeRevision[]
+>>>>>>> ae00f9107d7769e123788769c9123652bf66f60a
 
   // Relations
-  assignmentId String
   assignment   Assignment    @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
-  mahasiswaId  String
-  mahasiswa    User          @relation(fields: [mahasiswaId], references: [id], onDelete: Cascade)
-  aiEvaluation AIEvaluation?
-  grade        Grade?
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([assignmentId, mahasiswaId])
+  @@unique([assignmentId, userId])
   @@map("submissions")
 }
 
-model AIEvaluation {
-  id                  String   @id @default(cuid())
-  rawModelOutput      Json     // full raw JSON from LLM
-  perCriterionScore   Json     // [{criterionId, score, reasoning}]
-  suggestedTotalScore Float
-  suggestedFeedback   String
-  tokenUsage          Json?    // {promptTokens, completionTokens, totalTokens}
-  createdAt           DateTime @default(now())
-
-  // Relations
-  submissionId String     @unique
+model SubmissionVersion {
+  id           String   @id @default(cuid())
+  submissionId String
   submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  
+  versionNumber Int      // 1, 2, 3...
+  type          SubmissionType
+  content       String?
+  fileUrl       String?
+  fileName      String?
+  submittedAt   DateTime @default(now())
 
-  @@map("ai_evaluations")
+  evaluations   EvaluationRun[]
+  grades        GradeRevision[]
+
+  @@unique([submissionId, versionNumber])
+  @@map("submission_versions")
 }
 
-model Grade {
-  id            String   @id @default(cuid())
-  finalScore    Float
-  finalFeedback String
-  isAIAssisted  Boolean  @default(false)
-  editedFromAI  Boolean  @default(false) // true if dosen modified AI suggestion
-  gradedAt      DateTime @default(now())
+model EvaluationRun {
+  id                  String   @id @default(cuid())
+  submissionId        String
+  submission          Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  versionId           String
+  version             SubmissionVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  
+  // Provenance & Konteks saat dievaluasi
+  rubricVersionSnapshot Json? // Mencatat status rubrik saat dijalankan, agar tidak terpengaruh jika rubrik diubah dosen
+  
+  rawModelOutput      Json 
+  perCriterionScore   Json 
+  suggestedTotalScore Float? // null = belum dapat dinilai (NEEDS_REVIEW), bukan skor 0
+  suggestedFeedback   String
+  tokenUsage          Json? 
+  
+  // Provenance RAG (lihat docs/implementation/06-rag-architecture.md)
+  referenceSetVersionId String?
+  jobId                 String?  @unique
+  evaluatorConfig       Json? // provider, model, promptVersion, parameter, retrieval config, index generation
+  evidence              Json? // bukti yang benar-benar dikirim ke LLM (chunkId, locator, teks)
 
-  // Relations
-  submissionId String     @unique
-  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
-  gradedById   String
-  gradedBy     User       @relation("GradedByDosen", fields: [gradedById], references: [id], onDelete: Cascade)
+  createdAt           DateTime @default(now())
+  status              String   @default("COMPLETED") // COMPLETED, NEEDS_REVIEW, FAILED
+  idempotencyKey      String?  @unique
 
-  @@map("grades")
+  @@index([versionId, createdAt])
+  @@map("evaluation_runs")
+}
+
+model GradeRevision {
+  id              String   @id @default(cuid())
+  submissionId    String
+  submission      Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  versionId       String?
+  version         SubmissionVersion? @relation(fields: [versionId], references: [id], onDelete: SetNull)
+  
+  status          String   @default("DRAFT") // DRAFT, APPROVED, RELEASED, SUPERSEDED, WITHDRAWN
+  finalScore      Float
+  finalFeedback   String
+  isAIAssisted    Boolean  @default(false)
+  editedFromAI    Boolean  @default(false)
+  
+  gradedById      String
+  gradedBy        User     @relation("GradedByDosen", fields: [gradedById], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+  
+  // Audit log
+  changeReason    String?
+  legacyProvenance String? // Untuk data migrasi lama yang tidak diketahui
+
+  @@map("grade_revisions")
+}
+
+model Document {
+  id           String   @id @default(cuid())
+  assignmentId String
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  ownerId      String
+  owner        User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  
+  sourceType   SourceType
+  versions     DocumentVersion[]
+
+  createdAt    DateTime @default(now())
+
+  @@map("documents")
+}
+
+model DocumentVersion {
+  id             String   @id @default(cuid())
+  documentId     String
+  document       Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  
+  versionNumber  Int
+  objectKey      String   // Path in storage
+  mimeType       String
+  checksum       String
+  size           Int
+  
+  extractionStatus DocumentStatus @default(UPLOADED)
+  errorMessage   String?
+
+  // Provenance ekstraksi & indeks
+  originalName        String?
+  parserVersion       String?
+  extractionMethod    String?
+  pageCount           Int?
+  qualityFlags        Json?
+  activeIndexGeneration String? // generasi indeks aktif; diganti atomik setelah indeks baru valid
+  indexedAt           DateTime?
+  
+  approvedById   String?
+  approvedBy     User?    @relation("DocumentApprovals", fields: [approvedById], references: [id], onDelete: SetNull)
+  approvedAt     DateTime?
+
+  chunks         DocumentChunk[]
+  referenceSets  ReferenceSetDocument[]
+
+  createdAt      DateTime @default(now())
+
+  @@unique([documentId, versionNumber])
+  @@map("document_versions")
+}
+
+model DocumentChunk {
+  id                String   @id @default(cuid())
+  documentVersionId String
+  documentVersion   DocumentVersion @relation(fields: [documentVersionId], references: [id], onDelete: Cascade)
+  
+  chunkIndex        Int      @default(0)
+  tokenEstimate     Int      @default(0)
+  rawText           String   @db.Text
+  normalizedText    String?  @db.Text
+  locator           Json     // e.g. { type: "pdf_page", page: 4 }
+  heading           String?
+  language          String?
+  flags             Json?    // e.g. ["TABLE_DETECTED", "UNCLEAR_OCR"]
+  checksum          String
+
+  embeddings        ChunkEmbedding[]
+
+  @@index([documentVersionId, chunkIndex])
+  @@map("document_chunks")
+}
+
+// Embedding native pgvector (dimensi tetap 768; ganti dimensi = migrasi + reindex).
+// Kolom `embedding` hanya ditulis/dibaca lewat SQL berparameter (lib/rag/vector-store.ts).
+model ChunkEmbedding {
+  id              String   @id @default(cuid())
+  chunkId         String
+  chunk           DocumentChunk @relation(fields: [chunkId], references: [id], onDelete: Cascade)
+
+  // Metadata denormalisasi untuk filter retrieval yang selektif dan audit
+  classId           String
+  assignmentId      String
+  documentVersionId String
+  sourceType        SourceType
+  parserVersion     String?
+  checksum          String
+
+  indexGeneration String
+  model           String
+  dimension       Int
+  embedding       Unsupported("vector(768)")?
+  state           String   @default("READY")
+  createdAt       DateTime @default(now())
+
+  @@unique([chunkId, indexGeneration, model])
+  @@index([assignmentId, indexGeneration, model])
+  @@index([documentVersionId, indexGeneration])
+  @@map("chunk_embeddings")
+}
+
+// Cache embedding jawaban/query. scopeKey memisahkan hak akses (mis. sv:<submissionVersionId>);
+// tidak pernah dibagikan lintas mahasiswa.
+model EmbeddingCache {
+  id         String   @id @default(cuid())
+  scopeKey   String
+  checksum   String
+  model      String
+  dimension  Int
+  vectors    Json // number[][] (satu vektor per segmen)
+  hits       Int      @default(0)
+  createdAt  DateTime @default(now())
+  lastUsedAt DateTime @default(now())
+
+  @@unique([scopeKey, checksum, model, dimension])
+  @@map("embedding_cache")
+}
+
+// Antrean durable berbasis PostgreSQL (lease + heartbeat + SKIP LOCKED).
+// Payload hanya berisi ID; tidak boleh berisi isi jawaban atau dokumen.
+model Job {
+  id             String    @id @default(cuid())
+  type           JobType
+  status         JobStatus @default(QUEUED)
+  idempotencyKey String    @unique
+  correlationId  String
+  userId         String
+  classId        String?
+  payload        Json
+  progress       Json?
+  result         Json?
+  errorCode      String?
+  errorMessage   String?
+  attempts       Int       @default(0)
+  maxAttempts    Int       @default(3)
+  runAfter       DateTime  @default(now())
+  leaseOwner     String?
+  leaseExpiresAt DateTime?
+  heartbeatAt    DateTime?
+  createdAt      DateTime  @default(now())
+  startedAt      DateTime?
+  finishedAt     DateTime?
+
+  @@index([status, runAfter])
+  @@index([userId, status])
+  @@index([classId, status])
+  @@map("jobs")
+}
+
+model ReferenceSetVersion {
+  id             String   @id @default(cuid())
+  assignmentId   String
+  assignment     Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  
+  versionNumber  Int
+  mapping        Json?    // mapping soal/kriteria
+  visibility     String   @default("PRIVATE")
+  indexGeneration String?
+  manifestHash   String?
+
+  approvedById   String?
+  approvedBy     User?    @relation("ReferenceSetApprovals", fields: [approvedById], references: [id], onDelete: SetNull)
+  approvedAt     DateTime?
+
+  documents      ReferenceSetDocument[]
+  
+  createdAt      DateTime @default(now())
+
+  @@unique([assignmentId, versionNumber])
+  @@map("reference_set_versions")
+}
+
+model ReferenceSetDocument {
+  referenceSetId    String
+  referenceSet      ReferenceSetVersion @relation(fields: [referenceSetId], references: [id], onDelete: Cascade)
+  documentVersionId String
+  documentVersion   DocumentVersion @relation(fields: [documentVersionId], references: [id], onDelete: Cascade)
+
+  @@id([referenceSetId, documentVersionId])
+  @@map("reference_set_documents")
+}
+
+model EvaluatorConfigVersion {
+  id             String   @id @default(cuid())
+  versionNumber  Int
+  provider       String
+  model          String
+  promptVersion  String
+  parameters     Json     // e.g. temperature, max_tokens
+  retrievalConfig Json    // e.g. top_k, hybrid weight
+  parserVersion  String?
+  indexVersion   String?
+
+  createdAt      DateTime @default(now())
+
+  @@map("evaluator_config_versions")
 }

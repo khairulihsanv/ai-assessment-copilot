@@ -1,3 +1,4 @@
+import { publicCriterionSelect, publicGradeSelect, withReleasedGrade } from "@/lib/db/public-selects";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/db/prisma";
@@ -15,31 +16,49 @@ export async function GET(
 
   const { classId, assignmentId } = await params;
 
+  const cls = await prisma.class.findUnique({
+    where: { id: classId },
+    include: { enrollments: { where: { userId: session.user.id } } }
+  });
+
+  if (!cls) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  const isDosen = cls.dosenId === session.user.id;
+  const enrollment = cls.enrollments[0];
+  const isAssistant = enrollment?.role === "ASSISTANT";
+  const isPrivileged = isDosen || isAssistant;
+
+  if (!isPrivileged && !enrollment) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const assignment = await prisma.assignment.findFirst({
-    where: { id: assignmentId, classId },
+    where: { id: assignmentId, classId, ...(isPrivileged ? {} : { status: { not: "DRAFT" } }) },
     include: {
       rubric: {
-        include: { criteria: true },
+        include: {
+          criteria: isPrivileged ? true : { select: publicCriterionSelect }
+        },
       },
       class: {
         select: {
           id: true,
           name: true,
           dosenId: true,
-          enrollments: {
-            select: { mahasiswaId: true },
-          },
         },
       },
       submissions: {
+        where: isPrivileged ? undefined : { userId: session.user.id },
         include: {
-          mahasiswa: {
+          user: {
             select: { id: true, name: true, email: true },
           },
-          grade: true,
-          aiEvaluation: true,
+          grades: isPrivileged ? true : { where: { status: "RELEASED" }, select: publicGradeSelect },
+          versions: true,
         },
-        orderBy: { submittedAt: "desc" },
+        orderBy: { createdAt: "desc" },
       },
     },
   });
@@ -48,7 +67,9 @@ export async function GET(
     return NextResponse.json({ error: "Tugas tidak ditemukan" }, { status: 404 });
   }
 
-  return NextResponse.json(assignment);
+  return NextResponse.json(isPrivileged ? assignment : {
+    ...assignment, submissions: assignment.submissions.map(withReleasedGrade),
+  });
 }
 
 // DELETE /api/classes/[classId]/assignments/[assignmentId]
@@ -72,7 +93,7 @@ export async function DELETE(
   }
 
   await prisma.assignment.delete({
-    where: { id: assignmentId },
+    where: { id: assignmentId, classId },
   });
 
   return NextResponse.json({ success: true, message: "Tugas berhasil dihapus" });
@@ -109,13 +130,17 @@ export async function PATCH(
       );
     }
 
+    if (parsed.data.rubricId) {
+      const rubric = await prisma.rubric.findFirst({ where: { id: parsed.data.rubricId, classId }, select: { id: true } });
+      if (!rubric) return NextResponse.json({ error: "Rubrik tidak tersedia di kelas ini" }, { status: 400 });
+    }
     const dataToUpdate: Record<string, unknown> = { ...parsed.data };
     if (dataToUpdate.dueDate) {
       dataToUpdate.dueDate = new Date(dataToUpdate.dueDate as string);
     }
 
     const updated = await prisma.assignment.update({
-      where: { id: assignmentId },
+      where: { id: assignmentId, classId },
       data: dataToUpdate,
       include: {
         rubric: {

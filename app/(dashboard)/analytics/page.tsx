@@ -16,7 +16,7 @@ export default async function AnalyticsPage() {
     prisma.class.count({ where: { dosenId: session.user.id } }),
     prisma.assignment.count({ where: { class: { dosenId: session.user.id } } }),
     prisma.submission.count({ where: { assignment: { class: { dosenId: session.user.id } } } }),
-    prisma.grade.count({ where: { gradedById: session.user.id } }),
+    prisma.gradeRevision.count({ where: { gradedById: session.user.id } }),
   ]);
 
   return (

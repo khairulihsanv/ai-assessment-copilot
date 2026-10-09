@@ -1,3 +1,5 @@
+import { getClassAccess } from "@/lib/auth/class-access";
+import { publicCriterionSelect } from "@/lib/db/public-selects";
 import { auth } from "@/lib/auth/auth";
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
@@ -16,7 +18,7 @@ interface ResultPageProps {
 }
 
 export const metadata = {
-  title: "Hasil Penilaian Tugas — AI Assessment Copilot • SV UNS",
+  title: "Hasil Penilaian Tugas — Dexa Assessment",
 };
 
 export default async function AssignmentResultPage({ params }: ResultPageProps) {
@@ -26,16 +28,17 @@ export default async function AssignmentResultPage({ params }: ResultPageProps) 
   }
 
   const { classId, assignmentId } = await params;
+  if (!(await getClassAccess(classId, session.user.id))) notFound();
 
   const submission = await prisma.submission.findUnique({
     where: {
-      assignmentId_mahasiswaId: {
+      assignmentId_userId: {
         assignmentId,
-        mahasiswaId: session.user.id,
+        userId: session.user.id,
       },
     },
     include: {
-      grade: true,
+      grades: { where: { status: "RELEASED" } },
       assignment: {
         include: {
           class: {
@@ -44,18 +47,22 @@ export default async function AssignmentResultPage({ params }: ResultPageProps) 
             },
           },
           rubric: {
-            include: { criteria: true },
+            include: { criteria: { select: publicCriterionSelect } },
           },
         },
       },
     },
   });
 
-  if (!submission || !submission.grade) {
+  const grade =
+    submission?.assignment.classId === classId
+      ? submission.grades.find((item) => item.id === submission.releasedGradeId)
+      : undefined;
+  if (!submission || !grade) {
     redirect(`/classes/${classId}/assignments/${assignmentId}`);
   }
 
-  const { grade, assignment } = submission;
+  const assignment = submission.assignment;
   const percentage = Math.round((grade.finalScore / assignment.maxScore) * 100);
 
   const getLetterBadge = (pct: number) => {
@@ -82,13 +89,16 @@ export default async function AssignmentResultPage({ params }: ResultPageProps) 
       </div>
 
       {/* Main Grade Header Card */}
-      <div className="p-8 rounded-3xl bg-gradient-to-br from-card via-card to-emerald-500/5 border-2 border-emerald-500/30 shadow-md space-y-6">
+      <div className="p-8 rounded-lg bg-gradient-to-br from-card via-card to-emerald-500/5 border-2 border-emerald-500/30 shadow-none space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/50 pb-6">
           <div className="space-y-1">
-            <Badge variant="outline" className="text-xs bg-emerald-500/10 text-emerald-600 border-emerald-500/20 font-medium">
+            <Badge
+              variant="outline"
+              className="text-xs bg-emerald-500/10 text-emerald-600 border-emerald-500/20 font-medium"
+            >
               Hasil Evaluasi Resmi
             </Badge>
-            <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-foreground">
+            <h1 className="text-2xl sm:text-3xl font-semibold font-display text-foreground">
               {assignment.title}
             </h1>
             <p className="text-xs text-muted-foreground">
@@ -99,19 +109,24 @@ export default async function AssignmentResultPage({ params }: ResultPageProps) 
           <div className="flex items-center gap-3">
             <div className="text-right">
               <span className="text-xs text-muted-foreground font-medium">Nilai Akhir</span>
-              <div className="text-4xl font-extrabold font-mono text-emerald-600 dark:text-emerald-400">
+              <div className="text-4xl font-semibold font-mono text-emerald-600 dark:text-emerald-400">
                 {grade.finalScore}
-                <span className="text-lg text-muted-foreground font-normal"> / {assignment.maxScore}</span>
+                <span className="text-lg text-muted-foreground font-normal">
+                  {" "}
+                  / {assignment.maxScore}
+                </span>
               </div>
             </div>
-            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-2xl font-mono shadow-sm ${letterInfo.color}`}>
+            <div
+              className={`w-14 h-14 rounded-lg flex items-center justify-center font-bold text-2xl font-mono shadow-none ${letterInfo.color}`}
+            >
               {letterInfo.grade}
             </div>
           </div>
         </div>
 
         {/* Feedback Section */}
-        <div className="p-5 rounded-2xl bg-muted/30 border border-border/80 space-y-2.5">
+        <div className="p-5 rounded-lg bg-muted/30 border border-border/80 space-y-2.5">
           <h3 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
             <Award className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             Catatan & Umpan Balik Dosen Pengampu:
@@ -122,7 +137,7 @@ export default async function AssignmentResultPage({ params }: ResultPageProps) 
         </div>
 
         <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
-          <span>Dinilai secara resmi pada {formatDateTime(grade.gradedAt)}</span>
+          <span>Dinilai secara resmi pada {formatDateTime(grade.createdAt)}</span>
           {grade.isAIAssisted && (
             <span className="text-[11px] text-accent flex items-center gap-1 font-medium">
               <Sparkles className="w-3.5 h-3.5" />
