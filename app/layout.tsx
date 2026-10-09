@@ -28,14 +28,13 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "AI Assessment Copilot | Sekolah Vokasi UNS",
-    template: "%s | AI Assessment Copilot",
+    default: "Dexa Assessment | Intelligent Evaluation Platform",
+    template: "%s | Dexa Assessment",
   },
   description:
-    "AI Assessment Copilot — Platform manajemen tugas dan evaluasi cerdas dengan AI berlandaskan Human-in-the-Loop untuk Sekolah Vokasi Universitas Sebelas Maret.",
+    "Dexa Assessment — Platform manajemen tugas dan evaluasi akademik cerdas dengan AI berlandaskan filosofi Human-in-the-Loop.",
   keywords: [
-    "AI Assessment Copilot",
-    "Sekolah Vokasi UNS",
+    "Dexa Assessment",
     "Human-in-the-Loop",
     "Evaluasi Akademik",
     "Rubrik Penilaian",
