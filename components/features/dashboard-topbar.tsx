@@ -18,6 +18,12 @@ export function DashboardTopbar({ user }: TopbarProps) {
   const { toggleSidebar } = useUIStore();
   const isDosen = user.role === "DOSEN";
 
+  const handleLogout = async () => {
+    sessionStorage.removeItem("dexa_session_active");
+    localStorage.removeItem("dexa_remember_me");
+    await signOut({ callbackUrl: "/login" });
+  };
+
   return (
     <header className="h-20 flex items-center justify-between px-6 sm:px-8 bg-[#F3F4F6]/95 backdrop-blur-md border-b border-[#E5E7EB]/50 sticky top-0 z-20 transition-all">
       {/* Left: Mobile trigger & Welcome Back Heading */}
@@ -62,14 +68,22 @@ export function DashboardTopbar({ user }: TopbarProps) {
           <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-[#FF4D4D] ring-2 ring-white" />
         </button>
 
-        {/* User Profile Avatar in Forest Green */}
-        <div className="flex items-center gap-2.5">
+        {/* User Profile Avatar in Forest Green + Logout Button */}
+        <div className="flex items-center gap-2">
           <div
             className="w-11 h-11 rounded-full bg-[#1E4D3B] text-white flex items-center justify-center text-sm font-bold shadow-xs ring-2 ring-white select-none"
             title={`${user.name} (${isDosen ? "Dosen" : "Mahasiswa"})`}
           >
             {getInitials(user.name)}
           </div>
+          <button
+            onClick={handleLogout}
+            className="w-11 h-11 rounded-full bg-white border border-[#E5E7EB] flex items-center justify-center text-[#9CA3AF] hover:text-[#DC2626] hover:bg-[#FEE2E2] shadow-xs transition-all cursor-pointer"
+            aria-label="Keluar dari akun"
+            title="Keluar dari akun"
+          >
+            <LogOut size={17} />
+          </button>
         </div>
       </div>
     </header>

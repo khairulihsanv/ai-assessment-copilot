@@ -92,3 +92,47 @@ describe("Utility Functions", () => {
     expect(fileSizeToString(5 * 1024 * 1024)).toBe("5.0 MB");
   });
 });
+
+describe("Auth Validators", () => {
+  it("should accept valid registration with matching confirmPassword", async () => {
+    const { registerSchema } = await import("@/lib/validators/auth");
+    const valid = {
+      name: "Budi Santoso",
+      email: "budi@staff.uns.ac.id",
+      password: "password123",
+      confirmPassword: "password123",
+      role: "DOSEN",
+    };
+    const res = registerSchema.safeParse(valid);
+    expect(res.success).toBe(true);
+  });
+
+  it("should reject registration if password and confirmPassword do not match", async () => {
+    const { registerSchema } = await import("@/lib/validators/auth");
+    const invalid = {
+      name: "Budi Santoso",
+      email: "budi@staff.uns.ac.id",
+      password: "password123",
+      confirmPassword: "password456",
+      role: "DOSEN",
+    };
+    const res = registerSchema.safeParse(invalid);
+    expect(res.success).toBe(false);
+    if (!res.success) {
+      expect(res.error.issues[0]?.message).toContain("tidak cocok");
+    }
+  });
+
+  it("should reject registration if password is less than 6 characters", async () => {
+    const { registerSchema } = await import("@/lib/validators/auth");
+    const invalid = {
+      name: "Budi Santoso",
+      email: "budi@staff.uns.ac.id",
+      password: "123",
+      confirmPassword: "123",
+      role: "DOSEN",
+    };
+    const res = registerSchema.safeParse(invalid);
+    expect(res.success).toBe(false);
+  });
+});

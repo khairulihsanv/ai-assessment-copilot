@@ -38,6 +38,12 @@ export function DashboardSidebar({ user }: SidebarProps) {
   const { sidebarOpen, toggleSidebar } = useUIStore();
   const isDosen = user.role === "DOSEN";
 
+  const handleLogout = async () => {
+    sessionStorage.removeItem("dexa_session_active");
+    localStorage.removeItem("dexa_remember_me");
+    await signOut({ callbackUrl: "/login" });
+  };
+
   const dosenNav = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/classes", label: "Kelas Kuliah", icon: GraduationCap },
@@ -67,37 +73,27 @@ export function DashboardSidebar({ user }: SidebarProps) {
       )}
     >
       <div className="flex flex-col flex-1 overflow-hidden py-5">
-        {/* Brand Logo (Clover Emblem inside Forest Green circle) */}
+        {/* Brand Logo (Dexa Assessment) */}
         <div className={cn("flex items-center px-4 mb-6", sidebarOpen ? "gap-3" : "justify-center")}>
           <Link
             href="/dashboard"
-            className="w-12 h-12 rounded-2xl bg-[#1E4D3B] text-white flex items-center justify-center shadow-sm hover:scale-105 transition-transform flex-shrink-0 group"
-            title="AI Assessment Copilot"
+            className="w-11 h-11 rounded-2xl flex items-center justify-center shadow-xs hover:scale-105 transition-transform flex-shrink-0 group overflow-hidden"
+            title="Dexa Assessment"
           >
-            {/* Custom 4-Leaf / Network Clover SVG */}
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className="text-white group-hover:rotate-12 transition-transform duration-300"
-            >
-              <circle cx="8" cy="8" r="4.5" fill="currentColor" opacity="0.95" />
-              <circle cx="16" cy="8" r="4.5" fill="currentColor" opacity="0.8" />
-              <circle cx="8" cy="16" r="4.5" fill="currentColor" opacity="0.8" />
-              <circle cx="16" cy="16" r="4.5" fill="currentColor" opacity="0.95" />
-              <circle cx="12" cy="12" r="2.5" fill="#FFA07A" />
-            </svg>
+            <img
+              src="/dexa-logo.png"
+              alt="Dexa Assessment"
+              className="w-full h-full object-contain rounded-xl"
+            />
           </Link>
 
           {sidebarOpen && (
             <div className="flex flex-col min-w-0">
               <span className="font-display text-[15px] font-extrabold text-[#111827] truncate leading-tight tracking-tight">
-                AI Assessment
+                Dexa Assessment
               </span>
               <span className="text-[10px] font-mono text-[#1E4D3B] font-bold truncate uppercase tracking-widest mt-0.5">
-                Sekolah Vokasi UNS
+                Evaluation Hub
               </span>
             </div>
           )}
@@ -164,9 +160,9 @@ export function DashboardSidebar({ user }: SidebarProps) {
               <span className="text-[10px] text-[#6B7280] truncate">{isDosen ? "Dosen UNS" : "Mahasiswa"}</span>
             </div>
             <button
-              onClick={() => signOut({ callbackUrl: "/" })}
-              className="p-2 rounded-xl text-[#9CA3AF] hover:text-[#DC2626] hover:bg-[#FEE2E2] transition-colors"
-              title="Keluar"
+              onClick={handleLogout}
+              className="p-2 rounded-xl text-[#9CA3AF] hover:text-[#DC2626] hover:bg-[#FEE2E2] transition-colors cursor-pointer"
+              title="Keluar dari Akun"
             >
               <LogOut size={16} />
             </button>
@@ -174,9 +170,9 @@ export function DashboardSidebar({ user }: SidebarProps) {
         ) : (
           <div className="flex justify-center">
             <button
-              onClick={() => signOut({ callbackUrl: "/" })}
-              className="w-10 h-10 rounded-xl text-[#9CA3AF] hover:text-[#DC2626] hover:bg-[#FEE2E2] flex items-center justify-center transition-colors"
-              title="Keluar"
+              onClick={handleLogout}
+              className="w-10 h-10 rounded-xl text-[#9CA3AF] hover:text-[#DC2626] hover:bg-[#FEE2E2] flex items-center justify-center transition-colors cursor-pointer"
+              title="Keluar dari Akun"
             >
               <LogOut size={18} />
             </button>

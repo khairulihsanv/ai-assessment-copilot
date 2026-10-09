@@ -33,6 +33,10 @@ export const authConfig: NextAuthConfig = {
       }
 
       if (isOnAuth && isLoggedIn) {
+        // If user is accessing login with reason or registered parameter, allow them to view the page
+        if (nextUrl.searchParams.has("reason") || nextUrl.searchParams.has("registered")) {
+          return true;
+        }
         return Response.redirect(new URL("/dashboard", nextUrl));
       }
 
@@ -56,5 +60,6 @@ export const authConfig: NextAuthConfig = {
   providers: [],
   session: {
     strategy: "jwt",
+    maxAge: 12 * 60 * 60, // 12 hours max session
   },
 };

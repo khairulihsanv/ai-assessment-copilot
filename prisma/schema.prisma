@@ -147,7 +147,7 @@ model Assignment {
 
 model Submission {
   id          String           @id @default(cuid())
-  type        SubmissionType
+  type        SubmissionType   @default(TEXT)
   content     String?          // text content if TEXT submission
   fileUrl     String?          // file path/URL if PDF/DOCX
   fileName    String?

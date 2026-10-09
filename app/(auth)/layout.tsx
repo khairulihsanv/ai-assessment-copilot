@@ -16,21 +16,19 @@ export default function AuthLayout({
             {/* Institutional Brand Header */}
             <div className="flex items-center justify-between">
               <Link href="/" className="flex items-center gap-3.5 group">
-                <div className="w-12 h-12 rounded-2xl bg-[#1E4D3B] text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform flex-shrink-0">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                    <circle cx="8" cy="8" r="4.5" fill="currentColor" opacity="0.95" />
-                    <circle cx="16" cy="8" r="4.5" fill="currentColor" opacity="0.8" />
-                    <circle cx="8" cy="16" r="4.5" fill="currentColor" opacity="0.8" />
-                    <circle cx="16" cy="16" r="4.5" fill="currentColor" opacity="0.95" />
-                    <circle cx="12" cy="12" r="2.5" fill="#FFA07A" />
-                  </svg>
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform flex-shrink-0 overflow-hidden">
+                  <img
+                    src="/dexa-logo.png"
+                    alt="Dexa Assessment"
+                    className="w-full h-full object-contain rounded-xl"
+                  />
                 </div>
                 <div>
                   <span className="font-display text-lg font-extrabold text-[#111827] block tracking-tight leading-none">
-                    AI Assessment Copilot
+                    Dexa Assessment
                   </span>
                   <span className="text-[10px] font-mono text-[#1E4D3B] uppercase font-bold tracking-wider mt-1 block">
-                    Sekolah Vokasi UNS Hub
+                    Intelligent Evaluation Hub
                   </span>
                 </div>
               </Link>
