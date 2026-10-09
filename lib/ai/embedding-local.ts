@@ -14,12 +14,16 @@ class EmbeddingPipeline {
       if (config.kind !== "local") {
         throw new Error("EmbeddingProvider is not set to 'local' in config");
       }
-      // @ts-ignore
-      const { pipeline } = await import("@huggingface/transformers");
-      this.instance = pipeline(this.task, config.model, {
-        // Specify quantized model to reduce memory footprint
-        dtype: "q8",
-      } as any);
+      try {
+        const importDynamic = new Function('modulePath', 'return import(modulePath)');
+        const { pipeline } = await importDynamic("@huggingface/transformers");
+        this.instance = pipeline(this.task, config.model, {
+          // Specify quantized model to reduce memory footprint
+          dtype: "q8",
+        } as any);
+      } catch (err) {
+        throw new Error("Paket @huggingface/transformers tidak tersedia atau gagal dimuat: " + (err instanceof Error ? err.message : String(err)));
+      }
     }
     return this.instance;
   }
