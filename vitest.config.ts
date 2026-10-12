@@ -1,4 +1,4 @@
-import { resolve } from "path";
+import { resolve } from "node:path";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
@@ -6,12 +6,12 @@ export default defineConfig({
     globals: true,
     environment: "node",
     setupFiles: ["./vitest.setup.ts"],
-    include: ["tests/**/*.test.ts"],
-    exclude: ["tests/**/*.integration.test.ts"],
+    include: ["tests/**/*.test.ts", "apps/**/*.test.ts"],
+    exclude: ["tests/**/*.integration.test.ts", "apps/**/*.integration.test.ts", "apps/**/node_modules/**"],
   },
   resolve: {
     alias: {
-      "@": resolve(__dirname, "./"),
+      "@": resolve(__dirname, "./apps/frontend/src"),
     },
   },
 });

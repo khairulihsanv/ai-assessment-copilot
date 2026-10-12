@@ -1,0 +1,86 @@
+import { FolderKanban } from "lucide-react";
+import { redirect } from "next/navigation";
+import { ClassCard } from "@/components/features/class-card";
+import { CreateClassModal } from "@/components/features/create-class-modal";
+import { JoinClassModal } from "@/components/features/join-class-modal";
+import { auth } from "@/server/auth/auth";
+import { fetchFromBackend } from "@/server/api/backend-client";
+
+export const metadata = {
+  title: "Daftar Kelas — Dexa Assessment",
+};
+
+export default async function ClassesPage() {
+  const session = await auth();
+  if (!session?.user) {
+    redirect("/login");
+  }
+
+  const isDosen = session.user.role === "DOSEN";
+
+  const { data } = await fetchFromBackend<any[]>("/classes");
+  const classes = data || [];
+
+  return (
+    <div className="space-y-6 animate-in fade-in-50 duration-300">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-6">
+        <div>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-primary/5 text-primary font-mono text-[11px] font-bold mb-2">
+            <span>Ruang perkuliahan</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight font-display text-foreground">
+            {isDosen ? "Kelas Anda" : "Kelas Anda"}
+          </h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1 max-w-2xl">
+            {isDosen
+              ? "Kelola tugas, anggota, dan acuan penilaian untuk setiap kelas."
+              : "Lihat tugas aktif, kumpulkan lembar jawaban, dan periksa nilai serta umpan balik dari dosen."}
+          </p>
+        </div>
+
+        <div>{isDosen ? <CreateClassModal /> : <JoinClassModal />}</div>
+      </div>
+
+      {/* Classes Grid or Empty State */}
+      {classes.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 px-4 text-center rounded-lg border border-dashed border-border bg-card shadow-none">
+          <div className="w-16 h-16 rounded-lg bg-primary/5 text-primary flex items-center justify-center mb-4">
+            <FolderKanban className="w-8 h-8" />
+          </div>
+          <h3 className="text-xl font-semibold text-foreground font-display">
+            {isDosen ? "Belum Ada Kelas" : "Belum Mengikuti Kelas"}
+          </h3>
+          <p className="text-xs text-muted-foreground max-w-md mt-2 mb-6 leading-relaxed">
+            {isDosen
+              ? "Mulai dengan membuat kelas perkuliahan pertama Anda untuk membagikan tugas dan menggunakan asisten AI."
+              : "Masukkan kode kelas dari dosen pengajar Anda untuk mulai mengikuti perkuliahan dan mengerjakan tugas."}
+          </p>
+          {isDosen ? <CreateClassModal /> : <JoinClassModal />}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {classes.map((c) => {
+            const studentCount = "enrollments" in c._count ? c._count.enrollments : 0;
+            const dosenName =
+              "dosen" in c && c.dosen ? (c.dosen as { name: string }).name : undefined;
+
+            return (
+              <ClassCard
+                key={c.id}
+                id={c.id}
+                name={c.name}
+                subject={c.subject}
+                description={c.description}
+                enrollmentKey={isDosen ? c.enrollmentKey : undefined}
+                studentCount={studentCount}
+                dosenName={dosenName}
+                isDosen={isDosen}
+              />
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}

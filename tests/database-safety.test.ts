@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { withReleasedGrade } from "@/lib/db/public-selects";
-import { requireTestDatabaseUrl } from "@/lib/testing/database-url";
+import { requireTestDatabaseUrl } from "@/server/config/database-url";
+import { withReleasedGrade } from "@/server/db/public-selects";
 
 describe("Disposable test database guard", () => {
   it("accepts the explicit local CI database", () => {

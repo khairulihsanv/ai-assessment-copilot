@@ -4,9 +4,8 @@ import { GET as getSubmissions } from "@/app/api/classes/[classId]/assignments/[
 
 import { GET as getClassDetails } from "@/app/api/classes/[classId]/route";
 import { POST as finalizeGrade } from "@/app/api/submissions/[submissionId]/finalize/route";
-
-import { prisma } from "@/lib/db/prisma";
-import { requireTestDatabaseUrl } from "@/lib/testing/database-url";
+import { requireTestDatabaseUrl } from "@/server/config/database-url";
+import { prisma } from "@/server/db/prisma";
 
 // Checked again here for accidental invocation outside the integration config.
 const testUrl = requireTestDatabaseUrl(process.env.TEST_DATABASE_URL);
@@ -15,7 +14,7 @@ const runId = randomUUID();
 const fixtureUsers: string[] = [];
 
 const { authMock } = vi.hoisted(() => ({ authMock: vi.fn() }));
-vi.mock("@/lib/auth/auth", () => ({
+vi.mock("@/server/auth/auth", () => ({
   auth: authMock,
 }));
 

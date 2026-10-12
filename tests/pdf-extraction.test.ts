@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { extractTextFromBuffer } from "@/lib/ai/extract-text";
+import { extractTextFromBuffer } from "@/server/ai/extract-text";
 
 // A real, single-page PDF with an xref table; the parser is not mocked.
 function samplePdf(): Buffer {

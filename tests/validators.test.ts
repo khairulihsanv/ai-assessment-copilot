@@ -1,7 +1,47 @@
-import { describe, it, expect } from "vitest";
-import { createRubricSchema } from "@/lib/validators/rubric";
-import { createClassSchema, joinClassSchema } from "@/lib/validators/class";
-import { formatRelativeTime, fileSizeToString, getInitials } from "@/lib/utils";
+import { describe, expect, it } from "vitest";
+import { z } from "zod";
+import { createClassSchema, joinClassSchema } from "@dexa/contracts";
+import { createRubricSchema } from "@dexa/contracts";
+import { fileSizeToString, getInitials } from "@/shared/utils";
+
+const gradingResponseSchema = z.object({
+  perCriterion: z.array(
+    z.object({
+      criterionId: z.string(),
+      score: z.number().min(0),
+      reasoning: z.string(),
+      similarityScore: z.number().min(0).max(100).optional(),
+      classification: z.string().optional(),
+    }),
+  ),
+  suggestedTotalScore: z.number().min(0),
+  suggestedFeedback: z.string(),
+});
+
+describe("Grading Response Validator", () => {
+  it("should accept valid AI payload", () => {
+    const valid = {
+      perCriterion: [{ criterionId: "c1", score: 80, reasoning: "Good" }],
+      suggestedTotalScore: 80,
+      suggestedFeedback: "Keep it up",
+    };
+    expect(gradingResponseSchema.safeParse(valid).success).toBe(true);
+  });
+
+  it("should reject payload with missing fields", () => {
+    const invalid = { suggestedTotalScore: 80 };
+    expect(gradingResponseSchema.safeParse(invalid).success).toBe(false);
+  });
+
+  it("should reject payload with wrong types or invalid numeric values", () => {
+    const invalid = {
+      perCriterion: [{ criterionId: "c1", score: -10, reasoning: "Bad" }], // negative score
+      suggestedTotalScore: "80", // string instead of number
+      suggestedFeedback: "Keep it up",
+    };
+    expect(gradingResponseSchema.safeParse(invalid).success).toBe(false);
+  });
+});
 
 describe("Rubric Validator", () => {
   it("should accept valid rubric with weights summing to exactly 100%", () => {
