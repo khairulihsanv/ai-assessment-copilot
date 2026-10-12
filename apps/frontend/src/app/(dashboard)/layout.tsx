@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { DashboardSidebar } from "@/components/features/dashboard-sidebar";
 import { DashboardTopbar } from "@/components/features/dashboard-topbar";
 import { auth } from "@/server/auth/auth";
+import { SessionGuard } from "@/components/features/session-guard";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -15,7 +16,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
   };
 
   return (
-    <div className="flex min-h-screen bg-background text-foreground">
+    <div className="flex min-h-screen bg-[#F3F4F6] text-[#111827]">
+      <SessionGuard />
       <DashboardSidebar user={userData} />
       <div className="flex-1 flex flex-col min-w-0">
         <DashboardTopbar user={userData} />
