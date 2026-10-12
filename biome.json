@@ -18,6 +18,9 @@
       "style": {
         "noNonNullAssertion": "off"
       },
+      "complexity": {
+        "useOptionalChain": "off"
+      },
       "suspicious": {
         "noExplicitAny": "warn"
       }
@@ -36,7 +39,12 @@
       "!**/.next",
       "!**/dist",
       "!**/prisma/migrations",
-      "!**/*.config.mjs"
+      "!**/*.config.mjs",
+      "!**/public",
+      "!**/scratch",
+      "!**/docs",
+      "!**/.agents",
+      "!**/*.css"
     ]
   }
 }

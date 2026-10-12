@@ -1,6 +1,6 @@
 // Connectivity probe for the disposable test database. Refuses non-test URLs.
 import { PrismaClient } from "@prisma/client";
-import { requireTestDatabaseUrl } from "../lib/testing/database-url";
+import { requireTestDatabaseUrl } from "../apps/frontend/src/server/config/database-url.js";
 
 async function main() {
   const url = requireTestDatabaseUrl(process.env.TEST_DATABASE_URL);

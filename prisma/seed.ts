@@ -1,4 +1,4 @@
-import { PrismaClient, Role, SubmissionType, AssignmentStatus, SubmissionStatus } from "@prisma/client";
+import { AssignmentStatus, PrismaClient, Role, SubmissionType } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -49,7 +49,8 @@ async function main() {
     data: {
       name: "Praktikum Rekayasa Perangkat Lunak - TI 3A",
       subject: "Rekayasa Perangkat Lunak",
-      description: "Mata kuliah praktikum pengembangan sistem berbasis web modern, arsitektur microservices, dan implementasi CI/CD.",
+      description:
+        "Mata kuliah praktikum pengembangan sistem berbasis web modern, arsitektur microservices, dan implementasi CI/CD.",
       enrollmentKey: "RPL2026",
       dosenId: dosen.id,
     },
@@ -77,19 +78,22 @@ async function main() {
         create: [
           {
             label: "Pemahaman Konsep & Teori Arsitektur",
-            description: "Ketepatan menjelaskan karakteristik, kelebihan, dan kelemahan arsitektur Monolith vs Microservices.",
+            description:
+              "Ketepatan menjelaskan karakteristik, kelebihan, dan kelemahan arsitektur Monolith vs Microservices.",
             maxScore: 100,
             weight: 40,
           },
           {
             label: "Analisis Kritis & Studi Kasus",
-            description: "Kedalaman penalaran dalam menentukan skenario pemilihan arsitektur yang tepat pada industri riil.",
+            description:
+              "Kedalaman penalaran dalam menentukan skenario pemilihan arsitektur yang tepat pada industri riil.",
             maxScore: 100,
             weight: 40,
           },
           {
             label: "Sistematika Penulisan & Referensi",
-            description: "Kerapian struktur esai, tata bahasa akademik, serta kelengkapan referensi rujukan ilmiah.",
+            description:
+              "Kerapian struktur esai, tata bahasa akademik, serta kelengkapan referensi rujukan ilmiah.",
             maxScore: 100,
             weight: 20,
           },
@@ -154,19 +158,21 @@ Referensi:
       assignmentId: assignment.id,
       userId: mahasiswa.id,
       versions: {
-        create: [{
-          versionNumber: 1,
-          type: SubmissionType.TEXT,
-          content: sampleAnswer,
-        }]
-      }
+        create: [
+          {
+            versionNumber: 1,
+            type: SubmissionType.TEXT,
+            content: sampleAnswer,
+          },
+        ],
+      },
     },
-    include: { versions: true }
+    include: { versions: true },
   });
 
   const submission = await prisma.submission.update({
     where: { id: sub1.id },
-    data: { activeVersionId: sub1.versions[0]!.id }
+    data: { activeVersionId: sub1.versions[0]!.id },
   });
 
   console.log(`✅ Sample Submission dibuat untuk user: ${submission.id}`);
