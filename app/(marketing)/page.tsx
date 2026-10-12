@@ -1,25 +1,27 @@
 "use client";
 
-import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
 import {
-  Sparkles,
   ArrowRight,
-  ShieldCheck,
-  Check,
-  Copy,
-  FileText,
-  Cpu,
   BarChart3,
-  Sliders,
+  Check,
   CheckCircle2,
-  Menu,
-  X,
-  User,
+  Copy,
+  Cpu,
+  FileText,
   GraduationCap,
+  Menu,
   MousePointer2,
+  ShieldCheck,
+  Sliders,
+  Sparkles,
+  User,
+  X,
 } from "lucide-react";
+import Link from "next/link";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import "./landing.css";
+
+const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 /* ─── DeXa Brand Logo Component (Exact Authentic Image from User) ─── */
 
@@ -57,7 +59,7 @@ const NAV_LINKS = [
   { href: "#demo-section", label: "Demo" },
 ];
 
-const STEPS = [
+const _STEPS = [
   {
     num: "01",
     title: "Desain Rubrik",
@@ -108,170 +110,271 @@ export default function LandingPage() {
   const [copied, setCopied] = useState<"dosen" | "mhs" | null>(null);
   const [activeSection, setActiveSection] = useState<string>("home");
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isNavReady, setIsNavReady] = useState(false);
 
   // Interactive review panel states
   const [isEditing, setIsEditing] = useState(false);
   const [score, setScore] = useState(AI_SCORE);
   const [isReleased, setIsReleased] = useState(false);
 
-  // 1. Initial mount / page refresh scroll restoration
-  useEffect(() => {
-    // Disable automatic browser scroll restoration that might reset or conflict with hash
-    const prevRestoration = window.history.scrollRestoration;
-    window.history.scrollRestoration = "manual";
-    const resetRestoration = () => {
-      window.history.scrollRestoration = prevRestoration;
-    };
+  // Motion design refs & states
+  const heroRef = useRef<HTMLElement>(null);
+  const navLinksRef = useRef<HTMLElement>(null);
+  const indicatorRef = useRef<HTMLSpanElement>(null);
+  const mockupRef = useRef<HTMLDivElement>(null);
+  const workflowRef = useRef<HTMLElement>(null);
 
-    const rawTarget =
-      window.location.hash ||
-      (typeof window !== "undefined" ? sessionStorage.getItem("dexa_active_section") : null);
+  // Navigation lock refs (Bug 3)
+  const isNavigatingRef = useRef(false);
+  const scrollIdleTimerRef = useRef<number | null>(null);
+  const hardTimeoutRef = useRef<number | null>(null);
+  const scrollTickingRef = useRef(false);
 
-    if (rawTarget && rawTarget !== "#home" && rawTarget !== "#") {
-      const cleanId = rawTarget.replace("#", "");
-      setActiveSection(cleanId);
+  const [heroInView, setHeroInView] = useState(true);
+  const [workflowInView, setWorkflowInView] = useState(true);
+  const [mockupAnimated, setMockupAnimated] = useState(false);
+  const [mockupScore, setMockupScore] = useState(0);
+  const [wfProgress, setWfProgress] = useState(0);
 
-      const restoreScroll = () => {
-        const el = document.getElementById(cleanId);
-        if (el) {
-          el.scrollIntoView({ behavior: "instant" as ScrollBehavior });
-          return true;
-        }
-        return false;
-      };
-
-      // Attempt immediately
-      restoreScroll();
-
-      // Retry once layout has settled
-      const raf = requestAnimationFrame(() => {
-        restoreScroll();
-      });
-      const t1 = setTimeout(restoreScroll, 50);
-      const t2 = setTimeout(restoreScroll, 150);
-
-      return () => {
-        cancelAnimationFrame(raf);
-        clearTimeout(t1);
-        clearTimeout(t2);
-        resetRestoration();
-      };
-    }
-    return resetRestoration;
+  // ─── BUG 2: Reload & fresh visit always open at top with Home active ───
+  useIsomorphicLayoutEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.history.scrollRestoration = "manual";
+      if (window.location.hash) {
+        window.history.replaceState(null, "", window.location.pathname);
+      }
+    } catch {}
+    window.scrollTo(0, 0);
   }, []);
 
-  // 2. Active section detection & scroll position persistence (ScrollSpy)
-  useEffect(() => {
-    const sectionIds = ["home", "hitl", "cara-kerja", "fitur", "demo-section"];
-    let ticking = false;
-    let rafId = 0;
-    let lastSection: string | null = null;
-    let disposed = false;
+  // Release navigation lock helper (Bug 3)
+  const releaseNavLock = useCallback(() => {
+    isNavigatingRef.current = false;
+    if (scrollIdleTimerRef.current !== null) {
+      clearTimeout(scrollIdleTimerRef.current);
+      scrollIdleTimerRef.current = null;
+    }
+    if (hardTimeoutRef.current !== null) {
+      clearTimeout(hardTimeoutRef.current);
+      hardTimeoutRef.current = null;
+    }
+  }, []);
 
-    const checkScrollState = () => {
-      const scrolled = window.scrollY > 20;
-      setIsScrolled((prev) => (prev !== scrolled ? scrolled : prev));
+  // Interrupt navigation lock on manual user scroll (wheel, touch, keydown)
+  useEffect(() => {
+    const handleUserInterrupt = () => {
+      if (isNavigatingRef.current) {
+        releaseNavLock();
+      }
     };
 
-    const updateActiveSection = () => {
-      ticking = false;
-      // Never touch history once the user has left the landing route
-      if (disposed || window.location.pathname !== "/") return;
+    window.addEventListener("wheel", handleUserInterrupt, { passive: true });
+    window.addEventListener("touchstart", handleUserInterrupt, { passive: true });
+    window.addEventListener("touchmove", handleUserInterrupt, { passive: true });
+    window.addEventListener("keydown", handleUserInterrupt, { passive: true });
 
-      const windowHeight = window.innerHeight;
-      const navOffset = 90;
+    return () => {
+      window.removeEventListener("wheel", handleUserInterrupt);
+      window.removeEventListener("touchstart", handleUserInterrupt);
+      window.removeEventListener("touchmove", handleUserInterrupt);
+      window.removeEventListener("keydown", handleUserInterrupt);
+    };
+  }, [releaseNavLock]);
 
-      let current = "home";
+  // ─── BUG 1: Real geometry indicator updater ───
+  const updateIndicator = useCallback(() => {
+    if (!navLinksRef.current || !indicatorRef.current) return;
+    const activeEl = navLinksRef.current.querySelector<HTMLElement>(
+      `[data-section="${activeSection}"]`,
+    );
+    if (activeEl) {
+      const left = activeEl.offsetLeft;
+      const width = activeEl.offsetWidth;
+      indicatorRef.current.style.setProperty("--lp-indicator-x", `${left}px`);
+      indicatorRef.current.style.setProperty("--lp-indicator-w", `${width}px`);
+      indicatorRef.current.style.opacity = "1";
+    } else {
+      indicatorRef.current.style.opacity = "0";
+    }
+  }, [activeSection]);
+
+  // Bug 1: On first paint, place indicator with no transition, enable on next frame
+  useIsomorphicLayoutEffect(() => {
+    updateIndicator();
+    const rafId = requestAnimationFrame(() => {
+      setIsNavReady(true);
+    });
+    return () => cancelAnimationFrame(rafId);
+  }, [updateIndicator]);
+
+  // Bug 1: Re-measure after document.fonts.ready
+  useEffect(() => {
+    if (typeof document !== "undefined" && document.fonts) {
+      document.fonts.ready.then(() => {
+        updateIndicator();
+      });
+    }
+  }, [updateIndicator]);
+
+  // Bug 1: Re-measure on window resize & nav container resize via ResizeObserver
+  useEffect(() => {
+    const navEl = navLinksRef.current;
+    if (!navEl) return;
+
+    const handleResize = () => {
+      updateIndicator();
+    };
+
+    let ro: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined") {
+      ro = new ResizeObserver(handleResize);
+      ro.observe(navEl);
+    }
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      if (ro) ro.disconnect();
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [updateIndicator]);
+
+  // Bug 1: Re-measure when header changes height on scroll (82px to 68px)
+  useEffect(() => {
+    void isScrolled;
+    updateIndicator();
+    const t = setTimeout(updateIndicator, 360);
+    return () => clearTimeout(t);
+  }, [isScrolled, updateIndicator]);
+
+  // ─── BUG 3: Nav click handler with lock & smooth scroll ───
+  const handleNavClick = useCallback(
+    (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+      e.preventDefault();
+      const targetId = href.replace("#", "");
+      if (!targetId) return;
+
+      // Set active item immediately without flicker
+      setActiveSection(targetId);
+      setMenuOpen(false);
+
+      // Engage navigation lock
+      isNavigatingRef.current = true;
+      if (scrollIdleTimerRef.current !== null) clearTimeout(scrollIdleTimerRef.current);
+      if (hardTimeoutRef.current !== null) clearTimeout(hardTimeoutRef.current);
+
+      const prefersReduced =
+        typeof window !== "undefined" &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const behavior: ScrollBehavior = prefersReduced ? "auto" : "smooth";
+
+      if (targetId === "home") {
+        window.scrollTo({ top: 0, behavior });
+      } else {
+        const target = document.getElementById(targetId);
+        if (target) {
+          target.scrollIntoView({ behavior, block: "start" });
+        }
+      }
+
+      if (prefersReduced) {
+        releaseNavLock();
+        return;
+      }
+
+      // Hard timeout safety net
+      hardTimeoutRef.current = window.setTimeout(releaseNavLock, 1200);
+
+      // scrollend event listener
+      const onScrollEnd = () => {
+        releaseNavLock();
+        window.removeEventListener("scrollend", onScrollEnd);
+      };
+      window.addEventListener("scrollend", onScrollEnd, { once: true });
+    },
+    [releaseNavLock],
+  );
+
+  const scrollToTop = useCallback(
+    (e: React.MouseEvent) => {
+      handleNavClick(e as unknown as React.MouseEvent<HTMLAnchorElement>, "#home");
+    },
+    [handleNavClick],
+  );
+
+  // ─── BUG 3: Tuned ScrollSpy IntersectionObserver & Scroll Tracking ───
+  useEffect(() => {
+    const sectionIds = ["home", "hitl", "cara-kerja", "fitur", "demo-section"];
+    const headerLine = 80;
+
+    const evaluateActiveSection = () => {
+      if (isNavigatingRef.current) return;
+
+      if (window.scrollY < 40) {
+        setActiveSection("home");
+        return;
+      }
+
+      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 50) {
+        setActiveSection("demo-section");
+        return;
+      }
 
       for (const id of sectionIds) {
         const el = document.getElementById(id);
         if (!el) continue;
         const rect = el.getBoundingClientRect();
-        // If element top is within reasonable view range and bottom is below navbar
-        if (rect.top <= windowHeight * 0.45 && rect.bottom > navOffset) {
-          current = id;
+        if (rect.top <= headerLine && rect.bottom > headerLine) {
+          setActiveSection(id);
+          break;
         }
       }
-
-      if (current === lastSection) return;
-      lastSection = current;
-
-      // Side effects run outside of React's state updater (no setState-in-render)
-      const hash = current === "home" ? "" : `#${current}`;
-      try {
-        if (current !== "home") {
-          sessionStorage.setItem("dexa_active_section", `#${current}`);
-        } else {
-          sessionStorage.removeItem("dexa_active_section");
-        }
-
-        const currentHash = window.location.hash;
-        if ((hash && currentHash !== hash) || (!hash && currentHash)) {
-          window.history.replaceState(window.history.state, "", hash || window.location.pathname);
-        }
-      } catch {}
-
-      setActiveSection(current);
     };
 
     const handleScroll = () => {
-      checkScrollState();
-      if (!ticking) {
-        rafId = window.requestAnimationFrame(updateActiveSection);
-        ticking = true;
+      const scrolled = window.scrollY > 20;
+      setIsScrolled((prev) => (prev !== scrolled ? scrolled : prev));
+
+      if (isNavigatingRef.current) {
+        if (scrollIdleTimerRef.current !== null) {
+          clearTimeout(scrollIdleTimerRef.current);
+        }
+        scrollIdleTimerRef.current = window.setTimeout(releaseNavLock, 120);
+        return;
+      }
+
+      if (!scrollTickingRef.current) {
+        scrollTickingRef.current = true;
+        requestAnimationFrame(() => {
+          evaluateActiveSection();
+          scrollTickingRef.current = false;
+        });
       }
     };
+
+    const observer = new IntersectionObserver(
+      () => {
+        evaluateActiveSection();
+      },
+      {
+        rootMargin: "-80px 0px -50% 0px",
+        threshold: 0,
+      },
+    );
+
+    for (const id of sectionIds) {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    }
 
     window.addEventListener("scroll", handleScroll, { passive: true });
-    checkScrollState();
-    updateActiveSection();
+    evaluateActiveSection();
 
     return () => {
-      disposed = true;
-      window.cancelAnimationFrame(rafId);
+      observer.disconnect();
       window.removeEventListener("scroll", handleScroll);
     };
-  }, []);
-
-  // Navigation smooth scroll handler
-  const handleNavClick = useCallback((e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-    if (href === "#home") {
-      e.preventDefault();
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      try {
-        sessionStorage.removeItem("dexa_active_section");
-        window.history.replaceState(window.history.state, "", window.location.pathname);
-      } catch {}
-      setActiveSection("home");
-      setMenuOpen(false);
-      return;
-    }
-    if (href.startsWith("#")) {
-      const target = document.querySelector(href);
-      if (target) {
-        e.preventDefault();
-        target.scrollIntoView({ behavior: "smooth" });
-        const sectionId = href.replace("#", "");
-        setActiveSection(sectionId);
-        try {
-          sessionStorage.setItem("dexa_active_section", href);
-          window.history.replaceState(window.history.state, "", href);
-        } catch {}
-        setMenuOpen(false);
-      }
-    }
-  }, []);
-
-  const scrollToTop = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    try {
-      sessionStorage.removeItem("dexa_active_section");
-      window.history.replaceState(window.history.state, "", window.location.pathname);
-    } catch {}
-    setActiveSection("home");
-    setMenuOpen(false);
-  }, []);
+  }, [releaseNavLock]);
 
   // Scroll reveal observer for elements below
   useEffect(() => {
@@ -284,14 +387,174 @@ export default function LandingPage() {
           }
         }
       },
-      { rootMargin: "0px 0px -8% 0px", threshold: 0.08 }
+      { rootMargin: "0px 0px -8% 0px", threshold: 0.08 },
     );
 
     const elements = document.querySelectorAll(".lp-reveal");
-    elements.forEach((el) => observer.observe(el));
+    elements.forEach((el) => {
+      observer.observe(el);
+    });
 
     return () => observer.disconnect();
   }, []);
+
+  // Viewport Observer for Hero & Workflow to pause looping animations
+  useEffect(() => {
+    const heroEl = heroRef.current;
+    const workflowEl = workflowRef.current;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.target === heroEl) {
+            setHeroInView(entry.isIntersecting);
+          } else if (entry.target === workflowEl) {
+            setWorkflowInView(entry.isIntersecting);
+          }
+        }
+      },
+      { threshold: 0 },
+    );
+
+    if (heroEl) observer.observe(heroEl);
+    if (workflowEl) observer.observe(workflowEl);
+
+    return () => observer.disconnect();
+  }, []);
+
+  // Hero Ambient Parallax (Item 1: 0.15x scroll speed)
+  useEffect(() => {
+    const heroEl = heroRef.current;
+    if (!heroEl) return;
+
+    let rafId = 0;
+    const onScroll = () => {
+      if (!rafId) {
+        rafId = requestAnimationFrame(() => {
+          const scrollY = window.scrollY;
+          if (scrollY <= 1400) {
+            heroEl.style.setProperty("--hero-parallax", `${scrollY * 0.15}px`);
+          }
+          rafId = 0;
+        });
+      }
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, []);
+
+  // Cursor-reactive dot grid (Item 2)
+  useEffect(() => {
+    const heroEl = heroRef.current;
+    if (!heroEl) return;
+    const isFine = window.matchMedia("(pointer: fine)").matches;
+    if (!isFine) return;
+
+    let rafId = 0;
+    let targetX = -999;
+    let targetY = -999;
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (window.innerWidth <= 768) return;
+      const rect = heroEl.getBoundingClientRect();
+      targetX = e.clientX - rect.left;
+      targetY = e.clientY - rect.top;
+
+      if (!rafId) {
+        rafId = requestAnimationFrame(() => {
+          heroEl.style.setProperty("--mx", `${targetX}px`);
+          heroEl.style.setProperty("--my", `${targetY}px`);
+          rafId = 0;
+        });
+      }
+    };
+
+    const onMouseLeave = () => {
+      heroEl.style.setProperty("--mx", "-999px");
+      heroEl.style.setProperty("--my", "-999px");
+    };
+
+    heroEl.addEventListener("mousemove", onMouseMove);
+    heroEl.addEventListener("mouseleave", onMouseLeave);
+
+    return () => {
+      heroEl.removeEventListener("mousemove", onMouseMove);
+      heroEl.removeEventListener("mouseleave", onMouseLeave);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, []);
+
+  // Hero Mockup entrance & score counter (Item 6: runs once)
+  useEffect(() => {
+    const mockupEl = mockupRef.current;
+    if (!mockupEl) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setMockupAnimated(true);
+            observer.disconnect();
+
+            // Count from 0 to 85 over 900ms
+            const start = performance.now();
+            const duration = 900;
+            const target = 85;
+
+            const frame = (now: number) => {
+              const elapsed = now - start;
+              const progress = Math.min(elapsed / duration, 1);
+              const ease = 1 - (1 - progress) ** 3;
+              setMockupScore(Math.round(ease * target));
+              if (progress < 1) {
+                requestAnimationFrame(frame);
+              }
+            };
+            requestAnimationFrame(frame);
+            break;
+          }
+        }
+      },
+      { threshold: 0.12 },
+    );
+
+    observer.observe(mockupEl);
+    return () => observer.disconnect();
+  }, []);
+
+  // Workflow scroll progress (Item 8)
+  useEffect(() => {
+    const wfEl = workflowRef.current;
+    if (!wfEl) return;
+
+    let rafId = 0;
+    const onScroll = () => {
+      if (!rafId) {
+        rafId = requestAnimationFrame(() => {
+          const rect = wfEl.getBoundingClientRect();
+          const winH = window.innerHeight;
+          const progress = Math.min(Math.max((winH * 0.75 - rect.top) / (rect.height * 0.7), 0), 1);
+          setWfProgress(progress);
+          rafId = 0;
+        });
+      }
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, []);
+
+  const seg1Progress = Math.min(Math.max((wfProgress - 0.05) / 0.25, 0), 1);
+  const seg2Progress = Math.min(Math.max((wfProgress - 0.3) / 0.35, 0), 1);
+  const seg3Progress = Math.min(Math.max((wfProgress - 0.65) / 0.25, 0), 1);
 
   const copyToClipboard = useCallback(async (text: string, who: "dosen" | "mhs") => {
     try {
@@ -305,25 +568,33 @@ export default function LandingPage() {
 
   const delta = score - AI_SCORE;
   const deltaLabel =
-    delta === 0 ? "Sama dengan rekomendasi AI" : `${delta > 0 ? "+" : "−"}${Math.abs(delta)} poin dari draft AI`;
+    delta === 0
+      ? "Sama dengan rekomendasi AI"
+      : `${delta > 0 ? "+" : "−"}${Math.abs(delta)} poin dari draft AI`;
 
   return (
     <div className="lp">
       {/* ─── NAVBAR ─── */}
       <header className={`lp-nav ${isScrolled ? "is-scrolled" : ""}`}>
         <div className="lp-container lp-nav__inner">
-          <a href="#home" onClick={scrollToTop} className="lp-brand">
+          <Link href="#home" onClick={scrollToTop} className="lp-brand">
             <DexaLogo size={42} />
             <span className="lp-brand__name">Dexa Assessment</span>
-          </a>
+          </Link>
 
-          <nav className="lp-nav__links" aria-label="Navigasi Utama">
+          <nav className="lp-nav__links" ref={navLinksRef} aria-label="Navigasi Utama">
+            <span
+              ref={indicatorRef}
+              className={`lp-nav__indicator ${isNavReady ? "is-ready" : ""}`}
+              aria-hidden="true"
+            />
             {NAV_LINKS.map((link) => {
               const linkId = link.href.replace("#", "");
               const isActive = activeSection === linkId;
               return (
                 <a
                   key={link.href}
+                  data-section={linkId}
                   href={link.href}
                   onClick={(e) => handleNavClick(e, link.href)}
                   className={`lp-nav__link ${isActive ? "is-active" : ""}`}
@@ -369,10 +640,18 @@ export default function LandingPage() {
                   </a>
                 );
               })}
-              <Link href="/login" className="lp-btn lp-btn--secondary" onClick={() => setMenuOpen(false)}>
+              <Link
+                href="/login"
+                className="lp-btn lp-btn--secondary"
+                onClick={() => setMenuOpen(false)}
+              >
                 Masuk
               </Link>
-              <Link href="/register" className="lp-btn lp-btn--primary" onClick={() => setMenuOpen(false)}>
+              <Link
+                href="/register"
+                className="lp-btn lp-btn--primary"
+                onClick={() => setMenuOpen(false)}
+              >
                 Daftar Sekarang
               </Link>
             </nav>
@@ -382,36 +661,17 @@ export default function LandingPage() {
 
       <main>
         {/* ─── HERO SECTION ─── */}
-        <section id="home" className="lp-hero">
+        <section id="home" ref={heroRef} className={`lp-hero ${heroInView ? "" : "is-paused"}`}>
           {/* Subtle Dot Grid Canvas (5-8% opacity) */}
           <div className="lp-hero__bg-grid" aria-hidden="true" />
 
-          {/* Ambient Multi-Layered Emerald Kinetic Atmosphere */}
+          {/* Cursor-Reactive Emerald Dot Grid (Item 2) */}
+          <div className="lp-hero__cursor-grid" aria-hidden="true" />
+
+          {/* Ambient Two Drifting Emerald Blobs with Scroll Parallax (Item 1) */}
           <div className="lp-hero-ambient" aria-hidden="true">
-            {/* Base persistent soft emerald glow (always visible, anchor atmosphere) */}
-            <div className="lp-ambient-base" />
-
-            {/* Core expanding/contracting soft emerald aura */}
-            <div className="lp-ambient-core" />
-
-            {/* Soft breathing halo ring */}
-            <div className="lp-ambient-ring" />
-
-            {/* Organic drifting soft translucent green ambient shapes */}
-            <div className="lp-ambient-blob lp-blob--1" />
-            <div className="lp-ambient-blob lp-blob--2" />
-            <div className="lp-ambient-blob lp-blob--3" />
-            <div className="lp-ambient-blob lp-blob--4" />
-            <div className="lp-ambient-blob lp-blob--5" />
-
-            {/* Subtle floating ambient light particles around edges */}
-            <div className="lp-ambient-particle lp-particle--1" />
-            <div className="lp-ambient-particle lp-particle--2" />
-            <div className="lp-ambient-particle lp-particle--3" />
-            <div className="lp-ambient-particle lp-particle--4" />
-            <div className="lp-ambient-particle lp-particle--5" />
-            <div className="lp-ambient-particle lp-particle--6" />
-            <div className="lp-ambient-particle lp-particle--7" />
+            <div className="lp-ambient-blob lp-ambient-blob--1" />
+            <div className="lp-ambient-blob lp-ambient-blob--2" />
           </div>
 
           {/* Understated Micro Accents (Linear / Vercel Aesthetic) */}
@@ -428,6 +688,7 @@ export default function LandingPage() {
               style={{ top: "62%", left: "15%", width: 68, height: 42 }}
               viewBox="0 0 68 42"
               fill="none"
+              aria-hidden="true"
             >
               <path
                 d="M 6 36 C 24 36, 50 26, 56 6"
@@ -449,6 +710,7 @@ export default function LandingPage() {
               viewBox="0 0 150 260"
               fill="none"
               style={{ top: "30%", right: "3.5%", width: 140, height: 260 }}
+              aria-hidden="true"
             >
               <path
                 d="M 120 0 V 75 Q 120 95 100 95 H 45 Q 25 95 25 115 V 185 Q 25 205 45 205 H 125"
@@ -460,28 +722,71 @@ export default function LandingPage() {
           </div>
 
           <div className="lp-container lp-hero__content">
-            {/* 1. Top Pill Badge */}
+            {/* 1. Top Pill Badge (Item 4: 8px pulsing dot, emoji removed) */}
             <div className="lp-hero-pill lp-hero-animate">
-              <span className="lp-hero-pill__sparkle">✨</span>
+              <span className="lp-hero-pill__status" aria-hidden="true">
+                <span className="lp-hero-pill__dot" />
+                <span className="lp-hero-pill__ring" />
+              </span>
               <span>AI Assessment Copilot</span>
             </div>
 
-            {/* 2. Main Headline */}
-            <h1 className="lp-h1 lp-hero-animate">
-              Koreksi Tugas Lebih Cepat <br />
-              <span className="lp-h1__tone">dengan Bantuan AI.</span>
+            {/* 2. Main Headline (Item 3: Word-by-word clip entrance with green underline on Cepat) */}
+            <h1 className="lp-h1">
+              <span className="lp-h1__line">
+                <span className="lp-word-clip">
+                  <span className="lp-word" style={{ animationDelay: "0ms" }}>
+                    Koreksi
+                  </span>
+                </span>{" "}
+                <span className="lp-word-clip">
+                  <span className="lp-word" style={{ animationDelay: "70ms" }}>
+                    Tugas
+                  </span>
+                </span>{" "}
+                <span className="lp-word-clip">
+                  <span className="lp-word" style={{ animationDelay: "140ms" }}>
+                    Lebih
+                  </span>
+                </span>{" "}
+                <span className="lp-word-clip lp-word-clip--target">
+                  <span className="lp-word" style={{ animationDelay: "210ms" }}>
+                    Cepat
+                  </span>
+                  <span className="lp-word-underline" aria-hidden="true" />
+                </span>
+              </span>
+              <br />
+              <span className="lp-h1__line lp-h1__tone">
+                <span className="lp-word-clip">
+                  <span className="lp-word" style={{ animationDelay: "280ms" }}>
+                    dengan
+                  </span>
+                </span>{" "}
+                <span className="lp-word-clip">
+                  <span className="lp-word" style={{ animationDelay: "350ms" }}>
+                    Bantuan
+                  </span>
+                </span>{" "}
+                <span className="lp-word-clip">
+                  <span className="lp-word" style={{ animationDelay: "420ms" }}>
+                    AI.
+                  </span>
+                </span>
+              </span>
             </h1>
 
             {/* 3. Sub-headline */}
             <p className="lp-lead lp-hero-animate-d1">
-              Platform manajemen tugas &amp; evaluasi akademik cerdas yang membantu menganalisis jawaban mahasiswa
-              secara objektif via arsitektur <strong>Human-in-the-Loop</strong>.
+              Platform manajemen tugas &amp; evaluasi akademik cerdas yang membantu menganalisis
+              jawaban mahasiswa secara objektif via arsitektur <strong>Human-in-the-Loop</strong>.
             </p>
 
-            {/* 4. CTAs */}
+            {/* 4. CTAs (Item 5) */}
             <div className="lp-hero__ctas lp-hero-animate-d2">
               <Link href="#demo-section" className="lp-btn lp-btn--dark">
-                Daftar Sekarang
+                <span className="lp-btn__sheen" aria-hidden="true" />
+                <span>Daftar Sekarang</span>
                 <span className="lp-btn__arrow">→</span>
               </Link>
               <a href="#cara-kerja" className="lp-btn lp-btn--outline">
@@ -489,9 +794,12 @@ export default function LandingPage() {
               </a>
             </div>
 
-            {/* 5. UI Preview - Anchored at the bottom with subtle multi-layered ambient shadow, partially clipped */}
+            {/* 5. UI Preview (Item 6: entrance, sequence bar fill, tabular counter) */}
             <div className="lp-hero-workspace-wrapper lp-hero-animate-d3">
-              <div className="lp-hero-workspace">
+              <div
+                ref={mockupRef}
+                className={`lp-hero-workspace ${mockupAnimated ? "is-animated" : ""}`}
+              >
                 <div className="lp-ws-topbar">
                   <div className="lp-ws-dots">
                     <div className="lp-ws-dot" />
@@ -502,7 +810,10 @@ export default function LandingPage() {
                     <FileText size={15} className="text-[#03633e]" />
                     <span>Studio Penilaian · Tugas Basis Data</span>
                   </div>
-                  <span className="lp-chip lp-chip--wait">Menunggu Validasi</span>
+                  <span className="lp-chip lp-chip--wait">
+                    <span className="lp-chip__yellow-dot" aria-hidden="true" />
+                    Menunggu Validasi
+                  </span>
                 </div>
 
                 <div className="lp-ws-content">
@@ -528,13 +839,17 @@ export default function LandingPage() {
                     </div>
 
                     <div className="lp-doc-snippet">
-                      <p style={{ fontWeight: 650, color: "var(--lp-ink)", marginBottom: 8 }}>Implementasi Fungsi Login</p>
+                      <p style={{ fontWeight: 650, color: "var(--lp-ink)", marginBottom: 8 }}>
+                        Implementasi Fungsi Login
+                      </p>
                       <p>
-                        Query otentikasi menggunakan prepared statement sehingga input pengguna dipisahkan secara ketat
-                        dari struktur query database:
+                        Query otentikasi menggunakan prepared statement sehingga input pengguna
+                        dipisahkan secara ketat dari struktur query database:
                       </p>
                       <div className="lp-code-preview">
-                        {"$stmt = $pdo->prepare('SELECT id, password FROM users WHERE email = ?');\n$stmt->execute([$email]);"}
+                        {
+                          "$stmt = $pdo->prepare('SELECT id, password FROM users WHERE email = ?');\n$stmt->execute([$email]);"
+                        }
                       </div>
                     </div>
                   </div>
@@ -563,14 +878,22 @@ export default function LandingPage() {
                                   <Check size={11} strokeWidth={3} />
                                 </span>
                               )}
-                              <span>{item.name} ({item.weight}%)</span>
+                              <span>
+                                {item.name} ({item.weight}%)
+                              </span>
                             </div>
-                            <span style={{ fontWeight: 700 }}>{item.score}/{item.weight}</span>
+                            <span style={{ fontWeight: 700 }}>
+                              {item.score}/{item.weight}
+                            </span>
                           </div>
                           <div className="lp-rubric-bar">
                             <div
                               className="lp-rubric-fill"
-                              style={{ width: `${(item.score / item.weight) * 100}%` }}
+                              style={
+                                {
+                                  "--target-scale": item.score / item.weight,
+                                } as React.CSSProperties
+                              }
                             />
                           </div>
 
@@ -589,14 +912,13 @@ export default function LandingPage() {
                       <span style={{ fontSize: 13.5, color: "var(--lp-muted)", fontWeight: 600 }}>
                         Skor Rekomendasi
                       </span>
-                      <span className="lp-score-val">
-                        {AI_SCORE}<small>/100</small>
+                      <span className="lp-score-val lp-tnum">
+                        {mockupScore}
+                        <small>/100</small>
                       </span>
                     </div>
 
-                    <div className="lp-feedback-box">
-                      {AI_FEEDBACK}
-                    </div>
+                    <div className="lp-feedback-box">{AI_FEEDBACK}</div>
                   </div>
                 </div>
               </div>
@@ -614,29 +936,36 @@ export default function LandingPage() {
           <span id="tentang" className="sr-only" aria-hidden="true" />
           <div className="lp-container">
             <div className="lp-hitl-grid">
-              <div className="lp-reveal lp-reveal--left">
+              <div className="lp-reveal lp-stagger-1">
                 <span className="lp-runner">Filosofi Sistem</span>
                 <h2 className="lp-h2">
                   Pemberdayaan, <br />
                   <span className="lp-h1__tone">Bukan Penggantian.</span>
                 </h2>
                 <p className="lp-subtext">
-                  Dexa Assessment dirancang dengan prinsip <strong>Human-in-the-Loop</strong>. AI bekerja membaca,
-                  mengekstrak dokumen, dan menganalisis kecocokan jawaban dengan rubrik, namun keputusan akhir,
-                  empati, dan validasi nilai tetap 100% di tangan Anda.
+                  Dexa Assessment dirancang dengan prinsip <strong>Human-in-the-Loop</strong>. AI
+                  bekerja membaca, mengekstrak dokumen, dan menganalisis kecocokan jawaban dengan
+                  rubrik, namun keputusan akhir, empati, dan validasi nilai tetap 100% di tangan
+                  Anda.
                 </p>
 
                 <ul className="lp-check-list">
                   <li className="lp-check-item">
-                    <span className="lp-check-icon"><Check size={13} strokeWidth={3} /></span>
+                    <span className="lp-check-icon">
+                      <Check size={13} strokeWidth={3} />
+                    </span>
                     Menghindari bias penilaian otomatis (Zero AI-Slop)
                   </li>
                   <li className="lp-check-item">
-                    <span className="lp-check-icon"><Check size={13} strokeWidth={3} /></span>
+                    <span className="lp-check-icon">
+                      <Check size={13} strokeWidth={3} />
+                    </span>
                     Transparansi dasar penilaian per kriteria rubrik
                   </li>
                   <li className="lp-check-item">
-                    <span className="lp-check-icon"><Check size={13} strokeWidth={3} /></span>
+                    <span className="lp-check-icon">
+                      <Check size={13} strokeWidth={3} />
+                    </span>
                     Kontrol manual penuh terhadap skor dan umpan balik
                   </li>
                 </ul>
@@ -648,7 +977,7 @@ export default function LandingPage() {
               </div>
 
               {/* Interactive Validation Card */}
-              <div className="lp-reveal lp-reveal--right lp-delay-1">
+              <div className="lp-reveal lp-stagger-2">
                 <div className="lp-review-card">
                   <div className="lp-review-head">
                     <div>
@@ -672,13 +1001,12 @@ export default function LandingPage() {
                       </div>
                     </div>
                     <div className="lp-review-score-num">
-                      {score}<small>/100</small>
+                      {score}
+                      <small>/100</small>
                     </div>
                   </div>
 
-                  <div className="lp-feedback-box">
-                    {AI_FEEDBACK}
-                  </div>
+                  <div className="lp-feedback-box">{AI_FEEDBACK}</div>
 
                   {/* Manual Adjustment Slider */}
                   {isEditing && (
@@ -741,21 +1069,31 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ─── CARA KERJA (HOW IT WORKS / ALUR PRAKTIS) ─── */}
-        <section id="cara-kerja" className="lp-section lp-workflow-section">
+        {/* ─── CARA KERJA (HOW IT WORKS / ALUR PRAKTIS) (Item 8) ─── */}
+        <section
+          id="cara-kerja"
+          ref={workflowRef}
+          className={`lp-section lp-workflow-section ${workflowInView ? "" : "is-paused"}`}
+        >
           {/* Ambient Drifting Emerald Glow in Background */}
           <div className="lp-workflow-glow" aria-hidden="true" />
 
           {/* Ultra-faint dot grid with micro '+' crosshairs */}
           <div className="lp-workflow-bg-grid" aria-hidden="true" />
           <div className="lp-workflow-accents" aria-hidden="true">
-            <span className="lp-crosshair" style={{ top: "18%", left: "10%" }}>+</span>
-            <span className="lp-crosshair" style={{ top: "45%", right: "8%" }}>+</span>
-            <span className="lp-crosshair" style={{ bottom: "16%", left: "8%" }}>+</span>
+            <span className="lp-crosshair" style={{ top: "18%", left: "10%" }}>
+              +
+            </span>
+            <span className="lp-crosshair" style={{ top: "45%", right: "8%" }}>
+              +
+            </span>
+            <span className="lp-crosshair" style={{ bottom: "16%", left: "8%" }}>
+              +
+            </span>
           </div>
 
           <div className="lp-container">
-            <div className="lp-section-head lp-reveal lp-reveal--up">
+            <div className="lp-section-head lp-reveal">
               <span className="lp-runner">• ALUR PRAKTIS</span>
               <h2 className="lp-h2">Bagaimana Sistem Bekerja</h2>
               <p className="lp-subtext">
@@ -773,7 +1111,7 @@ export default function LandingPage() {
               >
                 <defs>
                   <filter id="glow-particle" x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur" />
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur" />
                     <feMerge>
                       <feMergeNode in="blur" />
                       <feMergeNode in="SourceGraphic" />
@@ -786,13 +1124,17 @@ export default function LandingPage() {
                   id="trail-seg-1"
                   d="M 462 150 L 518 150"
                   className="lp-trail-path"
+                  style={{
+                    strokeDasharray: 56,
+                    strokeDashoffset: Math.max(0, 56 * (1 - seg1Progress)),
+                  }}
                 />
                 <circle cx="462" cy="150" r="5" className="lp-trail-node" />
                 <circle cx="518" cy="150" r="5" className="lp-trail-node" />
 
-                {/* Animated Flowing Trail Particle on 01 -> 02 */}
-                <circle r="4" fill="#10B981" filter="url(#glow-particle)" opacity="0.95">
-                  <animateMotion dur="2.2s" repeatCount="indefinite" path="M 462 150 L 518 150" />
+                {/* Animated Flowing Trail Particle on 01 -> 02: 1 particle, slowed */}
+                <circle r="3.5" fill="#00c86d" filter="url(#glow-particle)" opacity="0.95">
+                  <animateMotion dur="3.4s" repeatCount="indefinite" path="M 462 150 L 518 150" />
                 </circle>
 
                 {/* 02 -> 03: Logical, Clean Stepped Channel from Step 02 down into Step 03 */}
@@ -800,14 +1142,18 @@ export default function LandingPage() {
                   id="trail-seg-2"
                   d="M 518 230 H 496 Q 490 230 490 242 V 310 Q 490 322 484 322 H 462"
                   className="lp-trail-path"
+                  style={{
+                    strokeDasharray: 180,
+                    strokeDashoffset: Math.max(0, 180 * (1 - seg2Progress)),
+                  }}
                 />
                 <circle cx="518" cy="230" r="5" className="lp-trail-node" />
                 <circle cx="462" cy="322" r="5" className="lp-trail-node" />
 
-                {/* Animated Flowing Trail Particle on 02 -> 03 */}
-                <circle r="4" fill="#10B981" filter="url(#glow-particle)" opacity="0.95">
+                {/* Animated Flowing Trail Particle on 02 -> 03: 1 particle, slowed */}
+                <circle r="3.5" fill="#00c86d" filter="url(#glow-particle)" opacity="0.95">
                   <animateMotion
-                    dur="3.2s"
+                    dur="4.4s"
                     repeatCount="indefinite"
                     path="M 518 230 H 496 Q 490 230 490 242 V 310 Q 490 322 484 322 H 462"
                   />
@@ -818,13 +1164,17 @@ export default function LandingPage() {
                   id="trail-seg-3"
                   d="M 462 405 L 518 405"
                   className="lp-trail-path"
+                  style={{
+                    strokeDasharray: 56,
+                    strokeDashoffset: Math.max(0, 56 * (1 - seg3Progress)),
+                  }}
                 />
                 <circle cx="462" cy="405" r="5" className="lp-trail-node" />
                 <circle cx="518" cy="405" r="5" className="lp-trail-node" />
 
-                {/* Animated Flowing Trail Particle on 03 -> 04 */}
-                <circle r="4" fill="#10B981" filter="url(#glow-particle)" opacity="0.95">
-                  <animateMotion dur="2.2s" repeatCount="indefinite" path="M 462 405 L 518 405" />
+                {/* Animated Flowing Trail Particle on 03 -> 04: 1 particle, slowed */}
+                <circle r="3.5" fill="#00c86d" filter="url(#glow-particle)" opacity="0.95">
+                  <animateMotion dur="3.4s" repeatCount="indefinite" path="M 462 405 L 518 405" />
                 </circle>
               </svg>
 
@@ -833,20 +1183,26 @@ export default function LandingPage() {
                 {/* Column 1: Step 01 & Step 03 */}
                 <div className="lp-workflow-col lp-workflow-col--left">
                   {/* Step 01 */}
-                  <div className="lp-wf-card lp-reveal lp-reveal--scale lp-delay-1">
-                    <span className="lp-wf-num">01</span>
+                  <div className="lp-wf-card lp-reveal lp-stagger-1">
+                    <div className={`lp-wf-num-circle ${wfProgress >= 0.05 ? "is-reached" : ""}`}>
+                      01
+                    </div>
                     <h3 className="lp-wf-title">Desain Rubrik</h3>
                     <p className="lp-wf-desc">
-                      Susun kriteria penilaian dan bobot nilai secara terstruktur sebagai acuan mutlak evaluasi.
+                      Susun kriteria penilaian dan bobot nilai secara terstruktur sebagai acuan
+                      mutlak evaluasi.
                     </p>
                   </div>
 
-                  {/* Step 03: Completely unified, clean 2D card with no arrows or icons */}
-                  <div className="lp-wf-card lp-reveal lp-reveal--scale lp-delay-3">
-                    <span className="lp-wf-num">03</span>
+                  {/* Step 03 */}
+                  <div className="lp-wf-card lp-reveal lp-stagger-3">
+                    <div className={`lp-wf-num-circle ${wfProgress >= 0.65 ? "is-reached" : ""}`}>
+                      03
+                    </div>
                     <h3 className="lp-wf-title">Analisis Kognitif</h3>
                     <p className="lp-wf-desc">
-                      AI menganalisis kesesuaian berkas dengan rubrik dan menghasilkan draft skor rekomendasi.
+                      AI menganalisis kesesuaian berkas dengan rubrik dan menghasilkan draft skor
+                      rekomendasi.
                     </p>
                   </div>
                 </div>
@@ -854,20 +1210,26 @@ export default function LandingPage() {
                 {/* Column 2: Step 02 & Step 04 (Staggered Down) */}
                 <div className="lp-workflow-col lp-workflow-col--right">
                   {/* Step 02 */}
-                  <div className="lp-wf-card lp-reveal lp-reveal--scale lp-delay-2">
-                    <span className="lp-wf-num">02</span>
+                  <div className="lp-wf-card lp-reveal lp-stagger-2">
+                    <div className={`lp-wf-num-circle ${wfProgress >= 0.3 ? "is-reached" : ""}`}>
+                      02
+                    </div>
                     <h3 className="lp-wf-title">Kumpul Berkas</h3>
                     <p className="lp-wf-desc">
-                      Unggah dokumen jawaban mahasiswa (PDF, Word) maupun teks langsung dengan proses cepat.
+                      Unggah dokumen jawaban mahasiswa (PDF, Word) maupun teks langsung dengan
+                      proses cepat.
                     </p>
                   </div>
 
                   {/* Step 04 */}
-                  <div className="lp-wf-card lp-reveal lp-reveal--scale lp-delay-4">
-                    <span className="lp-wf-num">04</span>
+                  <div className="lp-wf-card lp-reveal lp-stagger-4">
+                    <div className={`lp-wf-num-circle ${wfProgress >= 0.9 ? "is-reached" : ""}`}>
+                      04
+                    </div>
                     <h3 className="lp-wf-title">Validasi &amp; Rilis</h3>
                     <p className="lp-wf-desc">
-                      Tinjau draft AI, lakukan penyesuaian skor jika diperlukan, lalu sahkan nilai akhir secara resmi.
+                      Tinjau draft AI, lakukan penyesuaian skor jika diperlukan, lalu sahkan nilai
+                      akhir secara resmi.
                     </p>
                   </div>
                 </div>
@@ -879,25 +1241,23 @@ export default function LandingPage() {
         {/* Subtle section transition divider */}
         <div className="lp-section-divider" aria-hidden="true" />
 
-        {/* ─── KEUNGGULAN (FEATURES) ─── */}
+        {/* ─── KEUNGGULAN (FEATURES) (Item 9) ─── */}
         <section id="fitur" className="lp-section lp-features-section">
           {/* Ambient soft glow */}
           <div className="lp-features-ambient" aria-hidden="true" />
           <div className="lp-container">
-            <div className="lp-section-head lp-reveal lp-reveal--up">
+            <div className="lp-section-head lp-reveal">
               <span className="lp-runner">Keunggulan</span>
               <h2 className="lp-h2">Fitur Utama Platform</h2>
               <p className="lp-subtext">
-                Dirancang untuk memberikan kemudahan manajemen tugas dengan akurasi penilaian tinggi.
+                Dirancang untuk memberikan kemudahan manajemen tugas dengan akurasi penilaian
+                tinggi.
               </p>
             </div>
 
             <div className="lp-features-grid">
               {FEATURES.map((feat, idx) => (
-                <div
-                  key={feat.title}
-                  className={`lp-feature-card lp-reveal lp-reveal--scale lp-delay-${idx + 1}`}
-                >
+                <div key={feat.title} className={`lp-feature-card lp-reveal lp-stagger-${idx + 1}`}>
                   <div className="lp-feature-icon">{feat.icon}</div>
                   <h3 className="lp-feature-title">{feat.title}</h3>
                   <p className="lp-feature-desc">{feat.desc}</p>
@@ -915,17 +1275,18 @@ export default function LandingPage() {
           {/* Ambient soft glow */}
           <div className="lp-demo-ambient" aria-hidden="true" />
           <div className="lp-container">
-            <div className="lp-section-head lp-reveal lp-reveal--up">
+            <div className="lp-section-head lp-reveal">
               <span className="lp-runner">Sandbox Demo</span>
               <h2 className="lp-h2">Siap Mencoba?</h2>
               <p className="lp-subtext">
-                Gunakan kredensial sandbox instan berikut untuk menjelajahi platform langsung tanpa perlu registrasi.
+                Gunakan kredensial sandbox instan berikut untuk menjelajahi platform langsung tanpa
+                perlu registrasi.
               </p>
             </div>
 
             <div className="lp-demo-cards">
               {/* Dosen Card */}
-              <div className="lp-demo-card lp-reveal lp-reveal--left lp-delay-1">
+              <div className="lp-demo-card lp-reveal lp-stagger-1">
                 <div className="lp-demo-card-head">
                   <div className="lp-demo-role">
                     <GraduationCap size={20} style={{ color: "var(--lp-brand)" }} />
@@ -959,7 +1320,7 @@ export default function LandingPage() {
               </div>
 
               {/* Mahasiswa Card */}
-              <div className="lp-demo-card lp-reveal lp-reveal--right lp-delay-2">
+              <div className="lp-demo-card lp-reveal lp-stagger-2">
                 <div className="lp-demo-card-head">
                   <div className="lp-demo-role">
                     <User size={20} style={{ color: "var(--lp-brand)" }} />
@@ -1010,9 +1371,9 @@ export default function LandingPage() {
           </div>
 
           <div className="lp-footer__links">
-            <a href="#">Privasi</a>
-            <a href="#">Syarat Ketentuan</a>
-            <a href="#">Bantuan</a>
+            <a href="#home">Privasi</a>
+            <a href="#home">Syarat Ketentuan</a>
+            <a href="#home">Bantuan</a>
           </div>
         </div>
       </footer>
