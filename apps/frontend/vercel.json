@@ -1,7 +1,4 @@
 {
-  "git": {
-    "deploymentEnabled": {
-      "feat/paket-a-auth": false
-    }
-  }
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "cd ../.. && npm run build:frontend"
 }
