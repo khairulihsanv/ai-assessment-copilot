@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
 import {
   Award,
   BarChart3,
@@ -113,7 +112,12 @@ export function DashboardSidebar({ user }: SidebarProps) {
   const handleLogout = async () => {
     sessionStorage.removeItem("dexa_session_active");
     localStorage.removeItem("dexa_remember_me");
-    await signOut({ callbackUrl: "/login" });
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch {
+      // ignore
+    }
+    window.location.assign("/login");
   };
 
   const dosenNav = [

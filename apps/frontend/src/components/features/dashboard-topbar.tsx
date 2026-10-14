@@ -2,7 +2,6 @@
 import { ChevronRight, LogOut, Menu, Moon, Sun, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
 import { useRef } from "react";
 import { getInitials } from "@/shared/utils";
 import { useThemeStore } from "@/stores/theme-store";
@@ -104,7 +103,12 @@ export function DashboardTopbar({ user }: { user: WorkspaceUser }) {
           </p>
           <button
             type="button"
-            onClick={() => signOut({ callbackUrl: "/" })}
+            onClick={async () => {
+              try {
+                await fetch("/api/auth/logout", { method: "POST" });
+              } catch {}
+              window.location.assign("/");
+            }}
             className="mt-4 flex min-h-11 items-center gap-2 text-sm"
           >
             <LogOut size={16} />

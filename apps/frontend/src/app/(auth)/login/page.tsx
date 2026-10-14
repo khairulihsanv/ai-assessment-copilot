@@ -16,7 +16,6 @@ import {
   ArrowRight,
   Info,
 } from "lucide-react";
-import { signIn } from "next-auth/react";
 
 function LoginForm() {
   const router = useRouter();
@@ -79,17 +78,21 @@ function LoginForm() {
     setLoading(true);
 
     try {
-      // Use NextAuth client-side signIn
-      const result = await signIn("credentials", {
-        redirect: false,
-        email: email.trim().toLowerCase(),
-        password,
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          password,
+        }),
       });
 
-      if (result?.error) {
-        setError("Email atau kata sandi tidak cocok. Silakan coba lagi.");
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || !data.success) {
+        setError(data.error || "Email atau kata sandi tidak cocok. Silakan coba lagi.");
         setLoading(false);
-      } else if (result?.ok) {
+      } else {
         // Save preference for session guard
         if (rememberMe) {
           localStorage.setItem("dexa_remember_me", "true");

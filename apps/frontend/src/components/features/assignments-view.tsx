@@ -1,6 +1,5 @@
 "use client";
 
-import type { Prisma } from "@prisma/client";
 import {
   BookOpen,
   ChevronRight,
@@ -17,51 +16,73 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { formatRelativeTime } from "@/shared/utils";
 
-type ClassPayload = Prisma.ClassGetPayload<{
-  include: {
-    assignments: {
-      include: {
-        rubric: { include: { criteria: true } };
-        _count: { select: { submissions: true } };
-      };
-    };
-    _count: { select: { enrollments: true; assignments: true } };
-  };
-}>;
+export interface ClassAssignmentPayload {
+  id: string;
+  title: string;
+  description?: string | null;
+  instructions?: string | null;
+  dueDate: string | Date;
+  status: string;
+  submissionType: string;
+  maxScore?: number;
+  rubricId?: string | null;
+  rubric?: {
+    id: string;
+    title: string;
+    criteria?: Array<{
+      id: string;
+      label: string;
+      description?: string | null;
+      maxScore: number;
+      weight: number;
+    }>;
+  } | null;
+  submissions?: Array<{
+    id: string;
+    status: string;
+    submittedAt?: string | Date;
+    grades?: Array<{
+      id: string;
+      finalScore?: number | null;
+      finalFeedback?: string | null;
+      status: string;
+      createdAt?: string | Date;
+    }>;
+    versions?: any[];
+  }>;
+  _count?: { submissions: number };
+}
 
-type EnrollmentPayload = Prisma.EnrollmentGetPayload<{
-  include: {
-    class: {
-      include: {
-        assignments: {
-          include: {
-            rubric: {
-              include: {
-                criteria: {
-                  select: typeof import("@/server/db/public-selects").publicCriterionSelect;
-                };
-              };
-            };
-            submissions: {
-              include: {
-                grades: { select: typeof import("@/server/db/public-selects").publicGradeSelect };
-                versions: true;
-              };
-            };
-          };
-        };
-      };
-    };
-  };
-}>;
+export interface ClassPayload {
+  id: string;
+  name: string;
+  subject?: string | null;
+  code?: string;
+  courseCode?: string | null;
+  academicTerm?: string | null;
+  assignments: ClassAssignmentPayload[];
+  _count: { enrollments: number; assignments: number };
+}
 
-type RubricPayload = Prisma.RubricGetPayload<{
-  include: {
-    criteria: true;
-    class: { select: { id: true; name: true } };
-    _count: { select: { assignments: true } };
-  };
-}>;
+export interface EnrollmentPayload {
+  id: string;
+  role: string;
+  class: ClassPayload;
+}
+
+export interface RubricPayload {
+  id: string;
+  title: string;
+  criteria?: Array<{
+    id: string;
+    label: string;
+    description?: string | null;
+    maxScore: number;
+    weight: number;
+  }>;
+  class?: { id: string; name: string } | null;
+  _count?: { assignments: number };
+}
 
 interface AssignmentsViewProps {
   userRole: "DOSEN" | "MAHASISWA";
@@ -173,6 +194,7 @@ export function AssignmentsView({
     const studentTasks = enrollments.flatMap((e) =>
       (e.class.assignments || []).map((a) => ({
         ...a,
+        classId: e.class.id,
         className: e.class.name,
         subject: e.class.subject,
         mySubmission: a.submissions?.[0],

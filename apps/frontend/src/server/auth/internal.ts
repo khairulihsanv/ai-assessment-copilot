@@ -1,35 +1,35 @@
-import jwt from "jsonwebtoken";
+import { cookies } from "next/headers";
 
-function getInternalSecret(): string {
-  const secret = process.env.INTERNAL_API_SECRET;
-  if (!secret) {
-    if (process.env.NODE_ENV === "production") {
-      throw new Error("FATAL: INTERNAL_API_SECRET must be set in production");
-    }
-    return "default_unsafe_secret_for_dev_only";
+export async function getSessionToken(): Promise<string | undefined> {
+  try {
+    const cookieStore = await cookies();
+    return cookieStore.get("dexa_session")?.value;
+  } catch {
+    return undefined;
   }
-  return secret;
 }
 
-export function signInternalToken(user: { id: string; role: string }) {
-  return jwt.sign(
-    {
-      sub: user.id,
-      role: user.role,
-      iss: "frontend",
-      aud: "backend",
-    },
-    getInternalSecret(),
-    { algorithm: "HS256", expiresIn: "5m" }
-  );
-}
-
+/**
+ * Forwards requests to the FastAPI backend.
+ * Automatically injects the user's authentic dexa_session cookie as Bearer token
+ * if no Authorization header was explicitly provided.
+ */
 export async function forwardToBackend(
   url: string,
   init?: RequestInit,
 ): Promise<Response> {
   try {
-    return await fetch(url, init);
+    const headers = new Headers(init?.headers || {});
+    if (!headers.has("Authorization")) {
+      const token = await getSessionToken();
+      if (token) {
+        headers.set("Authorization", `Bearer ${token}`);
+      }
+    }
+    return await fetch(url, {
+      ...init,
+      headers,
+    });
   } catch (error) {
     console.error("[Backend Proxy Error]:", error);
     return new Response(
@@ -40,4 +40,11 @@ export async function forwardToBackend(
       },
     );
   }
+}
+
+/**
+ * @deprecated Frontend no longer self-signs tokens; backend validates authentic session tokens.
+ */
+export function signInternalToken(_user?: { id?: string; role?: string }): string {
+  return "";
 }

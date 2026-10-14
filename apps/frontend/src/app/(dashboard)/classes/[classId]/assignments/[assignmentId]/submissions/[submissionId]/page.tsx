@@ -2,7 +2,6 @@ import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AIReviewPanel } from "@/components/features/ai-review-panel";
-import { extractTextFromFile } from "@/server/ai/extract-text";
 import { auth } from "@/server/auth/auth";
 import { fetchFromBackend } from "@/server/api/backend-client";
 
@@ -62,19 +61,8 @@ export default async function SubmissionReviewPage({ params }: SubmissionReviewP
       g.status === "RELEASED",
   );
 
-  // Prepare text content if file
-  let displayContent = activeVersion?.content || "";
-  if (
-    !displayContent &&
-    activeVersion?.fileUrl &&
-    (activeVersion.type === "PDF" || activeVersion.type === "DOCX")
-  ) {
-    try {
-      displayContent = await extractTextFromFile(activeVersion.fileUrl, activeVersion.type);
-    } catch {
-      // ignore extract error on page load, will be handled during grading
-    }
-  }
+  // Prepare text content
+  const displayContent = activeVersion?.content || "";
 
   return (
     <div className="space-y-6 animate-in fade-in-50 duration-300">

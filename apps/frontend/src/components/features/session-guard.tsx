@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { signOut } from "next-auth/react";
 
 /**
  * SessionGuard ensures that users who did NOT choose "Ingat Sesi"
@@ -67,7 +66,9 @@ export function SessionGuard() {
           channel.close();
           sessionStorage.removeItem("dexa_session_active");
           localStorage.removeItem("dexa_remember_me");
-          signOut({ redirect: true, callbackUrl: "/login?reason=session_ended" });
+          fetch("/api/auth/logout", { method: "POST" }).finally(() => {
+            window.location.assign("/login?reason=session_ended");
+          });
         }
       }, 200);
 
@@ -78,7 +79,9 @@ export function SessionGuard() {
     } else {
       sessionStorage.removeItem("dexa_session_active");
       localStorage.removeItem("dexa_remember_me");
-      signOut({ redirect: true, callbackUrl: "/login?reason=session_ended" });
+      fetch("/api/auth/logout", { method: "POST" }).finally(() => {
+        window.location.assign("/login?reason=session_ended");
+      });
     }
   }, []);
 

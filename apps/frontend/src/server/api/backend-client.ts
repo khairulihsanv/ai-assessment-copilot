@@ -1,11 +1,12 @@
-import { auth } from "@/server/auth/auth";
-import { forwardToBackend, signInternalToken } from "@/server/auth/internal";
+import { auth, getSessionToken } from "@/server/auth/auth";
+import { forwardToBackend } from "@/server/auth/internal";
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3001";
 
 export interface BackendClientOptions extends RequestInit {
   userId?: string;
   role?: string;
+  token?: string;
 }
 
 export async function fetchFromBackend<T = any>(
@@ -18,41 +19,26 @@ export async function fetchFromBackend<T = any>(
   error?: string;
   json: () => Promise<T>;
 }> {
-  let userId = init?.userId;
-  let role = init?.role;
-
-  if (!userId || !role) {
-    const session = await auth();
-    if (!session?.user) {
-      return {
-        ok: false,
-        data: null,
-        status: 401,
-        error: "Unauthorized",
-        json: async () => {
-          throw new Error("Unauthorized");
-        },
-      };
-    }
-    userId = session.user.id;
-    role = session.user.role;
+  let token = init?.token;
+  if (!token) {
+    token = await getSessionToken();
   }
 
-  const token = signInternalToken({
-    id: userId,
-    role,
-  });
-
-  const { userId: _u, role: _r, ...requestInit } = init || {};
+  const { userId: _u, role: _r, token: _t, ...requestInit } = init || {};
 
   const url = `${BACKEND_URL}${path.startsWith("/") ? path : `/${path}`}`;
+  const headers = new Headers(requestInit.headers || {});
+
+  if (token && !headers.has("Authorization")) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+  if (!headers.has("Content-Type") && requestInit.body && typeof requestInit.body === "string") {
+    headers.set("Content-Type", "application/json");
+  }
+
   const res = await forwardToBackend(url, {
     ...requestInit,
-    headers: {
-      ...requestInit?.headers,
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
+    headers,
     cache: "no-store",
   });
 
@@ -62,7 +48,7 @@ export async function fetchFromBackend<T = any>(
       ok: false,
       data: null,
       status: res.status,
-      error: errorBody.error || `Backend returned status ${res.status}`,
+      error: errorBody.detail || errorBody.error || `Backend returned status ${res.status}`,
       json: async () => errorBody as T,
     };
   }

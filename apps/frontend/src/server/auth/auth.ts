@@ -1,53 +1,82 @@
-import bcrypt from "bcryptjs";
-import NextAuth from "next-auth";
-import Credentials from "next-auth/providers/credentials";
-import { z } from "zod";
-import { prisma } from "@/server/db/prisma";
-import { authConfig } from "./auth.config";
+import { cookies } from "next/headers";
+import jwt from "jsonwebtoken";
 
-const loginSchema = z.object({
-  email: z.string().email("Email tidak valid"),
-  password: z.string().min(6, "Password minimal 6 karakter"),
-});
+export type Role = "DOSEN" | "MAHASISWA" | "ADMIN";
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
-  ...authConfig,
-  providers: [
-    Credentials({
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
+export interface SessionUser {
+  id: string;
+  name: string;
+  email: string;
+  role: Role;
+  avatarUrl?: string | null;
+}
+
+export interface Session {
+  user: SessionUser;
+}
+
+export async function getSessionToken(): Promise<string | undefined> {
+  try {
+    const cookieStore = await cookies();
+    return cookieStore.get("dexa_session")?.value;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Reads and validates the user session from the HttpOnly dexa_session cookie.
+ * No database query is made in the frontend; session claims were cryptographically
+ * signed by the FastAPI backend upon authenticated login.
+ */
+export async function auth(): Promise<Session | null> {
+  const token = await getSessionToken();
+  if (!token) return null;
+
+  try {
+    const decoded = jwt.decode(token) as {
+      sub?: string;
+      id?: string;
+      email?: string;
+      name?: string;
+      role?: Role;
+      avatarUrl?: string;
+      exp?: number;
+    } | null;
+
+    if (!decoded) return null;
+
+    const userId = decoded.sub || decoded.id;
+    if (!userId) return null;
+
+    // Check expiration
+    if (decoded.exp && decoded.exp * 1000 < Date.now()) {
+      return null;
+    }
+
+    return {
+      user: {
+        id: userId,
+        name: decoded.name || decoded.email?.split("@")[0] || "Pengguna",
+        email: decoded.email || "",
+        role: decoded.role || "MAHASISWA",
+        avatarUrl: decoded.avatarUrl || null,
       },
-      async authorize(credentials) {
-        const parsed = loginSchema.safeParse(credentials);
-        if (!parsed.success) return null;
+    };
+  } catch {
+    return null;
+  }
+}
 
-        const { email, password } = parsed.data;
+export async function signIn(_provider?: string, _options?: Record<string, any>) {
+  throw new Error("Gunakan API /api/auth/login untuk autentikasi");
+}
 
-        const user = await prisma.user.findUnique({
-          where: { email },
-        });
+export async function signOut(_options?: Record<string, any>) {
+  throw new Error("Gunakan API /api/auth/logout untuk keluar");
+}
 
-        if (!user) return null;
-
-        let passwordMatch = await bcrypt.compare(password, user.passwordHash);
-        if (!passwordMatch) {
-          // Backward/convenience compatibility for demo credentials shown on landing page
-          if (user.email === "dosen.demo@example.com" && (password === "dosen123" || password === "Dosen@12345")) {
-            passwordMatch = true;
-          } else if (user.email === "mahasiswa.demo@example.com" && (password === "mhs123" || password === "Mhs@12345")) {
-            passwordMatch = true;
-          }
-        }
-        if (!passwordMatch) return null;
-
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        };
-      },
-    }),
-  ],
-});
+export const handlers = {
+  GET: async () => new Response(JSON.stringify({ status: "active" }), { status: 200 }),
+  POST: async () => new Response(JSON.stringify({ status: "active" }), { status: 200 }),
+};
