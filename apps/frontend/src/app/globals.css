@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "./workspace.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -94,7 +95,7 @@
 	--brand-forest-dark: #16382c;
 	--brand-forest-light: #356653;
 	--brand-mint: #e8efe9;
-	--brand-cream: #f7f8f5;
+	--brand-cream: #f7f7f2;
 	--brand-peach: #e9dfcf;
 	--cn-primary: #214c3e;
 	--cn-secondary: #526159;
@@ -107,7 +108,7 @@
 	--text-secondary: #526159;
 	--text-muted: #637068;
 	--text-inverse: #fff;
-	--border: #d8dfda;
+	--border: #e2e4dc;
 	--border-strong: #75847b;
 	--ring: #1d4ed8;
 	--ring-offset: #fff;
@@ -116,7 +117,7 @@
 	--sidebar-bg: #fff;
 	--sidebar-hover: #f0f3ef;
 	--sidebar-active: #e8efe9;
-	--background: #f7f8f5;
+	--background: #f7f7f2;
 	--foreground: #17251d;
 	--card: #fff;
 	--card-foreground: #17251d;
@@ -138,14 +139,14 @@
 	--chart-3: #47717f;
 	--chart-4: #776b82;
 	--chart-5: #688d73;
-	--radius: 0.625rem;
+	--radius: 0.75rem;
 	--sidebar: #fff;
 	--sidebar-foreground: #17251d;
 	--sidebar-primary: #214c3e;
 	--sidebar-primary-foreground: #fff;
 	--sidebar-accent: #e8efe9;
 	--sidebar-accent-foreground: #214c3e;
-	--sidebar-border: #d8dfda;
+	--sidebar-border: #e2e4dc;
 	--sidebar-ring: #1d4ed8;
 	color-scheme: light;
 }

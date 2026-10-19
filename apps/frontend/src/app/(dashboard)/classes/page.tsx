@@ -3,8 +3,8 @@ import { redirect } from "next/navigation";
 import { ClassCard } from "@/components/features/class-card";
 import { CreateClassModal } from "@/components/features/create-class-modal";
 import { JoinClassModal } from "@/components/features/join-class-modal";
-import { auth } from "@/server/auth/auth";
 import { fetchFromBackend } from "@/server/api/backend-client";
+import { auth } from "@/server/auth/auth";
 
 export const metadata = {
   title: "Daftar Kelas — Dexa Assessment",
@@ -59,7 +59,7 @@ export default async function ClassesPage() {
           {isDosen ? <CreateClassModal /> : <JoinClassModal />}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
           {classes.map((c) => {
             const studentCount = "enrollments" in c._count ? c._count.enrollments : 0;
             const dosenName =

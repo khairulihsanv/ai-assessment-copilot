@@ -1,25 +1,22 @@
-import { ArrowRight, BookOpen, CheckCircle2, Clock, Plus } from "lucide-react";
+import { ArrowRight, CheckCircle2, Clock, Plus } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import {
-  DosenQuickActionGroup,
-  JadwalKuliahButton,
-  SyncSiakadButton,
-} from "@/components/features/dashboard-quick-actions";
-import { auth } from "@/server/auth/auth";
+import { ClassCard } from "@/components/features/class-card";
+import { DosenQuickActionGroup } from "@/components/features/dashboard-quick-actions";
 import { fetchFromBackend } from "@/server/api/backend-client";
+import { auth } from "@/server/auth/auth";
 import { formatRelativeTime } from "@/shared/utils";
 
 export const metadata = { title: "Ringkasan — Dexa Assessment" };
 const action =
   "inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90";
-const panel = "overflow-hidden rounded-lg border border-border bg-card";
+const panel = "workspace-panel";
 function Empty({ children }: { children: React.ReactNode }) {
   return <p className="px-6 py-10 text-sm leading-relaxed text-muted-foreground">{children}</p>;
 }
 function Metric({ label, value, note }: { label: string; value: number; note: string }) {
   return (
-    <div className="min-w-0 py-4 px-2 sm:px-6">
+    <div className="workspace-metric min-w-0">
       <p className="text-sm text-muted-foreground">{label}</p>
       <p className="mt-2 text-3xl font-semibold tabular-nums tracking-tight">{value}</p>
       <p className="mt-1 text-xs text-muted-foreground">{note}</p>
@@ -111,14 +108,14 @@ async function DosenDashboard({
   const { classes, pending, released, queue } = data;
   return (
     <div className="space-y-7 pb-10">
-      <header className="flex flex-wrap items-end justify-between gap-4">
+      <header className="workspace-hero flex flex-wrap items-end justify-between gap-6">
         <div>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-[.14em] text-muted-foreground">
-            Ruang kerja dosen
-          </p>
-          <h1 className="text-3xl font-semibold tracking-tight">Selamat datang, {name}.</h1>
+          <p className="workspace-eyebrow">Ruang kerja dosen</p>
+          <h1 className="text-3xl font-semibold tracking-tight">
+            Selamat mengajar, {name.split(" ")[0]}.
+          </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Tinjau jawaban, berikan umpan balik, lalu rilis nilai.
+            Satu ruang untuk kelas Anda. Mulai dari yang perlu diperhatikan hari ini.
           </p>
         </div>
         <Link
@@ -129,10 +126,7 @@ async function DosenDashboard({
           Buat tugas
         </Link>
       </header>
-      <section
-        aria-label="Ringkasan pekerjaan"
-        className="grid grid-cols-3 divide-x divide-border border-y border-border"
-      >
+      <section aria-label="Ringkasan pekerjaan" className="workspace-metrics">
         <Metric label="Perlu dikoreksi" value={pending} note="Belum memiliki nilai rilis" />
         <Metric label="Nilai dirilis" value={released} note="Sudah tersedia bagi mahasiswa" />
         <Metric
@@ -188,19 +182,32 @@ async function DosenDashboard({
           )}
         </section>
         <aside className="space-y-6">
-          <section className="border-l-2 border-primary py-1 pl-5">
-            <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-              Keputusan tetap di tangan Anda
-            </p>
-            <h2 className="mt-3 text-lg font-semibold">
-              AI memberi saran.
-              <br />
-              Dosen menentukan nilai.
-            </h2>
-            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-              Periksa jawaban dan acuan sebelum menyetujui skor. Mahasiswa hanya melihat hasil yang
-              Anda rilis.
-            </p>
+          <section className="workspace-workflow">
+            <p className="workspace-eyebrow">Asisten penilaian</p>
+            <h2>Dari jawaban ke umpan balik.</h2>
+            <ol>
+              <li>
+                <span>01</span>
+                <div>
+                  <strong>Susun rubrik</strong>
+                  <p>Tentukan kriteria dan bobot penilaian.</p>
+                </div>
+              </li>
+              <li>
+                <span>02</span>
+                <div>
+                  <strong>Tinjau saran AI</strong>
+                  <p>Periksa skor bersama bukti jawaban.</p>
+                </div>
+              </li>
+              <li>
+                <span>03</span>
+                <div>
+                  <strong>Anda yang memutuskan</strong>
+                  <p>Sesuaikan, lalu rilis nilai ke mahasiswa.</p>
+                </div>
+              </li>
+            </ol>
           </section>
           <section className={panel}>
             <h2 className="border-b border-border p-4 text-sm font-semibold">Akses cepat</h2>
@@ -208,8 +215,6 @@ async function DosenDashboard({
               <DosenQuickActionGroup />
             </div>
           </section>
-          <JadwalKuliahButton />
-          <SyncSiakadButton />
         </aside>
       </div>
       <section>
@@ -219,33 +224,29 @@ async function DosenDashboard({
             Kelola kelas →
           </Link>
         </div>
-        <div className={panel}>
-          {classes.length ? (
-            <div className="divide-y divide-border">
-              {classes.slice(0, 4).map((c) => (
-                <Link
-                  key={c.id}
-                  href={`/classes/${c.id}`}
-                  className="flex items-center gap-4 p-5 hover:bg-muted/50"
-                >
-                  <BookOpen size={20} className="text-primary" />
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-sm font-semibold">{c.name}</h3>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {c.subject || "Mata kuliah"}
-                    </p>
-                  </div>
-                  <span className="text-xs text-muted-foreground">
-                    {c._count.assignments} tugas · {c._count.enrollments} mahasiswa
-                  </span>
-                  <ArrowRight size={16} />
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <Empty>Belum ada kelas aktif. Buat kelas pertama melalui menu Kelas.</Empty>
-          )}
-        </div>
+        {classes.length ? (
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {classes.slice(0, 3).map((c) => (
+              <ClassCard
+                key={c.id}
+                id={c.id}
+                name={c.name}
+                subject={c.subject}
+                studentCount={c._count.enrollments}
+                isDosen
+              />
+            ))}
+          </div>
+        ) : (
+          <div className={panel}>
+            <Empty>
+              Mulai ruang mengajar Anda dengan membuat kelas pertama.{" "}
+              <Link href="/classes" className="font-semibold text-primary underline">
+                Buat kelas →
+              </Link>
+            </Empty>
+          </div>
+        )}
       </section>
     </div>
   );
@@ -280,19 +281,14 @@ async function StudentDashboard({
   const { enrollments, tasks, grades: currentGrades } = data;
   return (
     <div className="space-y-7">
-      <header>
-        <p className="mb-2 text-xs font-semibold uppercase tracking-[.14em] text-muted-foreground">
-          Ruang belajar
-        </p>
+      <header className="workspace-hero">
+        <p className="workspace-eyebrow">Ruang belajar</p>
         <h1 className="text-3xl font-semibold tracking-tight">Halo, {name}.</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Lanjutkan tugas dan baca umpan balik dari dosen Anda.
         </p>
-        <div className="mt-4">
-          <JadwalKuliahButton />
-        </div>
       </header>
-      <section className="grid grid-cols-3 divide-x divide-border border-y border-border">
+      <section className="workspace-metrics">
         <Metric label="Kelas diikuti" value={enrollments.length} note="Keanggotaan Anda" />
         <Metric label="Tugas ditampilkan" value={tasks.length} note="Maksimal 6 tenggat terdekat" />
         <Metric label="Nilai dirilis" value={currentGrades.length} note="Keputusan dosen" />
