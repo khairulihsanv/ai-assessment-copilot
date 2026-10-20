@@ -1,41 +1,48 @@
-# Dexa academic workspace redesign
+# Dexa: a more expressive learning workspace
 
-Dexa now presents teaching and assessment as a clear sequence: organize a class, collect answers, review recommendations, then release an instructor's decision. The implementation keeps the existing Next.js application and backend contracts.
+The public landing now welcomes visitors with Dex, an original animated book companion, tactile blue/lime/peach/lilac controls, a guided tour, and a review simulation. Instructors and students have a feature hub that leads to working application routes.
 
-[Figma editable design](https://www.figma.com/design/istn7CpLAFlORU0IBKkZQN?node-id=2-44)
+[Editable Figma design](https://www.figma.com/design/istn7CpLAFlORU0IBKkZQN?node-id=20-833) · [Instructor overview](https://www.figma.com/design/istn7CpLAFlORU0IBKkZQN?node-id=2-44)
 
-## Implemented scope
+## What works
 
-- Marketing page with a typographic hierarchy, restrained paper/sage/clay palette, concise product copy, responsive navigation, and an explicitly labelled score-review simulation.
-- Login page with real email/password authentication, demo credential filling, accessible field labels, and session controls. Removed alert-only SSO buttons and unsupported security/performance claims from the authentication showcase.
-- Shared workspace navigation for desktop and mobile, a sticky desktop sidebar with collapse control, semantic theme colors, and role-specific destinations.
-- Instructor and student dashboards with readable summary cards and clear next actions.
-- Course cards with subject covers, member counts, working assignment links, and visible clipboard success/error feedback. Removed decorative buttons with no action.
-- Four editable Figma screen compositions (teacher desktop overview, teacher desktop classes, teacher mobile overview, student mobile overview), reusable button/navigation/course components, Inter text styles, and scoped variables.
+- **Landing and motion:** original SVG character with running, waving and resting poses; animated limbs, blink, shadow and floating cards. Visitors can pause animation. Reduced-motion preferences disable decorative motion. Scroll sections reveal progressively; content remains available without the observer. The interactive review demo is dynamically imported only when approaching the viewport and is explicitly labelled as a simulation.
+- **Feature navigation:** classes, assignments, rubric editing, review/grading, calendar, reports, Study Copilot and guides are reachable through role-specific navigation. The previous authentication, upload, grading and class workflows remain in the existing Next.js/FastAPI project.
+- **Instructor overview:** real backend counters, six feature shortcuts, searchable correction queue, class filtering and released-work progress. Data failures produce a visible error instead of invented statistics.
+- **Student overview:** task filters, submitted-work progress derived from the displayed tasks, enrolled classes and released feedback. No fabricated streaks, XP or achievements.
+- **Calendar:** month/day navigation and a clickable agenda using assignment due dates from authorized classes or enrollments.
+- **Reports:** grade distribution and CSV export of the current released grade revision for each submission in the instructor's classes. Draft and superseded revisions are excluded. CSV fields are quoted and formula-prefixed cells escaped.
+- **Study Copilot:** authenticated `/api/ai/study` → FastAPI `/ai/study`, task-context selection, suggestions, conversation reset, loading, retry and honest provider failure states. Uses configured Groq or Ollama; no canned fallback answer. Chat history is kept in the current page session only. Task access is checked server-side; the prompt contains public instructions and rubric criteria, excluding answer keys and other students' submissions. Requests have length, history, timeout and rate limits.
+- **Responsive workspace:** sticky/collapsible desktop sidebar, mobile drawer, light/dark themes, keyboard-visible controls and accessible animation pause control.
 
-The inner grading, rubric, analytics and assignment forms keep their existing workflows and receive the shared navigation/theme. This change does not replace the backend or introduce a new site builder dependency. Figma is a design reference; the running application is the interaction source of truth. Figma sample names/counts are illustrative.
+## Design and Figma
 
-## Design references and interpretation
+The visual direction takes inspiration from Duolingo's approachable learning experience and the user's [Hua Bao Running reference](https://dribbble.com/shots/27822029-Hua-Bao-Running). Dex is an original code-native character; no external mascot, artwork or screen has been copied. Inter and installed Lucide icons keep the interface consistent. The running application is the source of truth for behavior.
 
-- [Google Classroom assignment workflows](https://developers.google.com/workspace/classroom/tutorials/assignment-workflows): organize tasks by course and keep reviewing/grading a concrete next action.
-- [Duolingo's explanation of its learning path](https://blog.duolingo.com/new-duolingo-home-screen-design/): make the next step and progression clear. Dexa uses a short review sequence rather than game rewards.
-- [Dribbble LMS dashboard reference collection](https://dribbble.com/search/lms-dashboard): surveyed visual hierarchy and card density; no external screen or brand assets were copied.
+Figma contains six native editable screen compositions: landing desktop/mobile, instructor desktop dashboard/classes, instructor mobile and student mobile. The shared component shelf includes buttons, navigation, course cards, the original vector mascot, tactile feature icons and shortcut variants, with Inter styles and scoped semantic variables. Figma screen content is illustrative; its mascot poses are static motion studies. The actual motion and lazy loading run in React/CSS.
 
-The UI uses the repository's own logo, Inter, and installed Lucide icons. Serif emphasis is confined to the public landing headline; workspaces use Inter throughout.
+## Run and verify
 
-## Verification
+Use the existing project setup and environment configuration. Install `apps/backend/requirements.txt` for FastAPI. Study Copilot shares `GROQ_API_KEY`, `GROQ_BASE_URL`, `GROQ_MODEL`, or `OLLAMA_BASE_URL`/`OLLAMA_MODEL` from backend settings. A reachable configured provider is required for live answers.
 
-- `npm run build:frontend` — passed a clean production build.
-- `npm run typecheck -w apps/frontend` — passed.
-- `npm test` — 59 tests across 8 files passed.
-- Biome checks on the 10 changed TSX files — no errors; one existing `any[]` warning in the classes page.
-- Playwright against the production frontend with a local HTTP fixture backend: passed at desktop (1440 px), tablet (768 px), and phone (390 px). Checked horizontal overflow, both dashboard roles, landing menu closure, mobile drawer navigation, sidebar position/collapse, dark theme, class assignment destinations, demo account filling, and simulated score edit/release/reset. No client runtime errors observed.
-- Screenshots below were rendered from the production frontend with illustrative fixture data; they are not screenshots of live user records. Full authentication, upload and AI grading integration against the real FastAPI service was not run in this environment.
-- Figma screenshots inspected; heading reflow, card widths, active icons and Inter font use verified. All four screens contain native text/vector/frame/instance nodes; no flattened UI screenshots.
+Validation completed:
+
+- Clean `npm run build:frontend` and frontend TypeScript check passed.
+- `npm test`: **59 tests passed** across eight files.
+- Backend pytest: **19 tests passed**, including Study access/validation, private-field exclusion, provider request contracts and current-released-revision analytics. Provider HTTP responses were mocked; live inference was not tested.
+- Browser integration against the production frontend with a local fixture backend passed at 1440, 768 and 390 px: animation/pause/reduced motion, deferred demo loading, scroll reveals, role/tour actions, simulated score edit/release/reset, feature destinations, queue filters, calendar navigation, CSV download, Study API request/error/draft retention, sidebar/drawer and dark theme. No horizontal overflow or client runtime errors observed. Screenshots use fixture data, not live user records.
+- Re-run UI checks after a production build with `node scripts/verify-expressive-ui.cjs`. Install Playwright Chromium first, or set `CHROMIUM_EXECUTABLE` to a compatible browser executable. The script owns local ports 3000/3001 and writes inspection captures under `/tmp`.
+- Figma desktop/mobile screenshots inspected; layouts use native text/vector/frame/instance nodes instead of flattened UI images.
+
+Existing full authentication, document extraction/upload and grading against a live database/provider were not re-exercised end to end. The PR is a draft for review; it is not deployed.
 
 ## Previews
 
-![Instructor overview](dashboard-desktop.webp)
+![Dex running in the actual landing page](dex-motion.webp)
 ![Landing page](landing-desktop.webp)
-![Student mobile overview](student-mobile.webp)
-![Login on phone](login-mobile.webp)
+![Instructor overview](dashboard-desktop.webp)
+![Instructor overview on phone](dashboard-mobile.webp)
+![Student overview on phone](student-mobile.webp)
+![Task calendar](calendar-desktop.webp)
+![Study Copilot](copilot-desktop.webp)
+![Released-grade report](analytics-desktop.webp)

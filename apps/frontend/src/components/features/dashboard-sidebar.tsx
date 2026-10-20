@@ -3,8 +3,10 @@
 import {
   Award,
   BarChart3,
+  BookMarked,
   BookOpen,
   Bot,
+  CalendarDays,
   CheckSquare,
   ChevronLeft,
   ChevronRight,
@@ -41,11 +43,13 @@ export function WorkspaceNavigation({
     { href: "/dashboard", label: "Ringkasan", icon: LayoutDashboard },
     { href: "/classes", label: "Kelas saya", icon: BookOpen },
     { href: "/assignments", label: "Tugas", icon: ClipboardList },
+    { href: "/calendar", label: "Kalender tugas", icon: CalendarDays },
     ...(user.role === "DOSEN"
       ? [
           { href: "/grading", label: "Koreksi jawaban", icon: Sparkles },
           { href: "/rubrics", label: "Rubrik penilaian", icon: CheckSquare },
           { href: "/analytics", label: "Laporan kelas", icon: BarChart3 },
+          { href: "/copilot", label: "Study Copilot", icon: Bot },
         ]
       : [
           { href: "/grades", label: "Nilai & umpan balik", icon: Award },
@@ -72,6 +76,16 @@ export function WorkspaceNavigation({
           <span className={compact ? "sr-only" : "truncate"}>{label}</span>
         </Link>
       ))}
+      <Link
+        href="/docs"
+        onClick={onNavigate}
+        aria-current={pathname === "/docs" ? "page" : undefined}
+        title={compact ? "Panduan" : undefined}
+        className={cn("workspace-nav-item", compact && "justify-center")}
+      >
+        <BookMarked size={19} />
+        <span className={compact ? "sr-only" : ""}>Panduan</span>
+      </Link>
       <div className="my-5 border-t" />
       <Link
         href="/settings"
