@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, CheckCircle2, File, Loader2, UploadCloud, X } from "lucide-react";
+import { AlertCircle, Camera, CheckCircle2, File, Loader2, UploadCloud, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -9,13 +9,15 @@ import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { useUploadProgress } from "@/hooks/useUploadProgress";
 import { fileSizeToString, MAX_FILE_SIZE } from "@/shared/utils";
+import { ScanSubmissionPanel } from "./scan-submission-panel";
 
 interface SubmissionUploaderProps {
   classId: string;
   assignmentId: string;
-  allowedType: "TEXT" | "PDF" | "DOCX" | "ANY";
+  allowedType: "TEXT" | "PDF" | "DOCX" | "ANY" | "SCAN";
+  allowScan?: boolean;
   existingSubmission?: {
-    type: "TEXT" | "PDF" | "DOCX" | "ANY" | string;
+    type: "TEXT" | "PDF" | "DOCX" | "ANY" | "SCAN" | string;
     content?: string | null;
     fileName?: string | null;
     submittedAt: Date | string;
@@ -27,6 +29,7 @@ export function SubmissionUploader({
   classId,
   assignmentId,
   allowedType,
+  allowScan = true,
   existingSubmission,
   onSuccess,
 }: SubmissionUploaderProps) {
@@ -34,8 +37,15 @@ export function SubmissionUploader({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { progress, uploading, error: uploadError, startUpload } = useUploadProgress();
 
-  const [activeTab, setActiveTab] = useState<"file" | "text">(
-    allowedType === "TEXT" || existingSubmission?.type === "TEXT" ? "text" : "file",
+  const canScan =
+    allowScan && (allowedType === "ANY" || allowedType === "PDF" || allowedType === "SCAN");
+
+  const [activeTab, setActiveTab] = useState<"file" | "text" | "scan">(
+    allowedType === "SCAN"
+      ? "scan"
+      : allowedType === "TEXT" || existingSubmission?.type === "TEXT"
+        ? "text"
+        : "file",
   );
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [textContent, setTextContent] = useState(existingSubmission?.content || "");
@@ -154,31 +164,49 @@ export function SubmissionUploader({
           </p>
         </div>
 
-        {/* Format Selector Tabs if ANY */}
-        {allowedType === "ANY" && (
-          <div className="flex items-center p-1 bg-muted rounded-xl text-xs">
-            <button
-              type="button"
-              onClick={() => setActiveTab("file")}
-              className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
-                activeTab === "file"
-                  ? "bg-background text-foreground shadow-xs"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Upload Dokumen
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("text")}
-              className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
-                activeTab === "text"
-                  ? "bg-background text-foreground shadow-xs"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Tulis Esai / Teks
-            </button>
+        {/* Format Selector Tabs */}
+        {(allowedType === "ANY" || canScan) && (
+          <div className="flex items-center p-1 bg-muted rounded-xl text-xs gap-1 flex-wrap">
+            {allowedType !== "SCAN" && (
+              <button
+                type="button"
+                onClick={() => setActiveTab("file")}
+                className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
+                  activeTab === "file"
+                    ? "bg-background text-foreground shadow-xs"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Upload Dokumen
+              </button>
+            )}
+            {allowedType !== "SCAN" && allowedType !== "PDF" && (
+              <button
+                type="button"
+                onClick={() => setActiveTab("text")}
+                className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
+                  activeTab === "text"
+                    ? "bg-background text-foreground shadow-xs"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Tulis Esai / Teks
+              </button>
+            )}
+            {canScan && (
+              <button
+                type="button"
+                onClick={() => setActiveTab("scan")}
+                className={`px-3 py-1.5 rounded-lg font-semibold transition-all flex items-center gap-1.5 ${
+                  activeTab === "scan"
+                    ? "bg-background text-primary shadow-xs font-bold"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Camera className="w-3.5 h-3.5" />
+                Scan / Foto Jawaban
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -199,140 +227,153 @@ export function SubmissionUploader({
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Upload Mode: File */}
-        {activeTab === "file" && (
-          <div className="space-y-3">
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              accept={
-                allowedType === "PDF" ? ".pdf" : allowedType === "DOCX" ? ".docx" : ".pdf,.docx"
-              }
-              className="hidden"
-            />
+      {activeTab === "scan" ? (
+        <ScanSubmissionPanel
+          classId={classId}
+          assignmentId={assignmentId}
+          onSuccess={() => {
+            setSuccess(true);
+            router.refresh();
+            onSuccess?.();
+          }}
+          onCancel={() => setActiveTab(allowedType === "TEXT" ? "text" : "file")}
+        />
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Upload Mode: File */}
+          {activeTab === "file" && (
+            <div className="space-y-3">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept={
+                  allowedType === "PDF" ? ".pdf" : allowedType === "DOCX" ? ".docx" : ".pdf,.docx"
+                }
+                className="hidden"
+              />
 
-            {!selectedFile ? (
-              <button
-                type="button"
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-                onClick={() => fileInputRef.current?.click()}
-                className={`flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-2xl cursor-pointer transition-all ${
-                  dragOver
-                    ? "border-primary bg-primary/5"
-                    : "border-border hover:border-primary/40 hover:bg-muted/30"
-                }`}
-              >
-                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-3">
-                  <UploadCloud className="w-6 h-6" />
-                </div>
-                <p className="text-sm font-semibold text-foreground">
-                  Tarik dan lepas file jawaban di sini, atau{" "}
-                  <span className="text-primary hover:underline">pilih file</span>
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Format didukung:{" "}
-                  {allowedType === "ANY" ? "PDF (.pdf) atau Word (.docx)" : allowedType} • Maksimal
-                  10MB
-                </p>
-              </button>
-            ) : (
-              <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-muted/30">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                    <File className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-foreground font-mono line-clamp-1">
-                      {selectedFile.name}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {fileSizeToString(selectedFile.size)}
-                    </p>
-                  </div>
-                </div>
-
-                <Button
+              {!selectedFile ? (
+                <button
                   type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedFile(null)}
-                  disabled={uploading}
-                  className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-2xl cursor-pointer transition-all ${
+                    dragOver
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/40 hover:bg-muted/30"
+                  }`}
                 >
-                  <X className="w-4 h-4" />
-                </Button>
+                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-3">
+                    <UploadCloud className="w-6 h-6" />
+                  </div>
+                  <p className="text-sm font-semibold text-foreground">
+                    Tarik dan lepas file jawaban di sini, atau{" "}
+                    <span className="text-primary hover:underline">pilih file</span>
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Format didukung:{" "}
+                    {allowedType === "ANY" ? "PDF (.pdf) atau Word (.docx)" : allowedType} •
+                    Maksimal 10MB
+                  </p>
+                </button>
+              ) : (
+                <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-muted/30">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                      <File className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground font-mono line-clamp-1">
+                        {selectedFile.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {fileSizeToString(selectedFile.size)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedFile(null)}
+                    disabled={uploading}
+                    className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Upload Mode: Text */}
+          {activeTab === "text" && (
+            <div className="space-y-2">
+              <Label htmlFor="answerText" className="text-sm font-semibold">
+                Tulis Jawaban Anda
+              </Label>
+              <Textarea
+                id="answerText"
+                placeholder="Ketikkan jawaban lengkap, uraian analisis, kode program, atau ringkasan tugas Anda di sini..."
+                rows={10}
+                value={textContent}
+                onChange={(e) => setTextContent(e.target.value)}
+                disabled={uploading}
+                className="text-sm leading-relaxed"
+              />
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>
+                  {wordCount} kata • {charCount} karakter
+                </span>
+                <span>Pastikan jawaban relevan dengan rubrik penilaian</span>
               </div>
-            )}
-          </div>
-        )}
-
-        {/* Upload Mode: Text */}
-        {activeTab === "text" && (
-          <div className="space-y-2">
-            <Label htmlFor="answerText" className="text-sm font-semibold">
-              Tulis Jawaban Anda
-            </Label>
-            <Textarea
-              id="answerText"
-              placeholder="Ketikkan jawaban lengkap, uraian analisis, kode program, atau ringkasan tugas Anda di sini..."
-              rows={10}
-              value={textContent}
-              onChange={(e) => setTextContent(e.target.value)}
-              disabled={uploading}
-              className="text-sm leading-relaxed"
-            />
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>
-                {wordCount} kata • {charCount} karakter
-              </span>
-              <span>Pastikan jawaban relevan dengan rubrik penilaian</span>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Upload Progress Bar */}
-        {uploading && (
-          <div className="space-y-2 pt-2">
-            <div className="flex items-center justify-between text-xs font-semibold">
-              <span className="text-foreground flex items-center gap-1.5">
-                <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
-                Mengunggah jawaban ke server...
-              </span>
-              <span className="font-mono text-primary">{progress}%</span>
+          {/* Upload Progress Bar */}
+          {uploading && (
+            <div className="space-y-2 pt-2">
+              <div className="flex items-center justify-between text-xs font-semibold">
+                <span className="text-foreground flex items-center gap-1.5">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+                  Mengunggah jawaban ke server...
+                </span>
+                <span className="font-mono text-primary">{progress}%</span>
+              </div>
+              <Progress value={progress} className="h-2" />
             </div>
-            <Progress value={progress} className="h-2" />
-          </div>
-        )}
+          )}
 
-        {/* Submit Button */}
-        <div className="flex items-center justify-end gap-3 pt-2 border-t border-border/40">
-          <Button
-            type="submit"
-            disabled={
-              uploading ||
-              (activeTab === "file" && !selectedFile) ||
-              (activeTab === "text" && !textContent.trim())
-            }
-            className="gap-2 bg-primary text-primary-foreground font-semibold px-6 shadow-sm"
-          >
-            {uploading ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Mengunggah ({progress}%)
-              </>
-            ) : (
-              <>
-                <UploadCloud className="w-4 h-4" />
-                {existingSubmission ? "Kirim Ulang Jawaban" : "Kumpulkan Tugas"}
-              </>
-            )}
-          </Button>
-        </div>
-      </form>
+          {/* Submit Button */}
+          <div className="flex items-center justify-end gap-3 pt-2 border-t border-border/40">
+            <Button
+              type="submit"
+              disabled={
+                uploading ||
+                (activeTab === "file" && !selectedFile) ||
+                (activeTab === "text" && !textContent.trim())
+              }
+              className="gap-2 bg-primary text-primary-foreground font-semibold px-6 shadow-sm"
+            >
+              {uploading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Mengunggah ({progress}%)
+                </>
+              ) : (
+                <>
+                  <UploadCloud className="w-4 h-4" />
+                  {existingSubmission ? "Kirim Ulang Jawaban" : "Kumpulkan Tugas"}
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
+      )}
     </div>
   );
 }

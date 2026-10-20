@@ -1,9 +1,9 @@
+import { createRubricSchema } from "@dexa/contracts";
 import { Hono } from "hono";
-import { prisma } from "../db/prisma.js";
-import { createRubricSchema, updateRubricSchema } from "@dexa/contracts";
-import { internalAuthMiddleware, AuthContext } from "../middleware/auth.js";
-import { publicCriterionSelect } from "../utils/public-selects.js";
 import { generateEmbedding } from "../ai/embedding-client.js";
+import { prisma } from "../db/prisma.js";
+import { type AuthContext, internalAuthMiddleware } from "../middleware/auth.js";
+import { publicCriterionSelect } from "../utils/public-selects.js";
 
 const rubricsRouter = new Hono<AuthContext>();
 rubricsRouter.use("*", internalAuthMiddleware);
@@ -41,18 +41,20 @@ rubricsRouter.get("/", async (c) => {
 
 rubricsRouter.post("/", async (c) => {
   const user = c.get("user");
-  if (user.role !== "DOSEN") return c.json({ error: "Hanya dosen yang dapat membuat rubrik penilaian" }, 403);
+  if (user.role !== "DOSEN")
+    return c.json({ error: "Hanya dosen yang dapat membuat rubrik penilaian" }, 403);
 
   const classId = c.req.param("classId") as string;
   const cls = await prisma.class.findUnique({ where: { id: classId } });
-  
+
   if (!cls || cls.dosenId !== user.id) {
     return c.json({ error: "Kelas tidak ditemukan atau Anda bukan pengajar di kelas ini" }, 403);
   }
 
   const body = await c.req.json();
   const parsed = createRubricSchema.safeParse(body);
-  if (!parsed.success) return c.json({ error: parsed.error.issues[0]?.message ?? "Data rubrik tidak valid" }, 400);
+  if (!parsed.success)
+    return c.json({ error: parsed.error.issues[0]?.message ?? "Data rubrik tidak valid" }, 400);
 
   const { title, criteria } = parsed.data;
 
@@ -108,7 +110,7 @@ rubricsRouter.post("/", async (c) => {
 });
 
 rubricsRouter.get("/:rubricId", async (c) => {
-  const user = c.get("user");
+  const _user = c.get("user");
   const classId = c.req.param("classId") as string;
   const rubricId = c.req.param("rubricId") as string;
 
@@ -139,7 +141,12 @@ rubricsRouter.delete("/:rubricId", async (c) => {
   if (!rubric) return c.json({ error: "Rubrik tidak ditemukan" }, 404);
 
   if (rubric._count.assignments > 0) {
-    return c.json({ error: `Rubrik ini sedang digunakan oleh ${rubric._count.assignments} tugas. Tidak dapat dihapus.` }, 400);
+    return c.json(
+      {
+        error: `Rubrik ini sedang digunakan oleh ${rubric._count.assignments} tugas. Tidak dapat dihapus.`,
+      },
+      400,
+    );
   }
 
   await prisma.rubric.delete({ where: { id: rubricId } });
@@ -158,7 +165,8 @@ rubricsRouter.put("/:rubricId", async (c) => {
 
   const body = await c.req.json();
   const parsed = createRubricSchema.safeParse(body);
-  if (!parsed.success) return c.json({ error: parsed.error.issues[0]?.message ?? "Data rubrik tidak valid" }, 400);
+  if (!parsed.success)
+    return c.json({ error: parsed.error.issues[0]?.message ?? "Data rubrik tidak valid" }, 400);
 
   const { title, criteria } = parsed.data;
 

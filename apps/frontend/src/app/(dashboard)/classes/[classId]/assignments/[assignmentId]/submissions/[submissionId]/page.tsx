@@ -2,8 +2,8 @@ import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AIReviewPanel } from "@/components/features/ai-review-panel";
-import { auth } from "@/server/auth/auth";
 import { fetchFromBackend } from "@/server/api/backend-client";
+import { auth } from "@/server/auth/auth";
 
 interface SubmissionReviewPageProps {
   params: Promise<{
@@ -53,7 +53,9 @@ export default async function SubmissionReviewPage({ params }: SubmissionReviewP
 
   const activeVersion = submission.versions.find((v: any) => v.id === submission.activeVersionId);
   if (!activeVersion) notFound();
-  const initialAIEvaluation = submission.evaluations.find((e: any) => e.versionId === activeVersion?.id);
+  const initialAIEvaluation = submission.evaluations.find(
+    (e: any) => e.versionId === activeVersion?.id,
+  );
   const initialGrade = submission.grades.find(
     (g: any) =>
       g.id === submission.releasedGradeId &&
@@ -104,6 +106,11 @@ export default async function SubmissionReviewPage({ params }: SubmissionReviewP
         submissionContent={displayContent}
         fileName={activeVersion?.fileName || ""}
         fileUrl={activeVersion?.fileUrl || ""}
+        rawOcrText={activeVersion?.rawOcrText || null}
+        isEdited={Boolean(activeVersion?.isEdited)}
+        ocrStatus={activeVersion?.ocrStatus || null}
+        pageCount={activeVersion?.pageCount || activeVersion?.pages?.length || 0}
+        pages={activeVersion?.pages || []}
         rubricCriteria={submission.assignment.rubric?.criteria}
         initialAIEvaluation={
           initialAIEvaluation

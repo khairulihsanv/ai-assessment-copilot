@@ -1,20 +1,19 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
 import {
+  ArrowRight,
+  CheckCircle2,
   Eye,
   EyeOff,
-  School,
-  User,
   Loader2,
-  ArrowRight,
+  School,
   ShieldCheck,
-  CheckCircle2,
+  User,
 } from "lucide-react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 import { registerAction } from "@/server/services/auth-actions";
-
 
 function RegisterForm() {
   const router = useRouter();
@@ -78,7 +77,7 @@ function RegisterForm() {
       setLoading(false);
 
       const targetLoginUrl = `/login?registered=true&email=${encodeURIComponent(
-        email.trim().toLowerCase()
+        email.trim().toLowerCase(),
       )}&role=${role}`;
 
       setTimeout(() => {
@@ -98,9 +97,7 @@ function RegisterForm() {
         <h2 className="text-2xl font-display font-extrabold text-[#111827] tracking-tight">
           Buat Akun Akademik
         </h2>
-        <p className="text-xs text-[#6B7280]">
-          Bergabung dengan AI Assessment Copilot SV UNS
-        </p>
+        <p className="text-xs text-[#6B7280]">Bergabung dengan AI Assessment Copilot SV UNS</p>
       </div>
 
       {/* ─── AUTH MODE TABS ─── */}
@@ -167,12 +164,13 @@ function RegisterForm() {
             <span className="font-bold text-xs">Pendaftaran Berhasil!</span>
           </div>
           <p className="text-xs text-emerald-700 leading-relaxed">
-            Akun Anda telah berhasil dibuat. Sesuai kebijakan keamanan, silakan masuk menggunakan kredensial Anda. Mengalihkan ke portal masuk...
+            Akun Anda telah berhasil dibuat. Sesuai kebijakan keamanan, silakan masuk menggunakan
+            kredensial Anda. Mengalihkan ke portal masuk...
           </p>
           <div className="pt-1">
             <Link
               href={`/login?registered=true&email=${encodeURIComponent(
-                email.trim().toLowerCase()
+                email.trim().toLowerCase(),
               )}&role=${role}`}
               className="inline-flex items-center gap-1.5 text-xs font-bold text-[#1E4D3B] underline underline-offset-4"
             >
@@ -209,16 +207,16 @@ function RegisterForm() {
           {/* NIP / NIM (Informational / Identity) */}
           <div className="space-y-1">
             <label htmlFor="identity" className="text-xs font-bold text-[#374151] block">
-              {role === "DOSEN" ? "NIP / NIDN Dosen (Opsional)" : "NIM (Nomor Induk Mahasiswa) (Opsional)"}
+              {role === "DOSEN"
+                ? "NIP / NIDN Dosen (Opsional)"
+                : "NIM (Nomor Induk Mahasiswa) (Opsional)"}
             </label>
             <input
               id="identity"
               type="text"
               value={identity}
               onChange={(e) => setIdentity(e.target.value)}
-              placeholder={
-                role === "DOSEN" ? "198403122010121001" : "M3122008"
-              }
+              placeholder={role === "DOSEN" ? "198403122010121001" : "M3122008"}
               className="w-full px-4 py-2.5 rounded-2xl bg-[#F9FAFB] border border-[#E5E7EB] text-xs font-sans text-[#111827] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[#1E4D3B] focus:bg-white transition"
             />
           </div>
@@ -240,9 +238,7 @@ function RegisterForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder={
-                role === "DOSEN"
-                  ? "nama.dosen@staff.uns.ac.id"
-                  : "mhs.vokasi@student.uns.ac.id"
+                role === "DOSEN" ? "nama.dosen@staff.uns.ac.id" : "mhs.vokasi@student.uns.ac.id"
               }
               className="w-full px-4 py-2.5 rounded-2xl bg-[#F9FAFB] border border-[#E5E7EB] text-xs font-sans text-[#111827] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[#1E4D3B] focus:bg-white transition"
             />
@@ -298,7 +294,11 @@ function RegisterForm() {
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 className="absolute right-3.5 text-[#9CA3AF] hover:text-[#111827] transition cursor-pointer"
-                aria-label={showConfirmPassword ? "Sembunyikan konfirmasi kata sandi" : "Tampilkan konfirmasi kata sandi"}
+                aria-label={
+                  showConfirmPassword
+                    ? "Sembunyikan konfirmasi kata sandi"
+                    : "Tampilkan konfirmasi kata sandi"
+                }
               >
                 {showConfirmPassword ? <EyeOff size={15} /> : <Eye size={15} />}
               </button>
@@ -337,7 +337,13 @@ function RegisterForm() {
 
 export default function RegisterPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-xs font-mono text-[#6B7280]">Memuat Formulir Pendaftaran...</div>}>
+    <Suspense
+      fallback={
+        <div className="p-8 text-center text-xs font-mono text-[#6B7280]">
+          Memuat Formulir Pendaftaran...
+        </div>
+      }
+    >
       <RegisterForm />
     </Suspense>
   );

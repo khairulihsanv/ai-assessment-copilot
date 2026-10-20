@@ -19,11 +19,11 @@ export async function POST(request: Request) {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
-        "Content-Type": contentType
+        "Content-Type": contentType,
       },
       body,
-      // @ts-ignore
-      duplex: "half"
+      // @ts-expect-error
+      duplex: "half",
     });
 
     const data = await res.json();

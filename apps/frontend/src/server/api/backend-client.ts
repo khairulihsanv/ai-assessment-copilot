@@ -1,7 +1,7 @@
 import { auth, getSessionToken } from "@/server/auth/auth";
 import { forwardToBackend } from "@/server/auth/internal";
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3001";
+const BACKEND_URL = process.env.BACKEND_URL || "http://127.0.0.1:3001";
 
 export interface BackendClientOptions extends RequestInit {
   userId?: string;

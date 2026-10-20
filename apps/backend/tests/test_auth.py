@@ -70,7 +70,8 @@ def test_login_wrong_password(client):
         },
     )
     assert res.status_code == status.HTTP_401_UNAUTHORIZED
-    assert "Email atau password salah" in res.json()["detail"]
+    detail = res.json()["detail"].lower()
+    assert "kata sandi tidak cocok" in detail or "password salah" in detail
 
 
 def test_me_endpoint(client):

@@ -1,3 +1,4 @@
+import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
 
 export async function getSessionToken(): Promise<string | undefined> {
@@ -10,17 +11,49 @@ export async function getSessionToken(): Promise<string | undefined> {
 }
 
 /**
+ * Signs a valid internal JWT token for backend authentication from server-side handlers
+ * or when proxying with an authenticated session.
+ */
+export function signInternalToken(user?: { id?: string; role?: string }): string {
+  if (!user || !user.id) return "";
+  const secret =
+    process.env.SECRET_KEY ||
+    process.env.INTERNAL_API_SECRET ||
+    "dexa-assessment-secure-auth-secret-key-32chars-min-2026";
+  const now = Math.floor(Date.now() / 1000);
+  return jwt.sign(
+    {
+      sub: String(user.id),
+      id: String(user.id),
+      role: user.role,
+      iat: now,
+      exp: now + 3600,
+      iss: "dexa-backend",
+      aud: "dexa-client",
+    },
+    secret,
+    { algorithm: "HS256" },
+  );
+}
+
+/**
  * Forwards requests to the FastAPI backend.
  * Automatically injects the user's authentic dexa_session cookie as Bearer token
  * if no Authorization header was explicitly provided.
  */
-export async function forwardToBackend(
-  url: string,
-  init?: RequestInit,
-): Promise<Response> {
+export async function forwardToBackend(url: string, init?: RequestInit): Promise<Response> {
   try {
     const headers = new Headers(init?.headers || {});
-    if (!headers.has("Authorization")) {
+    const authHeader = headers.get("Authorization");
+
+    // Inject authentic session token if no auth header, or if it is empty/falsy
+    if (
+      !authHeader ||
+      authHeader.trim() === "Bearer" ||
+      authHeader.trim() === "Bearer undefined" ||
+      authHeader.trim() === "Bearer null" ||
+      authHeader.trim() === "Bearer "
+    ) {
       const token = await getSessionToken();
       if (token) {
         headers.set("Authorization", `Bearer ${token}`);
@@ -40,11 +73,4 @@ export async function forwardToBackend(
       },
     );
   }
-}
-
-/**
- * @deprecated Frontend no longer self-signs tokens; backend validates authentic session tokens.
- */
-export function signInternalToken(_user?: { id?: string; role?: string }): string {
-  return "";
 }

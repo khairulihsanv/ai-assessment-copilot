@@ -22,14 +22,17 @@ export async function POST(request: Request) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
-      body
+      body,
     });
 
     const data = await res.json();
     if (!res.ok) {
-      return NextResponse.json({ error: data.error || "Gagal bergabung kelas" }, { status: res.status });
+      return NextResponse.json(
+        { error: data.error || "Gagal bergabung kelas" },
+        { status: res.status },
+      );
     }
 
     return NextResponse.json(data, { status: 201 });

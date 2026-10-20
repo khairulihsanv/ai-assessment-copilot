@@ -1,6 +1,6 @@
-import re
 import hashlib
-from typing import List, Dict, Any
+import re
+from typing import Any
 
 
 def sha256_text(text: str) -> str:
@@ -12,7 +12,7 @@ def chunk_text(
     max_chunk_chars: int = 1500,
     overlap_chars: int = 200,
     locator_type: str = "section",
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     Split text into chunks with metadata and character/token estimate.
     """
@@ -22,7 +22,7 @@ def chunk_text(
 
     # Split by double newlines or paragraphs first
     paragraphs = re.split(r"\n\s*\n", clean_text)
-    chunks: List[Dict[str, Any]] = []
+    chunks: list[dict[str, Any]] = []
 
     current_chunk = ""
     chunk_index = 0

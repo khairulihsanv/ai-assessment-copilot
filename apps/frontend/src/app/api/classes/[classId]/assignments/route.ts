@@ -13,11 +13,15 @@ export async function GET(_request: Request, { params }: { params: Promise<{ cla
   const token = signInternalToken({ id: session.user.id, role: session.user.role });
 
   const res = await forwardToBackend(`${BACKEND_URL}/classes/${classId}/assignments`, {
-    headers: { Authorization: `Bearer ${token}` }
+    headers: { Authorization: `Bearer ${token}` },
   });
 
   const data = await res.json();
-  if (!res.ok) return NextResponse.json({ error: data.error || "Failed to fetch assignments" }, { status: res.status });
+  if (!res.ok)
+    return NextResponse.json(
+      { error: data.error || "Failed to fetch assignments" },
+      { status: res.status },
+    );
   return NextResponse.json(data);
 }
 
@@ -36,12 +40,16 @@ export async function POST(request: Request, { params }: { params: Promise<{ cla
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
+      Authorization: `Bearer ${token}`,
     },
-    body
+    body,
   });
 
   const data = await res.json();
-  if (!res.ok) return NextResponse.json({ error: data.error || "Gagal membuat penugasan" }, { status: res.status });
+  if (!res.ok)
+    return NextResponse.json(
+      { error: data.error || "Gagal membuat penugasan" },
+      { status: res.status },
+    );
   return NextResponse.json(data, { status: 201 });
 }

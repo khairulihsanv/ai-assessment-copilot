@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { prisma } from "../db/prisma.js";
-import { internalAuthMiddleware, AuthContext } from "../middleware/auth.js";
+import { type AuthContext, internalAuthMiddleware } from "../middleware/auth.js";
 
 const documentVersionsRouter = new Hono<AuthContext>();
 documentVersionsRouter.use("*", internalAuthMiddleware);
@@ -106,10 +106,7 @@ documentVersionsRouter.post("/:id/approve", async (c) => {
   }
 
   if (version.extractionStatus !== "REVIEW_REQUIRED") {
-    return c.json(
-      { error: `Cannot approve document in status: ${version.extractionStatus}` },
-      400,
-    );
+    return c.json({ error: `Cannot approve document in status: ${version.extractionStatus}` }, 400);
   }
 
   const updated = await prisma.documentVersion.updateMany({

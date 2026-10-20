@@ -21,7 +21,7 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
-db_url = settings.DATABASE_URL
+db_url = os.environ.get("DATABASE_URL") or settings.DATABASE_URL
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
 

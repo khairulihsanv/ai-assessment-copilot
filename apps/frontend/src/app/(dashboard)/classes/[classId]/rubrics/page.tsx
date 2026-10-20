@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { RubricManagementView } from "@/components/features/rubric-management-view";
-import { auth } from "@/server/auth/auth";
 import { fetchFromBackend } from "@/server/api/backend-client";
+import { auth } from "@/server/auth/auth";
 
 interface RubricsPageProps {
   params: Promise<{ classId: string }>;
@@ -20,7 +20,7 @@ export default async function RubricsPage({ params }: RubricsPageProps) {
   const { classId } = await params;
 
   const classRes = await fetchFromBackend<{ id: string; name: string; dosenId: string }>(
-    `/classes/${classId}`
+    `/classes/${classId}`,
   );
 
   if (!classRes.data) {

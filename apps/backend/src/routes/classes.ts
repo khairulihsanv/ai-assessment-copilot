@@ -1,7 +1,7 @@
+import { createClassSchema, joinClassSchema, updateClassSchema } from "@dexa/contracts";
 import { Hono } from "hono";
 import { prisma } from "../db/prisma.js";
-import { createClassSchema, joinClassSchema, updateClassSchema } from "@dexa/contracts";
-import { internalAuthMiddleware, type AuthContext } from "../middleware/auth.js";
+import { type AuthContext, internalAuthMiddleware } from "../middleware/auth.js";
 import { publicGradeSelect, withReleasedGrade } from "../utils/public-selects.js";
 
 const classesRouter = new Hono<AuthContext>();
@@ -30,9 +30,7 @@ classesRouter.get("/", async (c) => {
         orderBy: { createdAt: "desc" },
       });
 
-  const sanitized = isDosen
-    ? classes
-    : classes.map(({ enrollmentKey: _, ...rest }) => rest);
+  const sanitized = isDosen ? classes : classes.map(({ enrollmentKey: _, ...rest }) => rest);
 
   return c.json(sanitized);
 });
@@ -42,7 +40,7 @@ classesRouter.post("/", async (c) => {
   if (user.role !== "DOSEN") {
     return c.json({ error: "Unauthorized" }, 401);
   }
-  
+
   const body = await c.req.json();
   const parsed = createClassSchema.safeParse(body);
   if (!parsed.success) {
@@ -50,7 +48,7 @@ classesRouter.post("/", async (c) => {
   }
 
   const enrollmentKey = Array.from({ length: 6 }, () =>
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".charAt(Math.floor(Math.random() * 36))
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".charAt(Math.floor(Math.random() * 36)),
   ).join("");
 
   const newClass = await prisma.class.create({
@@ -84,7 +82,10 @@ classesRouter.post("/join", async (c) => {
   });
 
   if (!cls) {
-    return c.json({ error: "Kode kelas tidak ditemukan. Pastikan kode yang Anda masukkan benar." }, 404);
+    return c.json(
+      { error: "Kode kelas tidak ditemukan. Pastikan kode yang Anda masukkan benar." },
+      404,
+    );
   }
 
   if (cls.isArchived) {
@@ -105,7 +106,6 @@ classesRouter.post("/join", async (c) => {
 
   return c.json({ success: true, classId: cls.id, className: cls.name }, 201);
 });
-
 
 classesRouter.get("/:classId", async (c) => {
   const user = c.get("user");
@@ -202,7 +202,7 @@ classesRouter.get("/:classId", async (c) => {
             ...assignment,
             submissions: assignment.submissions.map(withReleasedGrade),
           })),
-        }
+        },
   );
 });
 
@@ -212,12 +212,13 @@ classesRouter.patch("/:classId", async (c) => {
 
   const classId = c.req.param("classId");
   const cls = await prisma.class.findUnique({ where: { id: classId } });
-  
+
   if (!cls || cls.dosenId !== user.id) return c.json({ error: "Kelas tidak ditemukan" }, 404);
 
   const body = await c.req.json();
   const parsed = updateClassSchema.safeParse(body);
-  if (!parsed.success) return c.json({ error: parsed.error.issues[0]?.message ?? "Data tidak valid" }, 400);
+  if (!parsed.success)
+    return c.json({ error: parsed.error.issues[0]?.message ?? "Data tidak valid" }, 400);
 
   const updated = await prisma.class.update({
     where: { id: classId },
@@ -233,7 +234,7 @@ classesRouter.delete("/:classId", async (c) => {
 
   const classId = c.req.param("classId");
   const cls = await prisma.class.findUnique({ where: { id: classId } });
-  
+
   if (!cls || cls.dosenId !== user.id) return c.json({ error: "Kelas tidak ditemukan" }, 404);
 
   await prisma.class.delete({ where: { id: classId } });
@@ -246,11 +247,11 @@ classesRouter.post("/:classId/regenerate-key", async (c) => {
 
   const classId = c.req.param("classId");
   const cls = await prisma.class.findUnique({ where: { id: classId } });
-  
+
   if (!cls || cls.dosenId !== user.id) return c.json({ error: "Kelas tidak ditemukan" }, 404);
 
   const newKey = Array.from({ length: 6 }, () =>
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".charAt(Math.floor(Math.random() * 36))
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".charAt(Math.floor(Math.random() * 36)),
   ).join("");
 
   const updated = await prisma.class.update({

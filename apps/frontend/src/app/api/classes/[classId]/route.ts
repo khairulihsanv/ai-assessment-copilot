@@ -13,13 +13,17 @@ export async function GET(_request: Request, { params }: { params: Promise<{ cla
 
   const { classId } = await params;
   const token = signInternalToken({ id: session.user.id, role: session.user.role });
-  
+
   const res = await forwardToBackend(`${BACKEND_URL}/classes/${classId}`, {
-    headers: { Authorization: `Bearer ${token}` }
+    headers: { Authorization: `Bearer ${token}` },
   });
 
-  const data = await res.json();
-  if (!res.ok) return NextResponse.json({ error: data.error || "Failed to fetch class" }, { status: res.status });
+  const data = (await res.json()) as any;
+  if (!res.ok)
+    return NextResponse.json(
+      { error: data.detail || data.error || "Failed to fetch class" },
+      { status: res.status },
+    );
   return NextResponse.json(data);
 }
 
@@ -41,13 +45,17 @@ export async function PATCH(
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
+      Authorization: `Bearer ${token}`,
     },
-    body
+    body,
   });
 
-  const data = await res.json();
-  if (!res.ok) return NextResponse.json({ error: data.error || "Failed to update class" }, { status: res.status });
+  const data = (await res.json()) as any;
+  if (!res.ok)
+    return NextResponse.json(
+      { error: data.error || "Failed to update class" },
+      { status: res.status },
+    );
   return NextResponse.json(data);
 }
 
@@ -66,10 +74,14 @@ export async function DELETE(
 
   const res = await forwardToBackend(`${BACKEND_URL}/classes/${classId}`, {
     method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` }
+    headers: { Authorization: `Bearer ${token}` },
   });
 
-  const data = await res.json();
-  if (!res.ok) return NextResponse.json({ error: data.error || "Failed to delete class" }, { status: res.status });
+  const data = (await res.json()) as any;
+  if (!res.ok)
+    return NextResponse.json(
+      { error: data.error || "Failed to delete class" },
+      { status: res.status },
+    );
   return NextResponse.json(data);
 }

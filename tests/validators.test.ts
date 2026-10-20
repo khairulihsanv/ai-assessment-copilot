@@ -1,7 +1,6 @@
+import { createClassSchema, createRubricSchema, joinClassSchema } from "@dexa/contracts";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { createClassSchema, joinClassSchema } from "@dexa/contracts";
-import { createRubricSchema } from "@dexa/contracts";
 import { fileSizeToString, getInitials } from "@/shared/utils";
 
 const gradingResponseSchema = z.object({

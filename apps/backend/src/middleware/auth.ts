@@ -1,4 +1,4 @@
-import { Context, Next } from "hono";
+import type { Context, Next } from "hono";
 import jwt from "jsonwebtoken";
 
 function getInternalSecret(): string {
@@ -46,7 +46,7 @@ export async function internalAuthMiddleware(c: Context<AuthContext>, next: Next
     });
 
     await next();
-  } catch (err) {
+  } catch (_err) {
     return c.json({ error: "Unauthorized: Invalid signature or expired token" }, 401);
   }
 }

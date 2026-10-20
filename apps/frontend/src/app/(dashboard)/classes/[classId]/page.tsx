@@ -4,8 +4,8 @@ import { notFound, redirect } from "next/navigation";
 import { AssignmentCard } from "@/components/features/assignment-card";
 import { RegenerateKeyButton } from "@/components/features/regenerate-key-button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { auth } from "@/server/auth/auth";
 import { fetchFromBackend } from "@/server/api/backend-client";
+import { auth } from "@/server/auth/auth";
 import { formatDate, getInitials } from "@/shared/utils";
 
 interface ClassDetailPageProps {

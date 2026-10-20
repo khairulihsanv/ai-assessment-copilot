@@ -1,5 +1,12 @@
 import { PrismaClient } from "@prisma/client";
 
+type ErrorClassification =
+  | "AUTH_OR_HBA_REJECTION"
+  | "SQL_ERROR"
+  | "TIMEOUT"
+  | "CONNECTION_REFUSED"
+  | "UNKNOWN";
+
 interface CheckResult {
   name: string;
   urlSafe: string;
@@ -8,16 +15,11 @@ interface CheckResult {
   error?: {
     code?: string;
     message: string;
-    classification:
-      | "AUTH_OR_HBA_REJECTION"
-      | "SQL_ERROR"
-      | "TIMEOUT"
-      | "CONNECTION_REFUSED"
-      | "UNKNOWN";
+    classification: ErrorClassification;
   };
 }
 
-function classifyError(err: any): CheckResult["error"]["classification"] {
+function classifyError(err: any): ErrorClassification {
   const msg = String(err?.message || "").toLowerCase();
   const code = String(err?.code || "");
 

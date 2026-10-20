@@ -14,7 +14,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   const token = signInternalToken({ id: session.user.id, role: session.user.role });
 
   const res = await forwardToBackend(`${BACKEND_URL}/document-versions/${id}/download`, {
-    headers: { Authorization: `Bearer ${token}` }
+    headers: { Authorization: `Bearer ${token}` },
   });
 
   if (!res.ok) {
@@ -27,7 +27,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     status: 200,
     headers: {
       "Content-Type": res.headers.get("Content-Type") || "application/octet-stream",
-      "Content-Disposition": res.headers.get("Content-Disposition") || `attachment; filename="${id}"`,
+      "Content-Disposition":
+        res.headers.get("Content-Disposition") || `attachment; filename="${id}"`,
     },
   });
 }

@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 import { prisma } from "../db/prisma.js";
-import { internalAuthMiddleware, AuthContext } from "../middleware/auth.js";
-import { publicGradeSelect, withReleasedGrade } from "../utils/public-selects.js";
+import { type AuthContext, internalAuthMiddleware } from "../middleware/auth.js";
 import { getStorage } from "../storage/storage.js";
+import { publicGradeSelect, withReleasedGrade } from "../utils/public-selects.js";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
@@ -28,7 +28,8 @@ submissionsRouter.get("/", async (c) => {
   const isPrivileged = isDosen || isAssistant;
 
   if (!isPrivileged && !enrollment) return c.json({ error: "Akses ditolak" }, 403);
-  if (!isPrivileged && assignment.status === "DRAFT") return c.json({ error: "Tugas tidak ditemukan" }, 404);
+  if (!isPrivileged && assignment.status === "DRAFT")
+    return c.json({ error: "Tugas tidak ditemukan" }, 404);
 
   const submissions = await prisma.submission.findMany({
     where: {
@@ -49,7 +50,8 @@ submissionsRouter.get("/", async (c) => {
 
 submissionsRouter.post("/", async (c) => {
   const user = c.get("user");
-  if (user.role !== "MAHASISWA") return c.json({ error: "Hanya mahasiswa yang dapat mengumpulkan tugas" }, 403);
+  if (user.role !== "MAHASISWA")
+    return c.json({ error: "Hanya mahasiswa yang dapat mengumpulkan tugas" }, 403);
 
   const classId = c.req.param("classId") as string;
   const assignmentId = c.req.param("assignmentId") as string;
@@ -58,11 +60,13 @@ submissionsRouter.post("/", async (c) => {
     where: { classId_userId: { classId, userId: user.id } },
   });
 
-  if (!enrollment || enrollment.role !== "STUDENT") return c.json({ error: "Anda belum terdaftar di kelas ini" }, 403);
+  if (!enrollment || enrollment.role !== "STUDENT")
+    return c.json({ error: "Anda belum terdaftar di kelas ini" }, 403);
 
   const assignment = await prisma.assignment.findFirst({ where: { id: assignmentId, classId } });
   if (!assignment) return c.json({ error: "Tugas tidak ditemukan" }, 404);
-  if (assignment.status !== "PUBLISHED") return c.json({ error: "Tugas tidak menerima pengumpulan" }, 403);
+  if (assignment.status !== "PUBLISHED")
+    return c.json({ error: "Tugas tidak menerima pengumpulan" }, 403);
 
   const now = new Date();
   if (now > assignment.dueDate && !assignment.allowLateSubmission) {
@@ -89,10 +93,17 @@ submissionsRouter.post("/", async (c) => {
         const originalName = file.name.toLowerCase();
         if (originalName.endsWith(".pdf")) submissionType = "PDF";
         else if (originalName.endsWith(".docx")) submissionType = "DOCX";
-        else return c.json({ error: "Format file tidak didukung. Harap unggah file .pdf atau .docx" }, 400);
+        else
+          return c.json(
+            { error: "Format file tidak didukung. Harap unggah file .pdf atau .docx" },
+            400,
+          );
 
         if (assignment.submissionType !== "ANY" && assignment.submissionType !== submissionType) {
-          return c.json({ error: `Tugas ini hanya menerima format ${assignment.submissionType}` }, 400);
+          return c.json(
+            { error: `Tugas ini hanya menerima format ${assignment.submissionType}` },
+            400,
+          );
         }
 
         const arrayBuffer = await file.arrayBuffer();
@@ -104,7 +115,10 @@ submissionsRouter.post("/", async (c) => {
         fileName = file.name;
       } else if (text && text.trim()) {
         if (assignment.submissionType !== "ANY" && assignment.submissionType !== "TEXT") {
-          return c.json({ error: `Tugas ini hanya menerima format ${assignment.submissionType}` }, 400);
+          return c.json(
+            { error: `Tugas ini hanya menerima format ${assignment.submissionType}` },
+            400,
+          );
         }
         submissionType = "TEXT";
         content = text.trim();
@@ -117,7 +131,10 @@ submissionsRouter.post("/", async (c) => {
         return c.json({ error: "Teks jawaban tidak boleh kosong" }, 400);
       }
       if (assignment.submissionType !== "ANY" && assignment.submissionType !== "TEXT") {
-        return c.json({ error: `Tugas ini hanya menerima format ${assignment.submissionType}` }, 400);
+        return c.json(
+          { error: `Tugas ini hanya menerima format ${assignment.submissionType}` },
+          400,
+        );
       }
       submissionType = "TEXT";
       content = body.content.trim();

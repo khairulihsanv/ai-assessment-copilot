@@ -1,8 +1,8 @@
 import { ArrowRight, FileText } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { auth } from "@/server/auth/auth";
 import { fetchFromBackend } from "@/server/api/backend-client";
+import { auth } from "@/server/auth/auth";
 import { formatRelativeTime } from "@/shared/utils";
 
 export const metadata = { title: "Studio penilaian | Dexa Assessment" };

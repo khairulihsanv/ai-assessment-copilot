@@ -25,9 +25,9 @@ export async function POST(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
+      Authorization: `Bearer ${token}`,
     },
-    body
+    body,
   });
 
   const data = await res.json();

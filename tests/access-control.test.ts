@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import jwt from "jsonwebtoken";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { db } = vi.hoisted(() => ({
   db: {
@@ -140,7 +140,7 @@ describe("Authorization handler contracts (mock DB, not integration)", () => {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    const data = await response.json();
+    const data = (await response.json()) as any;
     expect(data[0].submissions[0].grades).toEqual([{ id: "published", status: "RELEASED" }]);
   });
 

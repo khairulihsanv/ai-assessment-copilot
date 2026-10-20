@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 interface GradingStep {
   step: number;
   totalSteps: number;
   message: string;
+  progress?: number;
 }
 
 interface UseAIGradingStreamReturn {
@@ -22,28 +23,43 @@ export function useAIGradingStream(): UseAIGradingStreamReturn {
   const [currentStep, setCurrentStep] = useState<GradingStep | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const [eventSourceRef, setEventSourceRef] = useState<EventSource | null>(null);
+  const eventSourceRef = useRef<EventSource | null>(null);
+  const rejectCurrentRef = useRef<((reason?: any) => void) | null>(null);
 
   const reset = useCallback(() => {
     setGrading(false);
     setCurrentStep(null);
     setError(null);
-    if (eventSourceRef) {
-      eventSourceRef.close();
-      setEventSourceRef(null);
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+      eventSourceRef.current = null;
     }
-  }, [eventSourceRef]);
+    if (rejectCurrentRef.current) {
+      rejectCurrentRef.current(new Error("Reset oleh pengguna"));
+      rejectCurrentRef.current = null;
+    }
+  }, []);
 
   const cancelGrading = useCallback(() => {
-    if (eventSourceRef) {
-      eventSourceRef.close();
-      setEventSourceRef(null);
-      setGrading(false);
-      setError("Dibatalkan oleh pengguna");
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+      eventSourceRef.current = null;
     }
-  }, [eventSourceRef]);
+    setGrading(false);
+    setError("Dibatalkan oleh pengguna");
+    if (rejectCurrentRef.current) {
+      rejectCurrentRef.current(new Error("Dibatalkan oleh pengguna"));
+      rejectCurrentRef.current = null;
+    }
+  }, []);
 
   const startGrading = useCallback((submissionId: string): Promise<unknown> => {
+    if (eventSourceRef.current) {
+      return Promise.reject(
+        new Error("Penilaian sedang berjalan. Harap tunggu hingga proses selesai."),
+      );
+    }
+
     return new Promise((resolve, reject) => {
       setGrading(true);
       setError(null);
@@ -51,12 +67,15 @@ export function useAIGradingStream(): UseAIGradingStreamReturn {
         step: 1,
         totalSteps: 4,
         message: "Menghubungkan ke layanan AI Copilot...",
+        progress: 10,
       });
 
-      const eventSource = new EventSource(`/api/submissions/${submissionId}/grade/stream`);
-      setEventSourceRef(eventSource);
+      rejectCurrentRef.current = reject;
 
-      eventSource.addEventListener("status", (e) => {
+      const eventSource = new EventSource(`/api/submissions/${submissionId}/grade/stream`);
+      eventSourceRef.current = eventSource;
+
+      eventSource.addEventListener("status", (e: MessageEvent) => {
         try {
           const data = JSON.parse(e.data);
           setCurrentStep(data);
@@ -65,8 +84,10 @@ export function useAIGradingStream(): UseAIGradingStreamReturn {
         }
       });
 
-      eventSource.addEventListener("done", (e) => {
+      eventSource.addEventListener("done", (e: MessageEvent) => {
         eventSource.close();
+        eventSourceRef.current = null;
+        rejectCurrentRef.current = null;
         setGrading(false);
         try {
           const data = JSON.parse(e.data);
@@ -76,20 +97,26 @@ export function useAIGradingStream(): UseAIGradingStreamReturn {
         }
       });
 
-      eventSource.addEventListener("error", (e: unknown) => {
+      eventSource.addEventListener("error", (e: any) => {
         eventSource.close();
+        eventSourceRef.current = null;
+        const rejectFn = rejectCurrentRef.current;
+        rejectCurrentRef.current = null;
         setGrading(false);
+
         let errorMsg = "Gagal memproses penilaian dengan AI";
-        if (e && typeof e === "object" && "data" in e) {
+        if (e && typeof e === "object" && "data" in e && typeof e.data === "string") {
           try {
-            const data = JSON.parse((e as { data: string }).data);
+            const data = JSON.parse(e.data);
             if (data.message) errorMsg = data.message;
           } catch {
             // default
           }
         }
         setError(errorMsg);
-        reject(new Error(errorMsg));
+        if (rejectFn) {
+          rejectFn(new Error(errorMsg));
+        }
       });
     });
   }, []);

@@ -1,28 +1,47 @@
 import hashlib
-from typing import List, Dict, Any, Optional
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, BackgroundTasks
+from typing import Any
+
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    UploadFile,
+    status,
+)
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.models.enums import (
+    AssignmentStatus,
+    ClassRole,
+    DocumentStatus,
+    Role,
+    SourceType,
+)
 from app.models.models import (
-    Class,
-    Enrollment,
-    User,
     Assignment,
+    Class,
+    Document,
+    DocumentChunk,
+    DocumentVersion,
+    Enrollment,
+    ReferenceSetDocument,
+    ReferenceSetVersion,
     Rubric,
     Submission,
-    Document,
-    DocumentVersion,
-    DocumentChunk,
-    ReferenceSetVersion,
-    ReferenceSetDocument,
+    User,
 )
-from app.models.enums import Role, ClassRole, AssignmentStatus, SourceType, DocumentStatus
-from app.schemas.assignment_schemas import CreateAssignmentSchema, UpdateAssignmentSchema
+from app.schemas.assignment_schemas import (
+    CreateAssignmentSchema,
+    UpdateAssignmentSchema,
+)
 from app.security.dependencies import get_current_user
-from app.services.storage_service import storage
-from app.services.extractor_service import extract_text_from_buffer
 from app.services.chunker_service import chunk_text
+from app.services.extractor_service import extract_text_from_buffer
+from app.services.storage_service import storage
 
 assignments_router = APIRouter(tags=["assignments"])
 
@@ -208,10 +227,11 @@ async def create_assignment(
             detail="Kelas tidak ditemukan atau Anda bukan pengajar di kelas ini",
         )
 
-    if req.rubricId:
+    rubric_id = req.rubricId
+    if rubric_id:
         rubric = (
             db.query(Rubric)
-            .filter(Rubric.id == req.rubricId, Rubric.classId == class_id)
+            .filter(Rubric.id == rubric_id, Rubric.classId == class_id)
             .first()
         )
         if not rubric:
@@ -219,6 +239,8 @@ async def create_assignment(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Rubrik yang dipilih tidak ditemukan di kelas ini",
             )
+    else:
+        rubric_id = None
 
     new_assign = Assignment(
         classId=class_id,
@@ -228,7 +250,7 @@ async def create_assignment(
         dueDate=req.dueDate,
         maxScore=req.maxScore,
         allowLateSubmission=req.allowLateSubmission,
-        rubricId=req.rubricId,
+        rubricId=rubric_id,
         status=req.status,
     )
     db.add(new_assign)
@@ -390,6 +412,21 @@ async def get_assignment_detail(
             "subject": cls.subject,
             "dosenId": cls.dosenId,
             "dosen": {"id": cls.dosen.id, "name": cls.dosen.name, "email": cls.dosen.email} if cls.dosen else None,
+            "enrollments": [
+                {
+                    "id": e.id,
+                    "userId": e.mahasiswaId,
+                    "role": e.role.value if hasattr(e.role, "value") else str(e.role),
+                    "user": {
+                        "id": e.user.id,
+                        "name": e.user.name,
+                        "email": e.user.email,
+                    }
+                    if e.user
+                    else None,
+                }
+                for e in cls.enrollments
+            ],
         },
         "rubric": rubric_data,
         "submissions": subs_data,
@@ -669,12 +706,12 @@ async def upload_reference_document(
 async def create_reference_set(
     class_id: str,
     assignment_id: str,
-    payload: Dict[str, Any],
+    payload: dict[str, Any],
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     if current_user.role != Role.DOSEN:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
 
     cls = db.query(Class).filter(Class.id == class_id).first()
     if not cls or cls.dosenId != current_user.id:

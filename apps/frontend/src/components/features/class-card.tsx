@@ -4,6 +4,12 @@ import { Check, Copy, FolderOpen, Key, MoreVertical, TrendingUp, Users } from "l
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface ClassCardProps {
   id: string;
@@ -18,17 +24,7 @@ interface ClassCardProps {
 
 // Helper to generate a consistent color based on string
 const getBgColor = (str: string) => {
-  const colors = [
-    "bg-blue-600",
-    "bg-indigo-600",
-    "bg-purple-600",
-    "bg-pink-600",
-    "bg-rose-600",
-    "bg-orange-600",
-    "bg-green-700",
-    "bg-teal-700",
-    "bg-cyan-700",
-  ];
+  const colors = ["bg-sky-700", "bg-sky-800", "bg-blue-800"];
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     hash = str.charCodeAt(i) + ((hash << 5) - hash);
@@ -46,7 +42,7 @@ export function ClassCard({
   isDosen,
 }: ClassCardProps) {
   const [copied, setCopied] = useState(false);
-  const [_copyError, setCopyError] = useState(false);
+  const [copyError, setCopyError] = useState(false);
 
   const handleCopyKey = async (e: React.MouseEvent) => {
     e.preventDefault(); // prevent triggering the link overlay
@@ -69,12 +65,9 @@ export function ClassCard({
     <article className="group relative flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-all hover:shadow-md h-[280px]">
       {/* Header section */}
       <div className={`relative h-28 ${bgColor} p-4 text-white overflow-hidden`}>
-        {/* Subtle pattern or gradient overlay could go here */}
-        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white via-transparent to-transparent" />
-
         <div className="relative flex justify-between items-start z-10">
           <div className="min-w-0 flex-1 pr-4">
-            <h3 className="text-xl font-medium leading-tight truncate">
+            <h3 className="text-base font-semibold leading-snug line-clamp-2">
               <Link
                 href={`/classes/${id}`}
                 className="hover:underline focus-visible:outline-none after:absolute after:inset-0 after:z-0"
@@ -86,18 +79,38 @@ export function ClassCard({
               {subject || "Mata kuliah"}
             </p>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-white hover:bg-white/20 h-8 w-8 rounded-full z-10 shrink-0"
-          >
-            <MoreVertical size={18} />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={`Menu kelas ${name}`}
+                  className="text-white hover:text-white hover:bg-white/20 h-8 w-8 rounded-lg z-10 shrink-0"
+                />
+              }
+            >
+              <MoreVertical size={18} />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-44">
+              <DropdownMenuItem render={<Link href={`/classes/${id}`} />}>
+                Buka kelas
+              </DropdownMenuItem>
+              <DropdownMenuItem render={<Link href={`/classes/${id}/assignments`} />}>
+                Lihat tugas
+              </DropdownMenuItem>
+              {isDosen && (
+                <DropdownMenuItem render={<Link href={`/classes/${id}/rubrics`} />}>
+                  Kelola rubrik
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
       {/* Avatar (Absolute positioning overlapping header and body) */}
-      <div className="absolute right-4 top-20 z-10 flex h-16 w-16 items-center justify-center rounded-full border-4 border-card bg-slate-200 dark:bg-slate-700 text-2xl font-medium text-slate-700 dark:text-slate-200 shadow-sm">
+      <div className="absolute right-4 top-20 z-10 flex h-16 w-16 items-center justify-center rounded-full border-4 border-card bg-secondary text-2xl font-medium text-secondary-foreground">
         {avatarText}
       </div>
 
@@ -120,6 +133,7 @@ export function ClassCard({
               type="button"
               onClick={handleCopyKey}
               title="Salin kode kelas"
+              aria-label={copied ? "Kode kelas tersalin" : `Salin kode kelas ${enrollmentKey}`}
               className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
             >
               <Key size={14} />
@@ -127,23 +141,34 @@ export function ClassCard({
               {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
             </button>
           )}
+          {copyError && (
+            <p role="alert" className="max-w-40 text-xs text-destructive">
+              Tidak dapat menyalin. Salin kode kelas secara manual.
+            </p>
+          )}
         </div>
         <div className="flex gap-1">
           <Button
+            asChild
             variant="ghost"
             size="icon"
             title="Lihat tugas"
             className="h-9 w-9 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted"
           >
-            <TrendingUp size={18} />
+            <Link href={`/classes/${id}/assignments`} aria-label={`Lihat tugas ${name}`}>
+              <TrendingUp size={18} />
+            </Link>
           </Button>
           <Button
+            asChild
             variant="ghost"
             size="icon"
-            title="Buka folder kelas"
+            title="Buka kelas"
             className="h-9 w-9 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted"
           >
-            <FolderOpen size={18} />
+            <Link href={`/classes/${id}`} aria-label={`Buka kelas ${name}`}>
+              <FolderOpen size={18} />
+            </Link>
           </Button>
         </div>
       </div>

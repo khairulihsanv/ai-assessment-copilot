@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { CreateAssignmentForm } from "@/components/features/create-assignment-form";
-import { auth } from "@/server/auth/auth";
 import { fetchFromBackend } from "@/server/api/backend-client";
+import { auth } from "@/server/auth/auth";
 
 interface NewAssignmentPageProps {
   params: Promise<{ classId: string }>;

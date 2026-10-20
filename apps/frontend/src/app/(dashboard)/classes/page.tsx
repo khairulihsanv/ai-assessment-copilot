@@ -3,8 +3,8 @@ import { redirect } from "next/navigation";
 import { ClassCard } from "@/components/features/class-card";
 import { CreateClassModal } from "@/components/features/create-class-modal";
 import { JoinClassModal } from "@/components/features/join-class-modal";
-import { auth } from "@/server/auth/auth";
 import { fetchFromBackend } from "@/server/api/backend-client";
+import { auth } from "@/server/auth/auth";
 
 export const metadata = {
   title: "Daftar Kelas — Dexa Assessment",

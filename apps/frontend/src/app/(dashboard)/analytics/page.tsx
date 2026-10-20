@@ -1,191 +1,112 @@
-import { Award, BarChart3 } from "lucide-react";
+import { BarChart3, BookOpen, ClipboardList, Files, History } from "lucide-react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ExportAnalyticsButton } from "@/components/features/dashboard-quick-actions";
-import { auth } from "@/server/auth/auth";
 import { fetchFromBackend } from "@/server/api/backend-client";
+import { auth } from "@/server/auth/auth";
 
-export const metadata = {
-  title: "Laporan & Analitik — AI Assessment Copilot",
-};
+export const metadata = { title: "Laporan & Analitik — AI Assessment Copilot" };
 
 export default async function AnalyticsPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
+  if (session.user.role !== "DOSEN") redirect("/dashboard");
 
-  const { data } = await fetchFromBackend<{
+  const { ok, data } = await fetchFromBackend<{
     classesCount: number;
     assignmentsCount: number;
     submissionsCount: number;
     gradesCount: number;
   }>("/analytics");
-
-  const classesCount = data?.classesCount ?? 0;
-  const assignmentsCount = data?.assignmentsCount ?? 0;
-  const submissionsCount = data?.submissionsCount ?? 0;
+  const metrics =
+    ok && data
+      ? [
+          {
+            label: "Kelas",
+            value: data.classesCount,
+            detail: "Termasuk kelas yang diarsipkan",
+            icon: BookOpen,
+          },
+          {
+            label: "Penugasan",
+            value: data.assignmentsCount,
+            detail: "Seluruh tugas di kelas Anda",
+            icon: ClipboardList,
+          },
+          {
+            label: "Pengumpulan",
+            value: data.submissionsCount,
+            detail: "Jawaban yang telah dikumpulkan",
+            icon: Files,
+          },
+          {
+            label: "Revisi penilaian",
+            value: data.gradesCount,
+            detail: "Termasuk draf dan revisi nilai Anda",
+            icon: History,
+          },
+        ]
+      : null;
 
   return (
-    <div className="space-y-6 pb-12 animate-in fade-in-50 duration-300">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#E5E7EB]">
+    <div className="space-y-7 pb-12">
+      <div className="flex flex-col justify-between gap-4 border-b border-border pb-6 sm:flex-row sm:items-center">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#E2EFE9] text-[#1E4D3B]">
-              Academic Telemetry
-            </span>
-            <span className="font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-              OBE Capstone UNS
-            </span>
-          </div>
-          <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#111827] mt-1.5 flex items-center gap-2.5">
-            <BarChart3 className="text-[#1E4D3B]" size={26} />
-            <span>Laporan & Analitik Akademik</span>
+          <p className="text-xs font-semibold uppercase tracking-widest text-primary">
+            Rekap kelas
+          </p>
+          <h1 className="mt-2 flex items-center gap-3 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+            <BarChart3 className="shrink-0 text-primary" size={26} /> Laporan & Analitik Akademik
           </h1>
-          <p className="text-xs text-[#6B7280] mt-1">
-            Metrik capaian pembelajaran (OBE), distribusi nilai mahasiswa, dan rekapitulasi waktu
-            efisiensi dosen.
+          <p className="mt-2 text-sm text-muted-foreground">
+            Ringkasan kegiatan dan penilaian di kelas yang Anda kelola.
           </p>
         </div>
-
         <ExportAnalyticsButton />
       </div>
-
-      {/* KPI Cards (Matches Dribbble Triad + Forest Green Signature) */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {/* Card 1: Warm Amber Accent */}
-        <div className="p-6 rounded-3xl bg-[#F59E0B] text-slate-950 shadow-xs flex flex-col justify-between min-h-[140px]">
-          <span className="text-xs font-bold text-slate-900/80 uppercase tracking-wider">
-            Kelas Aktif
-          </span>
-          <div>
-            <div className="font-display text-4xl font-extrabold tracking-tight">
-              {classesCount || 5}
-            </div>
-            <span className="text-[11px] font-mono font-bold text-slate-950 mt-1 block">
-              Prodi TI SV UNS
-            </span>
-          </div>
+      {metrics ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {metrics.map(({ label, value, detail, icon: Icon }) => (
+            <section
+              key={label}
+              aria-label={label}
+              className="rounded-xl border border-border bg-card p-5"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-sm font-medium text-muted-foreground">{label}</h2>
+                <Icon size={19} className="text-primary" />
+              </div>
+              <p
+                className="mt-5 text-4xl font-semibold tabular-nums text-foreground"
+                data-metric-value
+              >
+                {value.toLocaleString("id-ID")}
+              </p>
+              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{detail}</p>
+            </section>
+          ))}
         </div>
-
-        {/* Card 2: Cerulean Blue Accent */}
-        <div className="p-6 rounded-3xl bg-[#2563EB] text-white shadow-xs flex flex-col justify-between min-h-[140px]">
-          <span className="text-xs font-bold text-blue-100 uppercase tracking-wider">
-            Total Penugasan
-          </span>
-          <div>
-            <div className="font-display text-4xl font-extrabold tracking-tight">
-              {assignmentsCount || 12}
-            </div>
-            <span className="text-[11px] font-mono font-bold text-blue-200 mt-1 block">
-              100% Berbasis Rubrik
-            </span>
-          </div>
+      ) : (
+        <div
+          role="alert"
+          className="rounded-xl border border-destructive/30 bg-card p-6 text-sm text-foreground"
+        >
+          Ringkasan belum dapat dimuat. Muat ulang halaman untuk mencoba kembali.
         </div>
-
-        {/* Card 3: Lavender Purple Accent */}
-        <div className="p-6 rounded-3xl bg-[#8B5CF6] text-white shadow-xs flex flex-col justify-between min-h-[140px]">
-          <span className="text-xs font-bold text-purple-100 uppercase tracking-wider">
-            Submisi Masuk
-          </span>
-          <div>
-            <div className="font-display text-4xl font-extrabold tracking-tight">
-              {submissionsCount || 98}
-            </div>
-            <span className="text-[11px] font-mono font-bold text-purple-200 mt-1 block">
-              Rata-rata 92% Ketepatan
-            </span>
-          </div>
-        </div>
-
-        {/* Card 4: Deep Forest Green Signature */}
-        <div className="p-6 rounded-3xl bg-[#1E4D3B] text-white shadow-xs flex flex-col justify-between min-h-[140px]">
-          <span className="text-xs font-bold text-emerald-200 uppercase tracking-wider">
-            Efisiensi Koreksi
-          </span>
-          <div>
-            <div className="font-display text-4xl font-extrabold tracking-tight">89%</div>
-            <span className="text-[11px] font-mono font-bold text-emerald-200/90 mt-1 block">
-              ~3.8 jam per tugas
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Analytics Details */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="p-7 rounded-3xl bg-white border border-[#E5E7EB] shadow-xs space-y-5">
-          <div className="flex items-center justify-between">
-            <h3 className="font-display text-base font-extrabold text-[#111827]">
-              Distribusi Nilai Mahasiswa
-            </h3>
-            <span className="font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#E2EFE9] text-[#1E4D3B]">
-              Capstone Outcome
-            </span>
-          </div>
-          <div className="space-y-4 text-xs">
-            <div>
-              <div className="flex justify-between font-mono mb-1.5">
-                <span className="font-bold text-[#111827]">Nilai A (85 - 100)</span>
-                <span className="font-extrabold text-emerald-700">46% (45 Mahasiswa)</span>
-              </div>
-              <div className="h-2.5 w-full bg-[#F3F4F6] rounded-full overflow-hidden">
-                <div className="h-full bg-emerald-600 rounded-full w-[46%]" />
-              </div>
-            </div>
-            <div>
-              <div className="flex justify-between font-mono mb-1.5">
-                <span className="font-bold text-[#111827]">Nilai B (70 - 84)</span>
-                <span className="font-extrabold text-blue-700">38% (37 Mahasiswa)</span>
-              </div>
-              <div className="h-2.5 w-full bg-[#F3F4F6] rounded-full overflow-hidden">
-                <div className="h-full bg-blue-600 rounded-full w-[38%]" />
-              </div>
-            </div>
-            <div>
-              <div className="flex justify-between font-mono mb-1.5">
-                <span className="font-bold text-[#111827]">Nilai C (55 - 69)</span>
-                <span className="font-extrabold text-purple-700">12% (12 Mahasiswa)</span>
-              </div>
-              <div className="h-2.5 w-full bg-[#F3F4F6] rounded-full overflow-hidden">
-                <div className="h-full bg-purple-600 rounded-full w-[12%]" />
-              </div>
-            </div>
-            <div>
-              <div className="flex justify-between font-mono mb-1.5">
-                <span className="font-bold text-[#111827]">Perlu Remedial (&lt; 55)</span>
-                <span className="font-extrabold text-rose-600">4% (4 Mahasiswa)</span>
-              </div>
-              <div className="h-2.5 w-full bg-[#F3F4F6] rounded-full overflow-hidden">
-                <div className="h-full bg-rose-500 rounded-full w-[4%]" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="p-7 rounded-3xl bg-[#F4F3ED] border border-[#E5E3D8] shadow-xs space-y-4 flex flex-col justify-between">
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <span className="w-8 h-8 rounded-xl bg-[#1E4D3B] text-white flex items-center justify-center font-bold">
-                <Award size={18} className="text-[#FFA07A]" />
-              </span>
-              <h3 className="font-display text-base font-extrabold text-[#111827]">
-                Kesesuaian Capaian Pembelajaran (OBE Matrix)
-              </h3>
-            </div>
-            <p className="text-xs text-[#4B5563] leading-relaxed">
-              Penilaian rubrik AI mendeteksi tingkat pemahaman tertinggi pada kriteria{" "}
-              <strong className="text-[#111827]">Logika Tree Invariant</strong> (96%) dan area yang
-              membutuhkan pendalaman pada{" "}
-              <strong className="text-[#111827]">Analisis Kompleksitas Matematika</strong> (78%).
-            </p>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-white border border-[#E5E3D8] flex items-center justify-between text-xs shadow-2xs">
-            <span className="font-bold text-[#111827]">Status Akreditasi OBE UNS</span>
-            <span className="font-mono text-[10px] font-bold px-3 py-1 rounded-full bg-[#E2EFE9] text-[#1E4D3B]">
-              Memenuhi Standar Unggul
-            </span>
-          </div>
-        </div>
-      </div>
+      )}
+      <section className="rounded-xl border border-border bg-card p-6">
+        <h2 className="text-lg font-semibold text-foreground">Tinjau hasil penilaian</h2>
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+          Buka kelas untuk meninjau pengumpulan dan nilai setiap tugas. Distribusi nilai dan capaian
+          pembelajaran belum tersedia pada laporan ini.
+        </p>
+        <Link
+          href="/classes"
+          className="mt-5 inline-flex rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+        >
+          Buka kelas
+        </Link>
+      </section>
     </div>
   );
 }

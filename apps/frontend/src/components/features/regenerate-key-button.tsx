@@ -50,12 +50,12 @@ export function RegenerateKeyButton({ classId, initialKey }: RegenerateKeyButton
   };
 
   return (
-    <div className="flex items-center gap-2 bg-[#F9FAFB] p-2 rounded-2xl border border-[#E5E7EB]">
-      <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-xl border border-[#E5E7EB] shadow-2xs">
-        <Key className="w-4 h-4 text-[#1E4D3B]" />
+    <div className="flex items-center gap-2 bg-muted/50 p-2 rounded-lg border border-border">
+      <div className="flex items-center gap-2 px-3 py-1.5 bg-card rounded-xl border border-border shadow-none">
+        <Key className="w-4 h-4 text-primary" />
         <span
           id="classEnrollmentKey"
-          className="font-mono text-sm font-extrabold tracking-wider text-[#111827]"
+          className="font-mono text-sm font-semibold tracking-wider text-foreground"
         >
           {currentKey}
         </span>
@@ -65,7 +65,7 @@ export function RegenerateKeyButton({ classId, initialKey }: RegenerateKeyButton
         type="button"
         onClick={handleCopy}
         title="Salin Kode Kelas"
-        className="h-9 px-3 rounded-xl border border-[#E5E7EB] bg-white hover:bg-[#E2EFE9] flex items-center gap-1.5 text-xs text-[#374151] hover:text-[#1E4D3B] font-bold transition shadow-2xs cursor-pointer"
+        className="h-9 px-3 rounded-xl border border-border bg-card hover:bg-secondary flex items-center gap-1.5 text-xs text-foreground hover:text-secondary-foreground font-bold transition shadow-none cursor-pointer"
       >
         {copied ? (
           <>
@@ -85,7 +85,7 @@ export function RegenerateKeyButton({ classId, initialKey }: RegenerateKeyButton
         onClick={handleRegenerate}
         disabled={loading}
         title="Acak Ulang Kode"
-        className="h-9 w-9 rounded-xl border border-[#E5E7EB] bg-white hover:bg-rose-50 flex items-center justify-center text-[#6B7280] hover:text-rose-600 transition shadow-2xs cursor-pointer disabled:opacity-50"
+        className="h-9 w-9 rounded-xl border border-border bg-card hover:bg-rose-50 flex items-center justify-center text-muted-foreground hover:text-rose-600 transition shadow-none cursor-pointer disabled:opacity-50"
       >
         <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
       </button>

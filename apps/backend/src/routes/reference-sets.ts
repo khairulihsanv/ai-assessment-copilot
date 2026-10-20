@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { prisma } from "../db/prisma.js";
-import { internalAuthMiddleware, AuthContext } from "../middleware/auth.js";
+import { type AuthContext, internalAuthMiddleware } from "../middleware/auth.js";
 
 const referenceSetsRouter = new Hono<AuthContext>();
 referenceSetsRouter.use("*", internalAuthMiddleware);

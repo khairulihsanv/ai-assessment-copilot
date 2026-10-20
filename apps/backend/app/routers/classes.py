@@ -1,13 +1,25 @@
 import random
 import string
-from typing import List, Dict, Any
+from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models.models import Class, Enrollment, User, Assignment, Rubric, Submission, GradeRevision
-from app.models.enums import Role, ClassRole, AssignmentStatus
-from app.schemas.class_schemas import CreateClassSchema, UpdateClassSchema, JoinClassSchema
+from app.models.enums import AssignmentStatus, ClassRole, Role
+from app.models.models import (
+    Assignment,
+    Class,
+    Enrollment,
+    Rubric,
+    Submission,
+    User,
+)
+from app.schemas.class_schemas import (
+    CreateClassSchema,
+    JoinClassSchema,
+    UpdateClassSchema,
+)
 from app.security.dependencies import get_current_user
 
 classes_router = APIRouter(prefix="/classes", tags=["classes"])
@@ -43,7 +55,7 @@ async def get_classes(current_user: User = Depends(get_current_user), db: Sessio
         enrollment_count = db.query(Enrollment).filter(Enrollment.classId == c.id).count()
         assignment_count = db.query(Assignment).filter(Assignment.classId == c.id).count()
 
-        item: Dict[str, Any] = {
+        item: dict[str, Any] = {
             "id": c.id,
             "name": c.name,
             "description": c.description,
@@ -73,8 +85,8 @@ async def create_class(
 ):
     if current_user.role != Role.DOSEN:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Unauthorized",
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Hanya dosen yang dapat membuat kelas",
         )
 
     # Generate unique key
@@ -114,7 +126,7 @@ async def join_class(
 ):
     if current_user.role != Role.MAHASISWA:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
+            status_code=status.HTTP_403_FORBIDDEN,
             detail="Hanya mahasiswa yang dapat bergabung ke kelas",
         )
 
@@ -187,6 +199,7 @@ async def get_class_detail(
     enrollments_data = [
         {
             "id": e.id,
+            "userId": e.mahasiswaId,
             "role": e.role.value if hasattr(e.role, "value") else str(e.role),
             "joinedAt": e.joinedAt.isoformat() if e.joinedAt else None,
             "user": {
@@ -219,16 +232,7 @@ async def get_class_detail(
             # Grades
             grades_data = []
             for g in s.grades:
-                if is_privileged:
-                    grades_data.append({
-                        "id": g.id,
-                        "status": g.status,
-                        "finalScore": g.finalScore,
-                        "finalFeedback": g.finalFeedback,
-                        "isAIAssisted": g.isAIAssisted,
-                        "createdAt": g.createdAt.isoformat() if g.createdAt else None,
-                    })
-                elif g.status == "RELEASED":
+                if is_privileged or g.status == "RELEASED":
                     grades_data.append({
                         "id": g.id,
                         "status": g.status,
@@ -311,7 +315,7 @@ async def get_class_detail(
             "criteria": crit_data,
         })
 
-    return {
+    result = {
         "id": cls.id,
         "name": cls.name,
         "description": cls.description,
@@ -319,7 +323,6 @@ async def get_class_detail(
         "isArchived": cls.isArchived,
         "createdAt": cls.createdAt.isoformat() if cls.createdAt else None,
         "dosenId": cls.dosenId,
-        "enrollmentKey": cls.enrollmentKey if is_privileged else None,
         "dosen": {
             "id": cls.dosen.id,
             "name": cls.dosen.name,
@@ -335,6 +338,10 @@ async def get_class_detail(
             "assignments": len(assignments),
         },
     }
+    if is_privileged:
+        result["enrollmentKey"] = cls.enrollmentKey
+
+    return result
 
 
 @classes_router.patch("/{class_id}")
@@ -345,7 +352,7 @@ async def update_class(
     db: Session = Depends(get_db),
 ):
     if current_user.role != Role.DOSEN:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
 
     cls = db.query(Class).filter(Class.id == class_id).first()
     if not cls or cls.dosenId != current_user.id:
@@ -382,7 +389,7 @@ async def delete_class(
     db: Session = Depends(get_db),
 ):
     if current_user.role != Role.DOSEN:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
 
     cls = db.query(Class).filter(Class.id == class_id).first()
     if not cls or cls.dosenId != current_user.id:
@@ -401,7 +408,7 @@ async def regenerate_key(
     db: Session = Depends(get_db),
 ):
     if current_user.role != Role.DOSEN:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
 
     cls = db.query(Class).filter(Class.id == class_id).first()
     if not cls or cls.dosenId != current_user.id:

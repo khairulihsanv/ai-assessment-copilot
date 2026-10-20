@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models.models import User, Submission, GradeRevision, Class, Assignment
 from app.models.enums import Role
+from app.models.models import Assignment, Class, GradeRevision, Submission, User
 from app.security.dependencies import get_current_user
 
 grades_router = APIRouter(tags=["grades"])

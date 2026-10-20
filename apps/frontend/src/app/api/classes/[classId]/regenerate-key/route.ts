@@ -19,11 +19,15 @@ export async function POST(
 
   const res = await forwardToBackend(`${BACKEND_URL}/classes/${classId}/regenerate-key`, {
     method: "POST",
-    headers: { Authorization: `Bearer ${token}` }
+    headers: { Authorization: `Bearer ${token}` },
   });
 
   const data = await res.json();
-  if (!res.ok) return NextResponse.json({ error: data.error || "Failed to regenerate key" }, { status: res.status });
+  if (!res.ok)
+    return NextResponse.json(
+      { error: data.error || "Failed to regenerate key" },
+      { status: res.status },
+    );
   // Ensure we match the previous response format: { enrollmentKey: ... } or what the backend returns: { success: true, newKey: ... }
   return NextResponse.json({ enrollmentKey: data.newKey || data.enrollmentKey });
 }

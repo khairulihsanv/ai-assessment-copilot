@@ -12,7 +12,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   const token = signInternalToken({ id: session.user.id, role: session.user.role });
 
   const res = await forwardToBackend(`${BACKEND_URL}/document-versions/${id}`, {
-    headers: { Authorization: `Bearer ${token}` }
+    headers: { Authorization: `Bearer ${token}` },
   });
 
   const data = await res.json();

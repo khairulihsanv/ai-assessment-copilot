@@ -5,7 +5,7 @@ import { useEffect, useRef } from "react";
 /**
  * SessionGuard ensures that users who did NOT choose "Ingat Sesi"
  * are automatically logged out when they close the browser / exit the website.
- * 
+ *
  * - If "dexa_remember_me" is true in localStorage, the session persists across browser restarts.
  * - Otherwise, the session is strictly scoped to the active browser session via sessionStorage.
  * - If user closed all tabs/browser and returns, they are immediately signed out to prevent

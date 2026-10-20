@@ -1,7 +1,11 @@
 import { Hono } from "hono";
 import { prisma } from "../db/prisma.js";
-import { internalAuthMiddleware, type AuthContext } from "../middleware/auth.js";
-import { publicCriterionSelect, publicGradeSelect, withReleasedGrade } from "../utils/public-selects.js";
+import { type AuthContext, internalAuthMiddleware } from "../middleware/auth.js";
+import {
+  publicCriterionSelect,
+  publicGradeSelect,
+  withReleasedGrade,
+} from "../utils/public-selects.js";
 
 const assignmentsOverviewRouter = new Hono<AuthContext>();
 assignmentsOverviewRouter.use("*", internalAuthMiddleware);

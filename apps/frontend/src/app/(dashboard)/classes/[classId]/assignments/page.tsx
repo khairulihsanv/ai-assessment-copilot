@@ -1,8 +1,8 @@
 import { ArrowRight, ChevronLeft, FileText, Layers, Plus } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { auth } from "@/server/auth/auth";
 import { fetchFromBackend } from "@/server/api/backend-client";
+import { auth } from "@/server/auth/auth";
 import { formatRelativeTime } from "@/shared/utils";
 
 interface ClassAssignmentsPageProps {
@@ -43,7 +43,7 @@ export default async function ClassAssignmentsPage({ params }: ClassAssignmentsP
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-muted text-[#00174b]">
+            <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-muted text-foreground">
               {cls.subject || "SV-TI"}
             </span>
             <span className="text-xs text-muted-foreground">
@@ -53,7 +53,7 @@ export default async function ClassAssignmentsPage({ params }: ClassAssignmentsP
           <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground mt-1">
             Manajemen Tugas: {cls.name}
           </h1>
-          <p className="text-xs text-[#434655] mt-0.5">
+          <p className="text-xs text-muted-foreground mt-0.5">
             Daftar tugas, tenggat waktu pengumpulan, dan rubrik evaluasi AI
           </p>
         </div>
@@ -96,7 +96,7 @@ export default async function ClassAssignmentsPage({ params }: ClassAssignmentsP
                   </span>
                 </div>
                 <h3 className="font-display text-base font-bold text-foreground">{asmt.title}</h3>
-                <p className="text-xs text-[#434655] line-clamp-2 leading-relaxed">
+                <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
                   {asmt.instructions}
                 </p>
               </div>

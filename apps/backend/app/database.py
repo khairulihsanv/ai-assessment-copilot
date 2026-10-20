@@ -1,6 +1,9 @@
-from typing import Generator
+from collections.abc import Generator
+from typing import Any
+
 from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker, Session
+from sqlalchemy.orm import Session, declarative_base, sessionmaker
+
 from app.config import settings
 
 # Handle postgresql protocol dialect if given as postgres://
@@ -8,7 +11,7 @@ db_url = settings.DATABASE_URL
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
 
-engine_kwargs = {}
+engine_kwargs: dict[str, Any] = {}
 if "sqlite" in db_url:
     engine_kwargs["connect_args"] = {"check_same_thread": False}
 else:

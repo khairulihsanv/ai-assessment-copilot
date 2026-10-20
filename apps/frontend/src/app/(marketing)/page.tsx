@@ -784,7 +784,7 @@ export default function LandingPage() {
 
             {/* 4. CTAs (Item 5) */}
             <div className="lp-hero__ctas lp-hero-animate-d2">
-              <Link href="#demo-section" className="lp-btn lp-btn--dark">
+              <Link href="/register" className="lp-btn lp-btn--dark">
                 <span className="lp-btn__sheen" aria-hidden="true" />
                 <span>Daftar Sekarang</span>
                 <span className="lp-btn__arrow">→</span>

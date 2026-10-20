@@ -27,6 +27,7 @@ enum SubmissionType {
   PDF
   DOCX
   ANY
+  SCAN
 }
 
 enum AssignmentStatus {
@@ -176,6 +177,7 @@ model Assignment {
   dueDate             DateTime
   maxScore            Float            @default(100)
   allowLateSubmission Boolean          @default(false)
+  allowScan           Boolean          @default(true)
   status              AssignmentStatus @default(DRAFT)
   createdAt           DateTime         @default(now())
 
@@ -224,13 +226,39 @@ model SubmissionVersion {
   content       String?
   fileUrl       String?
   fileName      String?
-  submittedAt   DateTime @default(now())
+  rawOcrText    String?          @db.Text
+  isEdited      Boolean          @default(false)
+  ocrStatus     String           @default("NONE")
+  pageCount     Int              @default(1)
+  submittedAt   DateTime         @default(now())
 
+  pages         SubmissionPage[]
   evaluations   EvaluationRun[]
   grades        GradeRevision[]
 
   @@unique([submissionId, versionNumber])
   @@map("submission_versions")
+}
+
+model SubmissionPage {
+  id                  String            @id @default(cuid())
+  submissionVersionId String
+  version             SubmissionVersion @relation(fields: [submissionVersionId], references: [id], onDelete: Cascade)
+  pageNumber          Int
+  imageUrl            String?
+  imageName           String?
+  mimeType            String?
+  width               Int?
+  height              Int?
+  extractedText       String?           @db.Text
+  confirmedText       String?           @db.Text
+  ocrStatus           String            @default("SUCCESS")
+  ocrError            String?           @db.Text
+  source              String            @default("IMAGE")
+  createdAt           DateTime          @default(now())
+
+  @@unique([submissionVersionId, pageNumber])
+  @@map("submission_pages")
 }
 
 model EvaluationRun {

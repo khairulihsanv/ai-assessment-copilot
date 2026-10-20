@@ -1,10 +1,10 @@
-from typing import Optional
+
 from pydantic import BaseModel, Field
 
 
 class FinalizeSchema(BaseModel):
     expectedSubmissionVersionId: str = Field(min_length=1)
-    expectedReleasedGradeId: Optional[str] = None
+    expectedReleasedGradeId: str | None = None
     finalScore: float = Field(ge=0)
     finalFeedback: str = Field(min_length=3)
     isAIAssisted: bool = False
@@ -13,4 +13,4 @@ class FinalizeSchema(BaseModel):
 
 class RevertFinalizeSchema(BaseModel):
     expectedReleasedGradeId: str = Field(min_length=1)
-    reason: Optional[str] = None
+    reason: str | None = None

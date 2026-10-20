@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import jwt from "jsonwebtoken";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { db } = vi.hoisted(() => ({
   db: {
@@ -48,7 +48,7 @@ describe("Read queries authorization and data contracts (Mock DB)", () => {
       });
 
       expect(res.status).toBe(200);
-      const data = await res.json();
+      const data = (await res.json()) as any;
       expect(data.id).toBe("class-1");
       expect(data.enrollmentKey).toBe("ABC123");
     });
@@ -100,7 +100,7 @@ describe("Read queries authorization and data contracts (Mock DB)", () => {
       });
 
       expect(res.status).toBe(200);
-      const data = await res.json();
+      const data = (await res.json()) as any;
       expect(data.assignments[0].submissions[0].grades).toEqual([
         { id: "grade-rel", status: "RELEASED", finalScore: 75 },
       ]);
@@ -141,7 +141,7 @@ describe("Read queries authorization and data contracts (Mock DB)", () => {
       });
 
       expect(res.status).toBe(200);
-      const data = await res.json();
+      const data = (await res.json()) as any;
       expect(data.grade.finalScore).toBe(0);
       expect(data.grade.finalScore).not.toBeNull();
     });
@@ -167,7 +167,7 @@ describe("Read queries authorization and data contracts (Mock DB)", () => {
       });
 
       expect(res.status).toBe(404);
-      const data = await res.json();
+      const data = (await res.json()) as any;
       expect(data.error).toBe("Nilai belum dirilis");
     });
   });
@@ -196,7 +196,7 @@ describe("Read queries authorization and data contracts (Mock DB)", () => {
       });
 
       expect(res.status).toBe(200);
-      const data = await res.json();
+      const data = (await res.json()) as any;
       expect(data.evaluations).toEqual([]);
       expect(data.grades).toHaveLength(1);
       expect(data.grades[0].id).toBe("grade-1");

@@ -28,10 +28,22 @@ export async function POST(request: Request) {
     const data = await backendRes.json().catch(() => ({}));
 
     if (!backendRes.ok) {
+      let errorMsg = "Gagal mendaftarkan akun. Silakan coba lagi.";
+      if (typeof data.detail === "string") {
+        errorMsg = data.detail;
+      } else if (Array.isArray(data.detail) && data.detail.length > 0) {
+        errorMsg =
+          typeof data.detail[0]?.msg === "string"
+            ? data.detail[0].msg
+            : "Format input tidak valid.";
+      } else if (typeof data.error === "string") {
+        errorMsg = data.error;
+      }
+
       return NextResponse.json(
         {
           success: false,
-          error: data.detail || "Gagal mendaftarkan akun. Silakan coba lagi.",
+          error: errorMsg,
         },
         { status: backendRes.status },
       );

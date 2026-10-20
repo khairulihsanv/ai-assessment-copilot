@@ -1,21 +1,20 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
-
-import classesRouter from "./routes/classes.js";
-import assignmentsRouter from "./routes/assignments.js";
-import rubricsRouter from "./routes/rubrics.js";
-import submissionsRouter from "./routes/submissions.js";
-import submissionDetailsRouter from "./routes/submission-details.js";
-import documentVersionsRouter from "./routes/document-versions.js";
-import referenceSetsRouter from "./routes/reference-sets.js";
 import aiRouter from "./routes/ai.js";
-import dashboardRouter from "./routes/dashboard.js";
 import analyticsRouter from "./routes/analytics.js";
+import assignmentsRouter from "./routes/assignments.js";
+import assignmentsOverviewRouter from "./routes/assignments-overview.js";
+import classesRouter from "./routes/classes.js";
+import dashboardRouter from "./routes/dashboard.js";
+import documentVersionsRouter from "./routes/document-versions.js";
 import gradesRouter from "./routes/grades.js";
 import gradingHubRouter from "./routes/grading-hub.js";
+import referenceSetsRouter from "./routes/reference-sets.js";
+import rubricsRouter from "./routes/rubrics.js";
 import rubricsHubRouter from "./routes/rubrics-hub.js";
-import assignmentsOverviewRouter from "./routes/assignments-overview.js";
+import submissionDetailsRouter from "./routes/submission-details.js";
+import submissionsRouter from "./routes/submissions.js";
 
 const app = new Hono();
 

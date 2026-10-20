@@ -1,10 +1,11 @@
 from datetime import datetime
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models.models import User, ReferenceSetVersion, DocumentStatus
 from app.models.enums import Role
+from app.models.models import DocumentStatus, ReferenceSetVersion, User
 from app.security.dependencies import get_current_user
 
 reference_sets_router = APIRouter(prefix="/reference-sets", tags=["reference-sets"])
@@ -17,7 +18,7 @@ async def approve_reference_set(
     db: Session = Depends(get_db),
 ):
     if current_user.role != Role.DOSEN:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
 
     ref_set = (
         db.query(ReferenceSetVersion)

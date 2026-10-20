@@ -1,0 +1,11 @@
+.workspace {
+  display: flex;
+  min-height: 100vh;
+  background: var(--background);
+  color: var(--foreground);
+
+}
+.content { flex: 1; padding: 32px 36px 44px; }
+.workspace :is(a, button):focus-visible { outline: 2px solid #0284c7; outline-offset: 3px; }
+@media (max-width: 1023px) { .content { padding: 28px 24px 36px; } }
+@media (max-width: 639px) { .content { padding: 24px 18px 36px; } }

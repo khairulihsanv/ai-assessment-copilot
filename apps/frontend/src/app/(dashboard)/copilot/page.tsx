@@ -12,83 +12,95 @@ export default async function CopilotPage() {
 
   return (
     <div className="space-y-6 pb-12 max-w-4xl animate-in fade-in-50 duration-300">
-      <div className="pb-4 border-b border-[#E5E7EB]">
+      <div className="pb-4 border-b border-border">
         <div className="flex items-center gap-2">
-          <span className="font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#E2EFE9] text-[#1E4D3B]">
-            AI Study Copilot Beta
-          </span>
-          <span className="font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-            Asisten Akademik Cerdas
+          <span className="font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800">
+            Fitur Dalam Pengembangan — Belum Tersedia
           </span>
         </div>
-        <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-[#111827] mt-1.5 flex items-center gap-2.5">
-          <Bot className="text-[#1E4D3B]" size={28} />
+        <h1 className="font-display text-2xl sm:text-3xl font-semibold text-foreground mt-1.5 flex items-center gap-2.5">
+          <Bot className="text-primary" size={28} />
           <span>AI Study Copilot</span>
         </h1>
-        <p className="text-xs text-[#6B7280] mt-1">
-          Tanyakan penjelasan rubrik penilaian, rekomendasi referensi akademik, atau analisis draf
-          tugas Anda sebelum dikumpulkan.
+        <p className="text-xs text-muted-foreground mt-1">
+          Asisten interaktif untuk konsultasi rubrik dan draf tugas (fitur ini sedang dalam
+          pengembangan dan belum tersedia).
         </p>
       </div>
 
-      {/* Suggested Prompts (Triad Accents) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="p-5 rounded-3xl bg-white border border-[#E5E7EB] shadow-xs space-y-2 cursor-pointer hover:border-[#F59E0B] transition-all">
-          <div className="flex items-center gap-2 text-xs font-extrabold text-[#F59E0B]">
+      {/* Notice Banner */}
+      <div className="p-4 rounded-lg bg-secondary/50 border border-border text-secondary-foreground text-xs flex items-center gap-3">
+        <Bot size={20} className="text-primary flex-shrink-0" />
+        <div>
+          <strong className="block font-semibold">Layanan Chat Interaktif Belum Tersedia</strong>
+          <span>
+            Fitur percakapan interaktif Study Copilot saat ini masih dalam pengembangan dan
+            berstatus belum tersedia. Silakan gunakan fitur evaluasi tugas dan koreksi rubrik yang
+            telah berjalan penuh di kelas Anda.
+          </span>
+        </div>
+      </div>
+
+      {/* Suggested Prompts (Preview Only) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 opacity-75">
+        <div className="p-5 rounded-xl bg-card border border-border shadow-none space-y-2 cursor-not-allowed">
+          <div className="flex items-center gap-2 text-xs font-semibold text-primary">
             <Lightbulb size={16} />
-            <span>Klarifikasi Rubrik</span>
+            <span>Klarifikasi Rubrik (Preview)</span>
           </div>
-          <p className="text-xs text-[#4B5563] leading-relaxed">
+          <p className="text-xs text-muted-foreground leading-relaxed">
             “Apa yang dimaksud dengan kondisi double-black pada Red-Black Tree?”
           </p>
         </div>
 
-        <div className="p-5 rounded-3xl bg-white border border-[#E5E7EB] shadow-xs space-y-2 cursor-pointer hover:border-[#2563EB] transition-all">
-          <div className="flex items-center gap-2 text-xs font-extrabold text-[#2563EB]">
+        <div className="p-5 rounded-xl bg-card border border-border shadow-none space-y-2 cursor-not-allowed">
+          <div className="flex items-center gap-2 text-xs font-semibold text-primary">
             <BookOpen size={16} />
-            <span>Referensi Capstone</span>
+            <span>Referensi Capstone (Preview)</span>
           </div>
-          <p className="text-xs text-[#4B5563] leading-relaxed">
+          <p className="text-xs text-muted-foreground leading-relaxed">
             “Berikan rekomendasi paper IEEE terkini seputar microservices caching.”
           </p>
         </div>
 
-        <div className="p-5 rounded-3xl bg-white border border-[#E5E7EB] shadow-xs space-y-2 cursor-pointer hover:border-[#8B5CF6] transition-all">
-          <div className="flex items-center gap-2 text-xs font-extrabold text-[#8B5CF6]">
+        <div className="p-5 rounded-xl bg-card border border-border shadow-none space-y-2 cursor-not-allowed">
+          <div className="flex items-center gap-2 text-xs font-semibold text-primary">
             <CheckCircle2 size={16} />
-            <span>Simulasi Pre-check</span>
+            <span>Simulasi Pre-check (Preview)</span>
           </div>
-          <p className="text-xs text-[#4B5563] leading-relaxed">
+          <p className="text-xs text-muted-foreground leading-relaxed">
             “Apakah struktur kode saya sudah mematuhi kaidah OOP dan naming standar?”
           </p>
         </div>
       </div>
 
-      {/* Chat Container (Warm Cream Dribbble Container #F4F3ED) */}
-      <div className="bg-[#F4F3ED] rounded-3xl border border-[#E5E3D8] shadow-xs p-6 space-y-5">
+      {/* Chat Container (Disabled state) */}
+      <div className="bg-secondary/40 rounded-xl border border-border shadow-none p-6 space-y-5">
         <div className="space-y-4">
           <div className="flex items-start gap-3.5">
-            <div className="w-10 h-10 rounded-2xl bg-[#1E4D3B] text-white flex items-center justify-center shrink-0 shadow-xs">
-              <Bot size={20} className="text-[#FFA07A]" />
+            <div className="w-10 h-10 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shrink-0 shadow-none">
+              <Bot size={20} />
             </div>
-            <div className="p-4 rounded-3xl bg-white text-xs text-[#111827] max-w-xl leading-relaxed border border-[#E5E3D8] shadow-2xs">
-              Halo <strong className="text-[#1E4D3B]">{session.user.name}</strong>! Saya adalah
-              asisten AI Study Copilot Anda. Saya dapat membantu menganalisis kesesuaian draft
-              jawaban Anda terhadap rubrik dosen sebelum pengumpulan akhir. Silakan ketik pertanyaan
-              atau lampirkan draft Anda.
+            <div className="p-4 rounded-xl bg-card text-xs text-foreground max-w-xl leading-relaxed border border-border shadow-none">
+              Halo <strong className="text-primary">{session.user.name}</strong>! Fitur percakapan
+              Study Copilot saat ini sedang dalam proses pengembangan. Antarmuka chat interaktif
+              belum terhubung ke model tutor dan dinonaktifkan untuk sementara waktu.
             </div>
           </div>
         </div>
 
-        <div className="pt-3 border-t border-[#E5E3D8] flex items-center gap-2.5">
+        <div className="pt-3 border-t border-border flex items-center gap-2.5 opacity-60">
           <input
             type="text"
-            placeholder="Tanyakan konsep algoritma, kriteria rubrik, atau saran perbaikan..."
-            className="flex-1 px-4 py-3 rounded-full bg-white border border-[#E5E3D8] text-xs font-sans text-[#111827] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[#1E4D3B] transition-all"
+            disabled
+            placeholder="Layanan chat Study Copilot belum tersedia..."
+            className="min-w-0 flex-1 px-4 py-3 rounded-full bg-muted border border-border text-xs font-sans text-muted-foreground cursor-not-allowed focus:outline-none"
           />
           <button
             type="button"
-            className="p-3 rounded-full bg-[#1E4D3B] hover:bg-[#15392C] text-white transition-all shadow-xs cursor-pointer active:scale-95"
+            disabled
+            title="Chat belum tersedia"
+            className="p-3 rounded-full bg-muted text-muted-foreground shadow-none cursor-not-allowed"
           >
             <Send size={16} />
           </button>

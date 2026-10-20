@@ -1,14 +1,15 @@
 import logging
-from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
+
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models.models import User
 from app.models.enums import Role
-from app.schemas.auth import LoginRequest, RegisterRequest, UserResponse, TokenResponse
-from app.security.passwords import verify_password, hash_password
-from app.security.tokens import create_access_token
+from app.models.models import User
+from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse, UserResponse
 from app.security.dependencies import get_current_user, login_rate_limiter
+from app.security.passwords import hash_password, verify_password
+from app.security.tokens import create_access_token
 
 logger = logging.getLogger("auth")
 
@@ -40,14 +41,14 @@ async def login(req: LoginRequest, request: Request, response: Response, db: Ses
         logger.info(f"Failed login attempt: account not found for email {req.email}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Email atau password salah.",
+            detail="Email atau kata sandi tidak cocok. Silakan coba lagi.",
         )
 
     if not verify_password(req.password, user.passwordHash, email=user.email):
         logger.info(f"Failed login attempt: wrong password for user_id={user.id}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Email atau password salah.",
+            detail="Email atau kata sandi tidak cocok. Silakan coba lagi.",
         )
 
     token = create_access_token({

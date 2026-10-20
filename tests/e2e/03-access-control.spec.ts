@@ -10,7 +10,6 @@ test.describe("E2E Pemeriksaan Akses & Keamanan Sistem", () => {
 
   test("2. Mahasiswa B tidak dapat mengakses detail pengumpulan milik Mahasiswa A", async ({
     browser,
-    request,
   }) => {
     // 1. Dosen A login untuk mendapatkan ID submission Mahasiswa A di Assignment A1
     const dosenContext = await browser.newContext();
@@ -23,8 +22,11 @@ test.describe("E2E Pemeriksaan Akses & Keamanan Sistem", () => {
 
     // Ambil daftar kelas A
     const classesRes = await dosenPage.request.get("/api/classes");
-    const classes = await classesRes.json();
-    const classA = classes.find((c: any) => c.enrollmentKey === "KEY-RPLA");
+    const rawBody = await classesRes.text();
+    console.log("[E2E Debug] /api/classes status:", classesRes.status(), "body:", rawBody);
+    const classes = JSON.parse(rawBody);
+    const classList = Array.isArray(classes) ? classes : classes.classes || [];
+    const classA = classList.find((c: any) => c.enrollmentKey === "KEY-RPLA");
     expect(classA).toBeTruthy();
 
     // Pastikan Mahasiswa A mengumpulkan jawaban di Tugas 1
@@ -107,7 +109,9 @@ test.describe("E2E Pemeriksaan Akses & Keamanan Sistem", () => {
     await expect(dosenAPage).toHaveURL(/\/dashboard/);
     const classARes = await dosenAPage.request.get("/api/classes");
     const classes = await classARes.json();
-    const classA = classes.find((c: any) => c.enrollmentKey === "KEY-RPLA");
+    const classList = Array.isArray(classes) ? classes : classes.classes || [];
+    const classA = classList.find((c: any) => c.enrollmentKey === "KEY-RPLA");
+    expect(classA).toBeTruthy();
 
     // Dosen B mencoba PATCH /api/classes/[classAId]
     const patchRes = await dosenBPage.request.patch(`/api/classes/${classA.id}`, {
@@ -133,7 +137,10 @@ test.describe("E2E Pemeriksaan Akses & Keamanan Sistem", () => {
     // Ambil kelas A via API
     const classesRes = await mhsPage.request.get("/api/classes");
     const classes = await classesRes.json();
-    const classA = classes.find((c: any) => c.name.includes("Rekayasa Perangkat Lunak"));
+    const classList = Array.isArray(classes) ? classes : classes.classes || [];
+    const classA = classList.find(
+      (c: any) => c.name && c.name.includes("Rekayasa Perangkat Lunak"),
+    );
     expect(classA).toBeTruthy();
 
     // Pastikan enrollmentKey disembunyikan dari mahasiswa
@@ -182,15 +189,24 @@ test.describe("E2E Pemeriksaan Akses & Keamanan Sistem", () => {
     await mhsContext.close();
   });
 
-  test("6. Backend Hono menolak token internal tidak sah (Kontrol positif + 5 kasus negatif)", async ({
+  test("6. Backend FastAPI menolak token internal tidak sah (Kontrol positif + 6 kasus negatif)", async ({
     request,
   }) => {
     const backendUrl = process.env.BACKEND_URL || "http://localhost:3001";
     const secret = process.env.INTERNAL_API_SECRET || "default_unsafe_secret_for_dev_only";
 
-    // KONTROL POSITIF: Token valid harus diterima backend
+    // Dapatkan user Dosen A yang sah dari database melalui endpoint login
+    const loginRes = await request.post("/api/auth/login", {
+      data: { email: "dosen_a@test.local", password: FIXTURE_PASSWORD },
+    });
+    expect(loginRes.status()).toBe(200);
+    const loginData = await loginRes.json();
+    const validUserId = loginData.user.id;
+    expect(validUserId).toBeTruthy();
+
+    // KONTROL POSITIF: Token valid untuk user terdaftar di DB harus diterima backend
     const validToken = jwt.sign(
-      { sub: "usr_valid_123", role: "DOSEN", iss: "frontend", aud: "backend" },
+      { sub: validUserId, role: "DOSEN", iss: "dexa-backend", aud: "dexa-client" },
       secret,
       { algorithm: "HS256", expiresIn: "5m" },
     );
@@ -202,7 +218,7 @@ test.describe("E2E Pemeriksaan Akses & Keamanan Sistem", () => {
 
     // KASUS NEGATIF 1: Signature Palsu (Tampered Signature)
     const tamperedToken = jwt.sign(
-      { sub: "usr_attacker", role: "DOSEN", iss: "frontend", aud: "backend" },
+      { sub: validUserId, role: "DOSEN", iss: "dexa-backend", aud: "dexa-client" },
       "wrong_attacker_secret_key_12345",
       { algorithm: "HS256" },
     );
@@ -213,7 +229,7 @@ test.describe("E2E Pemeriksaan Akses & Keamanan Sistem", () => {
 
     // KASUS NEGATIF 2: Expired Token
     const expiredToken = jwt.sign(
-      { sub: "usr_valid_123", role: "DOSEN", iss: "frontend", aud: "backend" },
+      { sub: validUserId, role: "DOSEN", iss: "dexa-backend", aud: "dexa-client" },
       secret,
       { algorithm: "HS256", expiresIn: "-10s" },
     );
@@ -224,7 +240,7 @@ test.describe("E2E Pemeriksaan Akses & Keamanan Sistem", () => {
 
     // KASUS NEGATIF 3: Issuer Salah (Wrong Issuer)
     const wrongIssToken = jwt.sign(
-      { sub: "usr_valid_123", role: "DOSEN", iss: "malicious-issuer", aud: "backend" },
+      { sub: validUserId, role: "DOSEN", iss: "malicious-issuer", aud: "dexa-client" },
       secret,
       { algorithm: "HS256", expiresIn: "5m" },
     );
@@ -235,7 +251,7 @@ test.describe("E2E Pemeriksaan Akses & Keamanan Sistem", () => {
 
     // KASUS NEGATIF 4: Audience Salah (Wrong Audience)
     const wrongAudToken = jwt.sign(
-      { sub: "usr_valid_123", role: "DOSEN", iss: "frontend", aud: "external-service" },
+      { sub: validUserId, role: "DOSEN", iss: "dexa-backend", aud: "external-service" },
       secret,
       { algorithm: "HS256", expiresIn: "5m" },
     );
@@ -245,7 +261,7 @@ test.describe("E2E Pemeriksaan Akses & Keamanan Sistem", () => {
     expect(res4.status()).toBe(401);
 
     // KASUS NEGATIF 5: Tanpa Claims Wajib (Missing sub or role)
-    const missingClaimsToken = jwt.sign({ iss: "frontend", aud: "backend" }, secret, {
+    const missingClaimsToken = jwt.sign({ iss: "dexa-backend", aud: "dexa-client" }, secret, {
       algorithm: "HS256",
       expiresIn: "5m",
     });
@@ -253,5 +269,16 @@ test.describe("E2E Pemeriksaan Akses & Keamanan Sistem", () => {
       headers: { Authorization: `Bearer ${missingClaimsToken}` },
     });
     expect(res5.status()).toBe(401);
+
+    // KASUS NEGATIF 6: User fiktif tidak terdaftar di database ditolak
+    const ghostUserToken = jwt.sign(
+      { sub: "usr_ghost_nonexistent_999", role: "DOSEN", iss: "dexa-backend", aud: "dexa-client" },
+      secret,
+      { algorithm: "HS256", expiresIn: "5m" },
+    );
+    const res6 = await request.get(`${backendUrl}/classes`, {
+      headers: { Authorization: `Bearer ${ghostUserToken}` },
+    });
+    expect(res6.status()).toBe(401);
   });
 });

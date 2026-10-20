@@ -12,16 +12,19 @@ export async function GET() {
   }
 
   const token = signInternalToken({ id: session.user.id, role: session.user.role });
-  
+
   const res = await forwardToBackend(`${BACKEND_URL}/classes`, {
     headers: {
-      Authorization: `Bearer ${token}`
-    }
+      Authorization: `Bearer ${token}`,
+    },
   });
 
   const data = await res.json();
   if (!res.ok) {
-    return NextResponse.json({ error: data.error || "Failed to fetch classes" }, { status: res.status });
+    return NextResponse.json(
+      { error: data.error || "Failed to fetch classes" },
+      { status: res.status },
+    );
   }
 
   return NextResponse.json(data);
@@ -36,19 +39,22 @@ export async function POST(request: Request) {
 
   const token = signInternalToken({ id: session.user.id, role: session.user.role });
   const body = await request.text();
-  
+
   const res = await forwardToBackend(`${BACKEND_URL}/classes`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
+      Authorization: `Bearer ${token}`,
     },
-    body
+    body,
   });
 
   const data = await res.json();
   if (!res.ok) {
-    return NextResponse.json({ error: data.error || "Failed to create class" }, { status: res.status });
+    return NextResponse.json(
+      { error: data.error || "Failed to create class" },
+      { status: res.status },
+    );
   }
 
   return NextResponse.json(data, { status: 201 });

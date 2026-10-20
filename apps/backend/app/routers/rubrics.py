@@ -1,10 +1,9 @@
-from typing import List, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models.models import Class, Enrollment, User, Rubric, RubricCriterion
-from app.models.enums import Role, ClassRole
+from app.models.enums import ClassRole, Role
+from app.models.models import Class, Enrollment, Rubric, RubricCriterion, User
 from app.schemas.rubric_schemas import CreateRubricSchema, UpdateRubricSchema
 from app.security.dependencies import get_current_user
 from app.services.embedding_service import generate_embedding

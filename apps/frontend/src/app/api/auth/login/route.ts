@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3001";
+const BACKEND_URL = process.env.BACKEND_URL || "http://127.0.0.1:3001";
 
 export async function POST(request: Request) {
   try {
@@ -23,10 +23,22 @@ export async function POST(request: Request) {
     const data = await backendRes.json().catch(() => ({}));
 
     if (!backendRes.ok) {
+      let errorMsg = "Email atau kata sandi tidak cocok. Silakan coba lagi.";
+      if (typeof data.detail === "string") {
+        errorMsg = data.detail;
+      } else if (Array.isArray(data.detail) && data.detail.length > 0) {
+        errorMsg =
+          typeof data.detail[0]?.msg === "string"
+            ? data.detail[0].msg
+            : "Format input tidak valid.";
+      } else if (typeof data.error === "string") {
+        errorMsg = data.error;
+      }
+
       return NextResponse.json(
         {
           success: false,
-          error: data.detail || "Email atau kata sandi tidak cocok. Silakan coba lagi.",
+          error: errorMsg,
         },
         { status: backendRes.status },
       );
@@ -39,10 +51,15 @@ export async function POST(request: Request) {
       user,
     });
 
+    const isSecure =
+      process.env.COOKIE_SECURE !== "false" &&
+      process.env.NODE_ENV === "production" &&
+      (request.url.startsWith("https:") || request.headers.get("x-forwarded-proto") === "https");
+
     // Set HttpOnly session cookie on the frontend response
     response.cookies.set("dexa_session", access_token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: isSecure,
       sameSite: "lax",
       path: "/",
       maxAge: 12 * 60 * 60, // 12 hours

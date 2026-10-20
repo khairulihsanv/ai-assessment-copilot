@@ -16,16 +16,19 @@ export async function POST(
   const contentType = request.headers.get("content-type") || "";
   const body = await request.arrayBuffer();
 
-  const res = await forwardToBackend(`${BACKEND_URL}/classes/${classId}/assignments/${assignmentId}/reference-documents`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": contentType
+  const res = await forwardToBackend(
+    `${BACKEND_URL}/classes/${classId}/assignments/${assignmentId}/reference-documents`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": contentType,
+      },
+      body,
+      // @ts-expect-error
+      duplex: "half",
     },
-    body,
-    // @ts-ignore
-    duplex: "half"
-  });
+  );
 
   const data = await res.json();
   if (!res.ok) return NextResponse.json(data, { status: res.status });

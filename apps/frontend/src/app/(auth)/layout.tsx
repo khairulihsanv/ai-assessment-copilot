@@ -1,12 +1,7 @@
-import { ArrowLeft, Check, FileText, ListChecks, Sparkles, ShieldCheck, Cpu } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import Link from "next/link";
-import { cn } from "@/shared/utils";
 
-export default function AuthLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-[#F3F4F6] flex items-center justify-center p-4 sm:p-6 lg:p-10 font-sans relative overflow-hidden">
       <div className="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch relative z-10">
@@ -51,10 +46,13 @@ export default function AuthLayout({
                 Learn today, succeed tomorrow!
               </p>
               <h1 className="font-display text-3xl xl:text-4xl font-extrabold text-[#111827] leading-tight tracking-tight">
-                Kecerdasan Buatan untuk Evaluasi Akademik <span className="text-[#1E4D3B]">Presisi Tinggi.</span>
+                Kecerdasan Buatan untuk Evaluasi Akademik{" "}
+                <span className="text-[#1E4D3B]">Presisi Tinggi.</span>
               </h1>
               <p className="text-sm text-[#4B5563] leading-relaxed max-w-xl">
-                Memadukan kecepatan inferensi AI dengan pengawasan penuh tenaga pendidik. Hasil penilaian transparan, bebas halusinasi, dan sesuai rubrik kurikulum vokasional terstandar.
+                Memadukan kecepatan inferensi AI dengan pengawasan penuh tenaga pendidik. Hasil
+                penilaian transparan, bebas halusinasi, dan sesuai rubrik kurikulum vokasional
+                terstandar.
               </p>
             </div>
 
@@ -86,13 +84,16 @@ export default function AuthLayout({
                   </span>
                 </div>
                 <p className="text-xs text-[#4B5563] italic leading-relaxed border-l-2 border-[#1E4D3B] pl-3">
-                  "Argumen relasional mahasiswa valid. Anomali update telah diselesaikan dengan partisi tabel transaksional."
+                  "Argumen relasional mahasiswa valid. Anomali update telah diselesaikan dengan
+                  partisi tabel transaksional."
                 </p>
 
                 <div className="flex items-center justify-between pt-2 text-xs">
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                    <span className="text-emerald-700 font-bold text-[11px]">Disetujui Dosen Penilai</span>
+                    <span className="text-emerald-700 font-bold text-[11px]">
+                      Disetujui Dosen Penilai
+                    </span>
                     <span className="text-[#9CA3AF]">•</span>
                     <span className="font-mono text-[#6B7280] text-[11px]">Conf: 99.4%</span>
                   </div>
@@ -122,9 +123,7 @@ export default function AuthLayout({
         {/* ─── RIGHT PANEL: Authentication Cockpit Card ─── */}
         <div className="lg:col-span-5 flex flex-col justify-center">
           <div className="bg-white rounded-3xl p-6 sm:p-10 border border-[#E5E7EB] shadow-sm relative overflow-hidden">
-            <div className="relative z-10">
-              {children}
-            </div>
+            <div className="relative z-10">{children}</div>
           </div>
         </div>
       </div>

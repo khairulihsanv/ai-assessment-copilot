@@ -14,7 +14,8 @@
     "typecheck": "npm run typecheck --workspaces",
     "test": "vitest run",
     "test:integration": "vitest run --config vitest.integration.config.ts",
-    "test:e2e": "tsx scripts/run-e2e-harness.ts"
+    "test:e2e": "tsx scripts/run-e2e-harness.ts",
+    "verify:real-ai": "tsx scripts/verify-real-ai.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.14",

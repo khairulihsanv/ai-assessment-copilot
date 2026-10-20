@@ -1,5 +1,5 @@
-import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
+import { cookies } from "next/headers";
 
 export type Role = "DOSEN" | "MAHASISWA" | "ADMIN";
 
@@ -26,15 +26,30 @@ export async function getSessionToken(): Promise<string | undefined> {
 
 /**
  * Reads and validates the user session from the HttpOnly dexa_session cookie.
- * No database query is made in the frontend; session claims were cryptographically
- * signed by the FastAPI backend upon authenticated login.
+ * Validates cryptographic signature, issuer, audience, and expiration against
+ * the configured secret. No hardcoded or insecure fallback keys.
  */
 export async function auth(): Promise<Session | null> {
   const token = await getSessionToken();
   if (!token) return null;
 
+  const secret =
+    process.env.INTERNAL_API_SECRET ||
+    process.env.AUTH_SECRET ||
+    process.env.SECRET_KEY ||
+    process.env.NEXTAUTH_SECRET;
+
+  if (!secret) {
+    console.error("[Auth] No authentication secret configured in environment.");
+    return null;
+  }
+
   try {
-    const decoded = jwt.decode(token) as {
+    const decoded = jwt.verify(token, secret, {
+      algorithms: ["HS256"],
+      issuer: "dexa-backend",
+      audience: "dexa-client",
+    }) as {
       sub?: string;
       id?: string;
       email?: string;
@@ -42,14 +57,11 @@ export async function auth(): Promise<Session | null> {
       role?: Role;
       avatarUrl?: string;
       exp?: number;
-    } | null;
-
-    if (!decoded) return null;
+    };
 
     const userId = decoded.sub || decoded.id;
     if (!userId) return null;
 
-    // Check expiration
     if (decoded.exp && decoded.exp * 1000 < Date.now()) {
       return null;
     }

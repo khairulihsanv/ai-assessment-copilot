@@ -1,11 +1,12 @@
 import json
+import os
 import re
-from typing import List, Dict, Any, Optional
+from typing import Any
+
 import httpx
 
 from app.config import settings
 from app.services.embedding_service import compute_similarity, generate_embedding
-
 
 SYSTEM_PROMPT = """You are an AI Assessment Copilot assisting lecturers in evaluating student submissions.
 You operate with a VECTOR EMBEDDING & CLASSIFICATION system that provides semantic similarity scores.
@@ -54,10 +55,10 @@ def build_user_prompt(
     assignment_title: str,
     assignment_instructions: str,
     max_score: float,
-    criteria: List[Dict[str, Any]],
-    similarity_map: Dict[str, Any],
+    criteria: list[dict[str, Any]],
+    similarity_map: dict[str, Any],
     student_answer: str,
-    evidence_blocks: Optional[List[Dict[str, Any]]] = None,
+    evidence_blocks: list[dict[str, Any]] | None = None,
 ) -> str:
     crit_text_blocks = []
     for idx, c in enumerate(criteria):
@@ -106,7 +107,7 @@ Gunakan SIMILARITY SCORE sebagai baseline klasifikasi awal, lalu berikan penilai
 Respons HARUS dalam format JSON yang valid."""
 
 
-def clean_json_response(raw_text: str) -> Dict[str, Any]:
+def clean_json_response(raw_text: str) -> dict[str, Any]:
     """Parse JSON from LLM response, stripping markdown codeblocks if present."""
     text = raw_text.strip()
     if "```json" in text:
@@ -125,10 +126,10 @@ async def evaluate_submission(
     assignment_title: str,
     assignment_instructions: str,
     assignment_max_score: float,
-    criteria: List[Dict[str, Any]],
+    criteria: list[dict[str, Any]],
     student_answer: str,
-    evidence_blocks: Optional[List[Dict[str, Any]]] = None,
-) -> Dict[str, Any]:
+    evidence_blocks: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     """
     Run AI evaluation pipeline:
     1. Generate embedding for student answer.
@@ -169,10 +170,30 @@ async def evaluate_submission(
 
     raw_output: Any = None
     token_usage = {"promptTokens": 0, "completionTokens": 0, "totalTokens": 0}
-    llm_response = None
+    llm_response: dict[str, Any] | None = None
+    provider_source = "fallback"
+    model_name = "similarity-fallback"
 
-    # Try Groq API if key is present
-    if settings.GROQ_API_KEY:
+    # Allow mock in test environment
+    if os.getenv("TEST_MOCK_LLM") == "true":
+        provider_source = "mock"
+        model_name = "test-mock-evaluator"
+        per_crit = []
+        for c in criteria:
+            c_max = float(c.get("maxScore", 10.0))
+            per_crit.append({
+                "criterionId": c["id"],
+                "score": round(c_max * 0.85, 1),
+                "reasoning": f"Evaluasi mock kriteria {c['label']} dengan skor 85%.",
+            })
+        llm_response = {
+            "perCriterion": per_crit,
+            "suggestedFeedback": "Hasil evaluasi model mock untuk pengujian otomatis.",
+        }
+        raw_output = {"mode": "test_mock", "model": model_name}
+
+    # Try Groq API if key is present and not a template placeholder
+    if not llm_response and settings.GROQ_API_KEY and not settings.GROQ_API_KEY.startswith("your-"):
         try:
             async with httpx.AsyncClient(timeout=45.0) as client:
                 res = await client.post(
@@ -196,6 +217,8 @@ async def evaluate_submission(
                     raw_output = data
                     content = data["choices"][0]["message"]["content"]
                     llm_response = clean_json_response(content)
+                    provider_source = "groq"
+                    model_name = settings.GROQ_MODEL
                     if "usage" in data:
                         token_usage = {
                             "promptTokens": data["usage"].get("prompt_tokens", 0),
@@ -223,11 +246,15 @@ async def evaluate_submission(
                     data = res.json()
                     raw_output = data
                     llm_response = clean_json_response(data.get("response", "{}"))
+                    provider_source = "ollama"
+                    model_name = settings.OLLAMA_MODEL
         except Exception as e:
             print(f"[Ollama Error]: {e}")
 
     # Honest fallback from embedding similarities if no LLM was reachable
     if not llm_response:
+        provider_source = "fallback"
+        model_name = "nomic-embed-baseline"
         per_crit = []
         for c in criteria:
             sim = similarity_map.get(c["id"], {})
@@ -253,13 +280,15 @@ async def evaluate_submission(
         raw_output = {"mode": "deterministic_similarity_baseline", "similarityMap": similarity_map}
 
     # 3. Server deterministic validation and score bounding
-    score_by_id = {}
-    reasoning_by_id = {}
-    for item in llm_response.get("perCriterion", []):
-        cid = item.get("criterionId")
-        if cid:
-            score_by_id[cid] = float(item.get("score", 0.0))
-            reasoning_by_id[cid] = item.get("reasoning", "")
+    score_by_id: dict[str, float] = {}
+    reasoning_by_id: dict[str, str] = {}
+    per_crit_list = llm_response.get("perCriterion", []) if isinstance(llm_response, dict) else []
+    for item in per_crit_list:
+        if isinstance(item, dict):
+            cid = str(item.get("criterionId", ""))
+            if cid:
+                score_by_id[cid] = float(item.get("score", 0.0))
+                reasoning_by_id[cid] = str(item.get("reasoning", ""))
 
     validated_per_criterion = []
     weighted_total = 0.0
@@ -288,12 +317,22 @@ async def evaluate_submission(
         else:
             weighted_total += 0.0
 
-    # Determinist total calculation on server
+    # Deterministic total calculation on server
     calculated_total = round(weighted_total, 1)
+
+    eval_status = "COMPLETED" if provider_source in ("groq", "ollama", "mock") else "NEEDS_REVIEW"
+    evaluator_config = {
+        "provider": provider_source,
+        "model": model_name,
+        "evidenceBlockCount": len(evidence_blocks) if evidence_blocks else 0,
+        "isFallback": provider_source == "fallback",
+    }
 
     return {
         "rawOutput": raw_output or {},
         "tokenUsage": token_usage,
+        "status": eval_status,
+        "evaluatorConfig": evaluator_config,
         "response": {
             "perCriterion": validated_per_criterion,
             "suggestedTotalScore": calculated_total,

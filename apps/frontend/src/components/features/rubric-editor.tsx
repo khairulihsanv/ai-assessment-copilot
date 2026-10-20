@@ -51,18 +51,27 @@ const PRESETS = [
         description: "Kedalaman penguasaan teori dan keakuratan penjelasan konsep.",
         maxScore: 100,
         weight: 40,
+        answerKey:
+          "Penjelasan konsep teoritis yang komprehensif, tepat sasaran, dan didukung rujukan akademis yang relevan.",
+        material: "Buku acuan bab teori fundamental dan konsep dasar analisis.",
       },
       {
         label: "Analisis Kritis & Argumen",
         description: "Kemampuan menyusun penalaran, elaborasi, dan analisis orisinal.",
         maxScore: 100,
         weight: 35,
+        answerKey:
+          "Penalaran kritis yang logis, evaluasi komparatif yang tajam, dan penyusunan argumen terstruktur.",
+        material: "Pedoman analisis kasus dan studi kritis materi perkuliahan.",
       },
       {
         label: "Struktur & Sistematika Bahasa",
         description: "Kejelasan alur pembahasan, tata bahasa akademik, dan referensi.",
         maxScore: 100,
         weight: 25,
+        answerKey:
+          "Tata bahasa akademik baku, sistematika bab yang koheren, dan sitasi daftar pustaka yang valid.",
+        material: "Pedoman penulisan ilmiah dan format laporan akademik.",
       },
     ],
   },
@@ -74,18 +83,27 @@ const PRESETS = [
         description: "Program berjalan sesuai spesifikasi dan menangani edge cases.",
         maxScore: 100,
         weight: 50,
+        answerKey:
+          "Implementasi algoritma berjalan benar, memenuhi semua test case spesifikasi, dan menangani boundary conditions.",
+        material: "Spesifikasi kebutuhan perangkat lunak dan arsitektur modul sistem.",
       },
       {
         label: "Kualitas Kode & Best Practices",
         description: "Kerapian struktur, penamaan variabel, modularitas, dan efisiensi.",
         maxScore: 100,
         weight: 30,
+        answerKey:
+          "Kode bersih (clean code), modular, mematuhi prinsip SOLID, dan efisiensi kompleksitas waktu/ruang.",
+        material: "Panduan coding conventions dan standar arsitektur clean code.",
       },
       {
         label: "Dokumentasi & Penjelasan Solusi",
         description: "Komentar kode yang informatif dan ringkasan implementasi.",
         maxScore: 100,
         weight: 20,
+        answerKey:
+          "Dokumentasi README jelas, komentar fungsi komprehensif, dan penjelasan alur arsitektur lengkap.",
+        material: "Format dokumentasi teknis dan standar pelaporan proyek kode.",
       },
     ],
   },
@@ -97,18 +115,27 @@ const PRESETS = [
         description: "Kelengkapan tahapan praktikum dan instrumen yang digunakan.",
         maxScore: 100,
         weight: 30,
+        answerKey:
+          "Langkah kerja eksperimental runtut, parameter pengukuran terdokumentasi, dan metodologi tepat.",
+        material: "Modul petunjuk praktikum laboratorium.",
       },
       {
         label: "Hasil Analisis & Pembahasan",
         description: "Interpretasi data pengamatan dan kaitan dengan teori dasar.",
         maxScore: 100,
         weight: 50,
+        answerKey:
+          "Interpretasi data kuantitatif akurat, visualisasi grafik jelas, dan korelasi mendalam dengan hipotesis.",
+        material: "Diktat analisis data pengamatan praktikum.",
       },
       {
         label: "Kesimpulan & Evaluasi",
         description: "Kesimpulan tepat sasaran menjawab tujuan praktikum.",
         maxScore: 100,
         weight: 20,
+        answerKey:
+          "Kesimpulan ringkas padat menjawab rumusan masalah eksperimen beserta saran evaluasi.",
+        material: "Panduan penarikan kesimpulan laporan ilmiah.",
       },
     ],
   },
@@ -203,7 +230,12 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
     if (confirm(`Terapkan preset template "${p.name}"? Kriteria saat ini akan digantikan.`)) {
       setTitle(p.name);
       setCriteria([
-        ...p.criteria.map((c) => ({ ...c, id: crypto.randomUUID(), answerKey: "", material: "" })),
+        ...p.criteria.map((c) => ({
+          ...c,
+          id: crypto.randomUUID(),
+          answerKey: c.answerKey || "",
+          material: c.material || "",
+        })),
       ]);
     }
   };
@@ -314,17 +346,17 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-6 bg-white border border-[#E5E7EB] p-7 rounded-3xl shadow-sm animate-in fade-in-50 duration-300"
+      className="space-y-6 bg-card border border-border p-7 rounded-xl shadow-sm animate-in fade-in-50 duration-300"
     >
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#F3F4F6] pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
         <div>
-          <h3 className="text-xl font-extrabold font-display text-[#111827] flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-[#1E4D3B] text-white flex items-center justify-center shrink-0">
+          <h3 className="text-xl font-semibold font-display text-foreground flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shrink-0">
               <Layers size={18} />
             </div>
             <span>{initialData?.id ? "Edit Rubrik Penilaian" : "Buat Rubrik Penilaian Baru"}</span>
           </h3>
-          <p className="text-xs text-[#6B7280] mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             Tentukan kriteria, masukkan <strong>Kunci Jawaban</strong> dan{" "}
             <strong>Materi Referensi</strong> agar AI Copilot menilai berdasarkan data faktual,
             bukan asumsi.
@@ -333,15 +365,15 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
 
         {/* Quick Presets */}
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-xs font-bold text-[#6B7280] flex items-center gap-1 mr-1">
-            <Wand2 className="w-3.5 h-3.5 text-[#FFA07A]" /> Template:
+          <span className="text-xs font-bold text-muted-foreground flex items-center gap-1 mr-1">
+            <Wand2 className="w-3.5 h-3.5 text-primary" /> Template:
           </span>
           {PRESETS.map((p, idx) => (
             <button
               key={p.name}
               type="button"
               onClick={() => applyPreset(idx)}
-              className="text-xs font-bold px-3 py-1.5 rounded-full bg-[#F3F4F6] hover:bg-[#E2EFE9] text-[#374151] hover:text-[#1E4D3B] border border-[#E5E7EB] transition-all cursor-pointer"
+              className="text-xs font-bold px-3 py-1.5 rounded-full bg-muted hover:bg-secondary text-foreground hover:text-secondary-foreground border border-border transition-all cursor-pointer"
             >
               {p.name.split(" ")[1] || p.name}
             </button>
@@ -350,15 +382,15 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
       </div>
 
       {/* AI Vector Info Banner */}
-      <div className="p-4 rounded-2xl bg-gradient-to-r from-[#E2EFE9] to-[#F0F7F4] border border-[#C5DDD1] flex items-start gap-3">
-        <div className="w-9 h-9 rounded-xl bg-[#1E4D3B] text-white flex items-center justify-center shrink-0 mt-0.5">
+      <div className="p-4 rounded-lg bg-secondary/50 border border-border flex items-start gap-3">
+        <div className="w-9 h-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shrink-0 mt-0.5">
           <Brain size={16} />
         </div>
         <div>
-          <p className="text-xs font-extrabold text-[#1E4D3B]">
+          <p className="text-xs font-semibold text-primary">
             🧬 Sistem Penilaian Berbasis Vector Embedding
           </p>
-          <p className="text-[11px] text-[#4B5563] mt-0.5 leading-relaxed">
+          <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
             Kunci Jawaban dan Materi yang Anda input akan di-<em>embed</em> ke database vektor. Saat
             AI menilai jawaban mahasiswa, sistem menghitung{" "}
             <strong>kesamaan semantik (cosine similarity)</strong> untuk mengklasifikasikan kualitas
@@ -368,7 +400,7 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
       </div>
 
       {error && (
-        <div className="p-3.5 text-xs rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 font-medium flex items-center gap-2">
+        <div className="p-3.5 text-xs rounded-lg bg-rose-50 border border-rose-200 text-rose-700 font-medium flex items-center gap-2">
           <AlertCircle className="w-4 h-4 flex-shrink-0" />
           <span>{error}</span>
         </div>
@@ -376,7 +408,7 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
 
       {/* Rubric Title */}
       <div className="space-y-1.5">
-        <Label htmlFor="rubricTitle" className="text-xs font-extrabold text-[#374151]">
+        <Label htmlFor="rubricTitle" className="text-xs font-semibold text-foreground">
           Judul Rubrik <span className="text-rose-600">*</span>
         </Label>
         <Input
@@ -386,20 +418,20 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
           onChange={(e) => setTitle(e.target.value)}
           required
           disabled={loading}
-          className="rounded-2xl bg-[#F9FAFB] border-[#E5E7EB] focus:border-[#1E4D3B] focus:bg-white text-xs py-2.5 h-10 font-medium"
+          className="rounded-lg bg-muted/50 border-border focus:border-primary focus:bg-card text-xs py-2.5 h-10 font-medium"
         />
       </div>
 
       {/* Criteria List */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <Label className="text-xs font-extrabold text-[#374151]">Daftar Kriteria Penilaian</Label>
+          <Label className="text-xs font-semibold text-foreground">Daftar Kriteria Penilaian</Label>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-[#6B7280]">Total Bobot:</span>
+            <span className="text-xs font-medium text-muted-foreground">Total Bobot:</span>
             <span
               className={`font-mono text-xs px-3 py-0.5 rounded-full font-bold ${
                 isWeightValid
-                  ? "bg-[#E2EFE9] text-[#1E4D3B] border border-[#C5DDD1]"
+                  ? "bg-secondary text-secondary-foreground border border-border"
                   : "bg-rose-100 text-rose-700 border border-rose-200"
               }`}
             >
@@ -410,10 +442,10 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
         </div>
 
         {/* Progress Bar of Weight Allocation */}
-        <div className="w-full h-2.5 bg-[#F3F4F6] rounded-full overflow-hidden flex">
+        <div className="w-full h-2.5 bg-muted rounded-full overflow-hidden flex">
           <div
             className={`h-full transition-all duration-300 ${
-              isWeightValid ? "bg-[#1E4D3B]" : totalWeight > 100 ? "bg-rose-500" : "bg-amber-500"
+              isWeightValid ? "bg-primary" : totalWeight > 100 ? "bg-rose-500" : "bg-amber-500"
             }`}
             style={{ width: `${Math.min(totalWeight, 100)}%` }}
           />
@@ -428,14 +460,14 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
             return (
               <div
                 key={c.id}
-                className="rounded-2xl border border-[#E5E7EB] bg-[#F9FAFB] hover:border-[#C5DDD1] transition-all overflow-hidden"
+                className="rounded-lg border border-border bg-muted/50 hover:border-primary/40 transition-all overflow-hidden"
               >
                 {/* Criterion Header Bar */}
                 <div className="p-5 space-y-3.5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 grid grid-cols-1 sm:grid-cols-12 gap-3">
                       <div className="sm:col-span-6 space-y-1">
-                        <Label className="text-xs font-bold text-[#4B5563]">
+                        <Label className="text-xs font-bold text-muted-foreground">
                           Label Kriteria #{index + 1} <span className="text-rose-600">*</span>
                         </Label>
                         <Input
@@ -444,12 +476,12 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
                           onChange={(e) => updateCriterion(index, "label", e.target.value)}
                           required
                           disabled={loading}
-                          className="rounded-xl bg-white border-[#E5E7EB] focus:border-[#1E4D3B] text-xs h-9"
+                          className="rounded-xl bg-card border-border focus:border-primary text-xs h-9"
                         />
                       </div>
 
                       <div className="sm:col-span-3 space-y-1">
-                        <Label className="text-xs font-bold text-[#4B5563]">
+                        <Label className="text-xs font-bold text-muted-foreground">
                           Bobot (%) <span className="text-rose-600">*</span>
                         </Label>
                         <div className="relative">
@@ -461,16 +493,16 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
                             onChange={(e) => updateCriterion(index, "weight", e.target.value)}
                             required
                             disabled={loading}
-                            className="rounded-xl bg-white border-[#E5E7EB] focus:border-[#1E4D3B] pr-7 font-mono font-bold text-xs h-9"
+                            className="rounded-xl bg-card border-border focus:border-primary pr-7 font-mono font-bold text-xs h-9"
                           />
-                          <span className="absolute right-2.5 top-2 text-xs text-[#9CA3AF] font-mono">
+                          <span className="absolute right-2.5 top-2 text-xs text-muted-foreground font-mono">
                             %
                           </span>
                         </div>
                       </div>
 
                       <div className="sm:col-span-3 space-y-1">
-                        <Label className="text-xs font-bold text-[#4B5563]">
+                        <Label className="text-xs font-bold text-muted-foreground">
                           Skor Maksimal <span className="text-rose-600">*</span>
                         </Label>
                         <Input
@@ -481,7 +513,7 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
                           onChange={(e) => updateCriterion(index, "maxScore", e.target.value)}
                           required
                           disabled={loading}
-                          className="rounded-xl bg-white border-[#E5E7EB] focus:border-[#1E4D3B] font-mono font-bold text-xs h-9"
+                          className="rounded-xl bg-card border-border focus:border-primary font-mono font-bold text-xs h-9"
                         />
                       </div>
                     </div>
@@ -490,7 +522,7 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
                       type="button"
                       onClick={() => removeCriterion(index)}
                       disabled={criteria.length <= 1 || loading}
-                      className="text-[#9CA3AF] hover:text-rose-600 hover:bg-rose-50 h-9 w-9 rounded-xl flex items-center justify-center transition mt-5 shrink-0 cursor-pointer disabled:opacity-40"
+                      className="text-muted-foreground hover:text-rose-600 hover:bg-rose-50 h-9 w-9 rounded-xl flex items-center justify-center transition mt-5 shrink-0 cursor-pointer disabled:opacity-40"
                       title="Hapus Kriteria"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -498,7 +530,7 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
                   </div>
 
                   <div className="space-y-1">
-                    <Label className="text-xs font-medium text-[#6B7280]">
+                    <Label className="text-xs font-medium text-muted-foreground">
                       Deskripsi / Panduan Penilaian (Opsional)
                     </Label>
                     <Input
@@ -506,7 +538,7 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
                       value={c.description}
                       onChange={(e) => updateCriterion(index, "description", e.target.value)}
                       disabled={loading}
-                      className="rounded-xl bg-white border-[#E5E7EB] focus:border-[#1E4D3B] text-xs h-9"
+                      className="rounded-xl bg-card border-border focus:border-primary text-xs h-9"
                     />
                   </div>
 
@@ -514,11 +546,11 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
                   <button
                     type="button"
                     onClick={() => togglePanel(index)}
-                    className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl bg-white border border-[#E5E7EB] hover:bg-[#F0F7F4] hover:border-[#C5DDD1] transition-all cursor-pointer group"
+                    className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl bg-card border border-border hover:bg-muted hover:border-primary/40 transition-all cursor-pointer group"
                   >
                     <div className="flex items-center gap-2.5">
-                      <Brain size={14} className="text-[#1E4D3B]" />
-                      <span className="text-xs font-bold text-[#374151]">
+                      <Brain size={14} className="text-primary" />
+                      <span className="text-xs font-bold text-foreground">
                         Kunci Jawaban & Materi Referensi
                       </span>
                       {/* Status badges */}
@@ -541,12 +573,12 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
                     {isExpanded ? (
                       <ChevronUp
                         size={14}
-                        className="text-[#6B7280] group-hover:text-[#1E4D3B] transition"
+                        className="text-muted-foreground group-hover:text-primary transition"
                       />
                     ) : (
                       <ChevronDown
                         size={14}
-                        className="text-[#6B7280] group-hover:text-[#1E4D3B] transition"
+                        className="text-muted-foreground group-hover:text-primary transition"
                       />
                     )}
                   </button>
@@ -554,11 +586,11 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
 
                 {/* Expandable Answer Key & Material Panels */}
                 {isExpanded && (
-                  <div className="px-5 pb-5 space-y-4 border-t border-[#E5E7EB] pt-4 bg-gradient-to-b from-[#F0F7F4]/50 to-[#F9FAFB]">
+                  <div className="px-5 pb-5 space-y-4 border-t border-border pt-4 bg-muted/40">
                     {/* Answer Key Input */}
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <Label className="text-xs font-bold text-[#1E4D3B] flex items-center gap-1.5">
+                        <Label className="text-xs font-bold text-primary flex items-center gap-1.5">
                           <KeyRound size={13} className="text-emerald-600" />
                           Kunci Jawaban
                           <span className="font-mono text-[9px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded uppercase tracking-wider font-bold">
@@ -580,15 +612,15 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
                           />
                           <button
                             type="button"
-                            className="relative flex items-center gap-1 px-2.5 py-1 bg-white border border-[#E5E7EB] rounded-lg hover:bg-[#F3F4F6] text-[#374151] font-medium transition-colors pointer-events-none"
+                            className="relative flex items-center gap-1 px-2.5 py-1 bg-card border border-border rounded-lg hover:bg-muted text-foreground font-medium transition-colors pointer-events-none"
                             disabled={loading}
                           >
-                            <Upload size={12} className="text-[#6B7280]" />
+                            <Upload size={12} className="text-muted-foreground" />
                             <span className="text-[10px]">Upload (PDF/DOCX)</span>
                           </button>
                         </div>
                       </div>
-                      <p className="text-[10px] text-[#6B7280] leading-relaxed -mt-0.5">
+                      <p className="text-[10px] text-muted-foreground leading-relaxed -mt-0.5">
                         Tulis kunci jawaban lengkap untuk kriteria ini. AI akan menghitung kesamaan
                         semantik antara jawaban mahasiswa dengan kunci jawaban ini.
                       </p>
@@ -598,10 +630,10 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
                         onChange={(e) => updateCriterion(index, "answerKey", e.target.value)}
                         disabled={loading}
                         rows={5}
-                        className="w-full rounded-xl bg-white border border-[#E5E7EB] focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200 text-xs p-3 resize-y placeholder:text-[#9CA3AF] transition-all outline-none"
+                        className="w-full rounded-xl bg-card border border-border focus:border-emerald-500 focus:ring-1 focus:ring-emerald-200 text-xs p-3 resize-y placeholder:text-muted-foreground transition-all outline-none"
                       />
                       {c.answerKey && (
-                        <p className="text-[10px] text-[#9CA3AF] font-mono">
+                        <p className="text-[10px] text-muted-foreground font-mono">
                           {c.answerKey.length.toLocaleString()} karakter
                         </p>
                       )}
@@ -610,7 +642,7 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
                     {/* Material Input */}
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <Label className="text-xs font-bold text-[#1E4D3B] flex items-center gap-1.5">
+                        <Label className="text-xs font-bold text-primary flex items-center gap-1.5">
                           <BookOpen size={13} className="text-blue-600" />
                           Materi Referensi
                           <span className="font-mono text-[9px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded uppercase tracking-wider font-bold">
@@ -632,15 +664,15 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
                           />
                           <button
                             type="button"
-                            className="relative flex items-center gap-1 px-2.5 py-1 bg-white border border-[#E5E7EB] rounded-lg hover:bg-[#F3F4F6] text-[#374151] font-medium transition-colors pointer-events-none"
+                            className="relative flex items-center gap-1 px-2.5 py-1 bg-card border border-border rounded-lg hover:bg-muted text-foreground font-medium transition-colors pointer-events-none"
                             disabled={loading}
                           >
-                            <Upload size={12} className="text-[#6B7280]" />
+                            <Upload size={12} className="text-muted-foreground" />
                             <span className="text-[10px]">Upload (PDF/DOCX)</span>
                           </button>
                         </div>
                       </div>
-                      <p className="text-[10px] text-[#6B7280] leading-relaxed -mt-0.5">
+                      <p className="text-[10px] text-muted-foreground leading-relaxed -mt-0.5">
                         Paste materi ajar, catatan kuliah, atau referensi yang relevan. AI akan
                         menggunakan ini sebagai dasar pengetahuan faktual saat mengevaluasi.
                       </p>
@@ -650,10 +682,10 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
                         onChange={(e) => updateCriterion(index, "material", e.target.value)}
                         disabled={loading}
                         rows={5}
-                        className="w-full rounded-xl bg-white border border-[#E5E7EB] focus:border-blue-500 focus:ring-1 focus:ring-blue-200 text-xs p-3 resize-y placeholder:text-[#9CA3AF] transition-all outline-none"
+                        className="w-full rounded-xl bg-card border border-border focus:border-blue-500 focus:ring-1 focus:ring-blue-200 text-xs p-3 resize-y placeholder:text-muted-foreground transition-all outline-none"
                       />
                       {c.material && (
-                        <p className="text-[10px] text-[#9CA3AF] font-mono">
+                        <p className="text-[10px] text-muted-foreground font-mono">
                           {c.material.length.toLocaleString()} karakter
                         </p>
                       )}
@@ -669,7 +701,7 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
           type="button"
           onClick={addCriterion}
           disabled={loading}
-          className="w-full py-3 rounded-2xl border-2 border-dashed border-[#C5DDD1] text-[#1E4D3B] hover:bg-[#E2EFE9]/40 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
+          className="w-full py-3 rounded-lg border-2 border-dashed border-border text-secondary-foreground hover:bg-secondary/40 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Tambah Kriteria Penilaian</span>
@@ -677,9 +709,9 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
       </div>
 
       {/* Form Actions */}
-      <div className="flex items-center justify-between gap-3 pt-4 border-t border-[#F3F4F6]">
-        <p className="text-[10px] text-[#9CA3AF] flex items-center gap-1.5">
-          <Sparkles size={11} className="text-[#FFA07A]" />
+      <div className="flex items-center justify-between gap-3 pt-4 border-t border-border">
+        <p className="text-[10px] text-muted-foreground flex items-center gap-1.5">
+          <Sparkles size={11} className="text-primary" />
           Embedding vektor akan di-generate otomatis saat rubrik disimpan
         </p>
         <div className="flex items-center gap-3">
@@ -688,7 +720,7 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
               type="button"
               onClick={onCancel}
               disabled={loading}
-              className="px-5 py-2.5 rounded-full border border-[#E5E7EB] text-[#374151] hover:bg-[#F3F4F6] text-xs font-bold transition cursor-pointer"
+              className="px-5 py-2.5 rounded-full border border-border text-foreground hover:bg-muted text-xs font-bold transition cursor-pointer"
             >
               Batal
             </button>
@@ -696,7 +728,7 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
           <button
             type="submit"
             disabled={loading || !isWeightValid}
-            className="flex items-center gap-2 bg-[#1E4D3B] hover:bg-[#15392C] text-white font-extrabold text-xs px-6 py-2.5 rounded-full shadow-xs hover:shadow transition-all disabled:opacity-50 cursor-pointer"
+            className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs px-6 py-2.5 rounded-full shadow-none hover:shadow transition-all disabled:opacity-50 cursor-pointer"
           >
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
             <span>

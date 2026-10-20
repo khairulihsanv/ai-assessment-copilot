@@ -5,8 +5,8 @@
  * Computes cosine similarity for semantic matching.
  */
 
-import { generateEmbeddingLocal, generateEmbeddingsLocal } from "./embedding-local.js";
 import { embeddingConfig } from "../config/rag-config.js";
+import { generateEmbeddingLocal, generateEmbeddingsLocal } from "./embedding-local.js";
 
 // ─── Types ─── //
 export interface EmbeddingResult {
@@ -109,7 +109,7 @@ export async function generateEmbedding(text: string, scopeKey?: string): Promis
         throw new EmbeddingError("API_ERROR", errorMessage);
       }
 
-      const data = await response.json() as any;
+      const data = (await response.json()) as any;
       embeddingData = data.data?.[0]?.embedding;
       tokenUsage = data.usage?.total_tokens ?? 0;
 

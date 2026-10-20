@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+
+from app.config import settings
 from app.models.models import User
 from app.security.dependencies import get_current_user
 from app.services.extractor_service import extract_text_from_buffer
-from app.config import settings
 
 ai_router = APIRouter(prefix="/ai", tags=["ai"])
 
@@ -44,7 +45,7 @@ async def extract_text_endpoint(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Gagal mengekstrak teks: {str(e)}",
+            detail=f"Gagal mengekstrak teks: {e!s}",
         )
 
 

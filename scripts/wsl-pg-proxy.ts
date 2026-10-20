@@ -1,5 +1,5 @@
-import net from "node:net";
 import { execSync } from "node:child_process";
+import net from "node:net";
 
 function getWslIp(): string {
   try {

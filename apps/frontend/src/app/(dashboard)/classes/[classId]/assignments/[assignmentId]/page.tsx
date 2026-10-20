@@ -12,8 +12,8 @@ import {
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { SubmissionUploader } from "@/components/features/submission-uploader";
-import { auth } from "@/server/auth/auth";
 import { fetchFromBackend } from "@/server/api/backend-client";
+import { auth } from "@/server/auth/auth";
 import { formatDateTime, formatRelativeTime, getInitials } from "@/shared/utils";
 
 interface AssignmentDetailPageProps {
@@ -43,8 +43,10 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
 
   const assignment = await res.json();
 
-  const isDosen = assignment.class.dosenId === session.user.id;
-  const isEnrolled = assignment.class.enrollments.some((e: { user: { id: string } }) => e.user.id === session.user.id);
+  const isDosen = assignment.class?.dosenId === session.user.id;
+  const isEnrolled = (assignment.class?.enrollments || []).some(
+    (e: { user?: { id: string } }) => e.user?.id === session.user.id,
+  );
 
   if (!isDosen && !isEnrolled) {
     redirect("/classes");
@@ -57,7 +59,7 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
     ? assignment.submissions.find((s: any) => s.userId === session.user.id)
     : null;
 
-  const totalEnrollments = assignment.class.enrollments.length;
+  const totalEnrollments = (assignment.class?.enrollments || []).length;
   const submittedCount = assignment.submissions.length;
   const gradedCount = assignment.submissions.filter((s: any) => s.releasedGradeId).length;
   const pendingCount = assignment.submissions.filter((s: any) => !s.releasedGradeId).length;
@@ -86,12 +88,12 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
             <span className="font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-md bg-muted text-primary">
               {assignment.class.name} ({assignment.class.subject || "Umum"})
             </span>
-            <span className="font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-md bg-[#f1f5f9] text-[#434655]">
+            <span className="font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-md bg-muted text-muted-foreground">
               Maks: {assignment.maxScore} Poin
             </span>
             {assignment.rubric && (
-              <span className="font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-md bg-[#eaddff] text-[#25005a] flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-[#6a1edb]" />
+              <span className="font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-md bg-secondary text-secondary-foreground flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-primary" />
                 Rubrik AI: {assignment.rubric.title}
               </span>
             )}
@@ -156,7 +158,7 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
             <span className="text-[11px] font-medium text-muted-foreground block">
               Perlu Evaluasi AI
             </span>
-            <span className="font-display text-xl font-bold text-[#6a1edb]">
+            <span className="font-display text-xl font-bold text-primary">
               {pendingCount} Berkas
             </span>
           </div>
@@ -164,7 +166,7 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
             <span className="text-[11px] font-medium text-muted-foreground block">
               Selesai Dinilai
             </span>
-            <span className="font-display text-xl font-bold text-[#10b981]">
+            <span className="font-display text-xl font-bold text-primary">
               {gradedCount} Berkas
             </span>
           </div>
@@ -181,25 +183,25 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
               <FileText className="w-4 h-4 text-primary" />
               <span>Instruksi Penugasan</span>
             </h2>
-            <div className="text-xs sm:text-sm text-[#434655] leading-relaxed whitespace-pre-wrap">
+            <div className="text-xs sm:text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
               {assignment.instructions}
             </div>
           </div>
 
           {/* Student Graded Result Card (if graded) */}
           {!isDosen && releasedGrade && (
-            <div className="p-6 rounded-lg border border-[#d1fae5] bg-gradient-to-br from-[#f0fdf4] to-white shadow-none space-y-4">
+            <div className="p-6 rounded-lg border border-border bg-secondary/40 shadow-none space-y-4">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-[#065f46] font-bold text-base font-display">
+                <div className="flex items-center gap-2 text-secondary-foreground font-bold text-base font-display">
                   <Award className="w-5 h-5" />
                   <span>Nilai & Evaluasi Akhir</span>
                 </div>
-                <span className="bg-[#10b981] text-white font-mono text-base font-bold px-3 py-1 rounded-xl shadow-none">
+                <span className="bg-primary text-primary-foreground font-mono text-base font-bold px-3 py-1 rounded-xl shadow-none">
                   {releasedGrade.finalScore} / {assignment.maxScore}
                 </span>
               </div>
 
-              <div className="p-4 rounded-xl bg-card border border-[#d1fae5] space-y-1.5">
+              <div className="p-4 rounded-xl bg-card border border-border space-y-1.5">
                 <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                   Umpan Balik Dosen Pengajar:
                 </p>
@@ -211,7 +213,7 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
               <div className="text-xs text-muted-foreground flex items-center justify-between pt-1">
                 <span>Dinilai pada {formatDateTime(releasedGrade.createdAt)}</span>
                 {releasedGrade.isAIAssisted && (
-                  <span className="text-[11px] text-[#6a1edb] flex items-center gap-1 font-semibold">
+                  <span className="text-[11px] text-primary flex items-center gap-1 font-semibold">
                     <Sparkles className="w-3.5 h-3.5" />
                     Dibantu Asisten AI (Divalidasi Dosen)
                   </span>
@@ -226,6 +228,7 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
               classId={classId}
               assignmentId={assignmentId}
               allowedType={assignment.submissionType}
+              allowScan={assignment.allowScan ?? true}
               existingSubmission={
                 studentSubmission?.versions.find(
                   (v: { id: string }) => v.id === studentSubmission.activeVersionId,
@@ -266,7 +269,8 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
                   {assignment.submissions.map((sub: any) => {
                     const isLate = new Date(sub.createdAt).getTime() > due.getTime();
                     const activeVersion =
-                      sub.versions.find((v: any) => v.id === sub.activeVersionId) || sub.versions[0];
+                      sub.versions.find((v: any) => v.id === sub.activeVersionId) ||
+                      sub.versions[0];
                     const grade = sub.grades.find((g: any) => g.id === sub.releasedGradeId);
                     const isGraded = !!grade;
                     const aiEvaluation = sub.evaluations.find(
@@ -277,7 +281,7 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
                     return (
                       <div
                         key={sub.id}
-                        className="p-4 rounded-lg bg-card border border-border hover:border-[#cbdbf5] transition-all shadow-none flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                        className="p-4 rounded-lg bg-card border border-border hover:border-primary/40 transition-all shadow-none flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                       >
                         {/* Student Details */}
                         <div className="flex items-start gap-3 min-w-0">
@@ -294,7 +298,7 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
                                   Terlambat
                                 </span>
                               )}
-                              <span className="font-mono text-[10px] px-2 py-0.2 rounded bg-[#f1f5f9] text-[#434655]">
+                              <span className="font-mono text-[10px] px-2 py-0.2 rounded bg-muted text-muted-foreground">
                                 {activeVersion?.type || "ANY"}
                               </span>
                             </div>
@@ -309,13 +313,13 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
                         <div className="flex items-center gap-3 self-start sm:self-center shrink-0">
                           {/* Status Badge */}
                           {isGraded ? (
-                            <span className="font-mono text-xs font-bold px-2.5 py-1 rounded-xl bg-[#d1fae5] text-[#065f46] flex items-center gap-1">
+                            <span className="font-mono text-xs font-bold px-2.5 py-1 rounded-xl bg-secondary text-secondary-foreground flex items-center gap-1">
                               <CheckCircle2 className="w-3.5 h-3.5" />
                               Nilai: {grade?.finalScore}
                             </span>
                           ) : isAIReviewed ? (
-                            <span className="font-mono text-xs font-bold px-2.5 py-1 rounded-xl bg-[#eaddff] text-[#25005a] flex items-center gap-1">
-                              <Sparkles className="w-3.5 h-3.5 text-[#6a1edb]" />
+                            <span className="font-mono text-xs font-bold px-2.5 py-1 rounded-xl bg-secondary text-secondary-foreground flex items-center gap-1">
+                              <Sparkles className="w-3.5 h-3.5 text-primary" />
                               Draft AI: {aiEvaluation?.suggestedTotalScore ?? "-"}
                             </span>
                           ) : (

@@ -1,7 +1,9 @@
 import math
 import re
-from typing import List, Optional, Dict, Any
+from typing import Any
+
 import httpx
+
 from app.config import settings
 
 
@@ -24,7 +26,7 @@ def text_overlap_similarity(text_a: str, text_b: str) -> float:
     return intersection / union if union > 0 else 0.0
 
 
-def cosine_similarity(vec_a: List[float], vec_b: List[float]) -> float:
+def cosine_similarity(vec_a: list[float], vec_b: list[float]) -> float:
     """Calculate cosine similarity between two float vectors."""
     if not vec_a or not vec_b or len(vec_a) != len(vec_b):
         return 0.0
@@ -39,17 +41,63 @@ def cosine_similarity(vec_a: List[float], vec_b: List[float]) -> float:
     return max(0.0, min(1.0, dot / (norm_a * norm_b)))
 
 
-async def generate_embedding(text: str) -> List[float]:
-    """
-    Generate embedding vector for text using configured embedding API or Ollama.
-    Falls back to deterministic hash projection if external API unavailable.
-    """
-    if not text.strip():
-        return [0.0] * 768
+class EmbeddingError(Exception):
+    """Base error for embedding operations."""
 
-    # Try Ollama embeddings if available
+
+class EmbeddingProviderUnavailableError(EmbeddingError):
+    """Raised when the embedding provider (e.g. Ollama) is offline, unreachable, or returns an error."""
+
+
+class EmbeddingDimensionMismatchError(EmbeddingError):
+    """Raised when the vector dimension does not match expected 768 dimensions."""
+
+
+class EmbeddingResult:
+    def __init__(self, vector: list[float], model: str, dimension: int = 768, is_mock: bool = False):
+        self.vector = vector
+        self.model = model
+        self.dimension = dimension
+        self.is_mock = is_mock
+
+
+async def generate_embedding_result(text: str, allow_mock: bool | None = None) -> EmbeddingResult:
+    """
+    Generate embedding vector for text using configured Ollama nomic-embed-text API.
+    Does NOT silently disguise hash projections as nomic-embed-text.
+    In testing/mock environments, explicitly marks the model as 'test-deterministic-mock-v1'.
+    """
+    import os
+    is_test_env = (
+        allow_mock is True
+        or settings.ENVIRONMENT == "test"
+        or os.environ.get("TEST_MOCK_EMBEDDING") == "true"
+        or getattr(settings, "ALLOW_STUB_PROVIDERS", False)
+        or os.environ.get("ALLOW_STUB_PROVIDERS") == "true"
+    )
+
+    if not text.strip():
+        model_name = "test-deterministic-mock-v1" if is_test_env else "nomic-embed-text"
+        return EmbeddingResult(vector=[0.0] * 768, model=model_name, dimension=768, is_mock=is_test_env)
+
+    # 1. In explicit mock/test mode, generate a deterministic projection clearly labeled as mock
+    if is_test_env and (allow_mock is True or os.environ.get("TEST_MOCK_EMBEDDING") == "true"):
+        dim = 768
+        vec = [0.0] * dim
+        words = re.findall(r"\w+", text.lower())
+        for w in words:
+            idx = hash(w) % dim
+            vec[idx] += 1.0
+
+        norm = math.sqrt(sum(x * x for x in vec))
+        if norm > 0:
+            vec = [x / norm for x in vec]
+        return EmbeddingResult(vector=vec, model="test-deterministic-mock-v1", dimension=768, is_mock=True)
+
+    # 2. Try Ollama embeddings
+    ollama_error = None
     try:
-        async with httpx.AsyncClient(timeout=5.0) as client:
+        async with httpx.AsyncClient(timeout=6.0) as client:
             resp = await client.post(
                 f"{settings.OLLAMA_BASE_URL}/api/embeddings",
                 json={"model": "nomic-embed-text", "prompt": text[:4000]},
@@ -57,22 +105,46 @@ async def generate_embedding(text: str) -> List[float]:
             if resp.status_code == 200:
                 data = resp.json()
                 if "embedding" in data and isinstance(data["embedding"], list):
-                    return data["embedding"][:768]
-    except Exception:
-        pass
+                    vec = data["embedding"]
+                    if len(vec) != 768:
+                        raise EmbeddingDimensionMismatchError(
+                            f"Dimensi vektor dari nomic-embed-text ({len(vec)}) tidak sesuai dengan pgvector (768)."
+                        )
+                    return EmbeddingResult(vector=vec, model="nomic-embed-text", dimension=768, is_mock=False)
+                else:
+                    ollama_error = f"Respons Ollama tidak memuat list embedding: {data}"
+            else:
+                ollama_error = f"Ollama HTTP {resp.status_code}: {resp.text}"
+    except EmbeddingDimensionMismatchError:
+        raise
+    except Exception as e:
+        ollama_error = str(e)
 
-    # Deterministic pseudo-embedding from character/token distribution as stable fallback
-    dim = 768
-    vec = [0.0] * dim
-    words = re.findall(r"\w+", text.lower())
-    for w in words:
-        idx = hash(w) % dim
-        vec[idx] += 1.0
+    # 3. If mock is allowed in test environments when Ollama is offline, return explicit test mock
+    if is_test_env:
+        dim = 768
+        vec = [0.0] * dim
+        words = re.findall(r"\w+", text.lower())
+        for w in words:
+            idx = hash(w) % dim
+            vec[idx] += 1.0
 
-    norm = math.sqrt(sum(x * x for x in vec))
-    if norm > 0:
-        vec = [x / norm for x in vec]
-    return vec
+        norm = math.sqrt(sum(x * x for x in vec))
+        if norm > 0:
+            vec = [x / norm for x in vec]
+        return EmbeddingResult(vector=vec, model="test-deterministic-mock-v1", dimension=768, is_mock=True)
+
+    # 4. In real production / non-mock mode, DO NOT disguise fallback as nomic-embed-text!
+    raise EmbeddingProviderUnavailableError(
+        f"Layanan embedding Ollama ({settings.OLLAMA_BASE_URL}) tidak tersedia: {ollama_error}. "
+        "Vektor semantik nyata tidak dapat dibuat."
+    )
+
+
+async def generate_embedding(text: str, allow_mock: bool | None = None) -> list[float]:
+    """Helper that returns raw vector for backward compatibility."""
+    result = await generate_embedding_result(text, allow_mock=allow_mock)
+    return result.vector
 
 
 def classify_score(score: float) -> str:
@@ -91,12 +163,12 @@ def classify_score(score: float) -> str:
 
 def compute_similarity(
     student_answer: str,
-    answer_key: Optional[str] = None,
-    material: Optional[str] = None,
-    student_embedding: Optional[List[float]] = None,
-    answer_key_embedding: Optional[List[float]] = None,
-    material_embedding: Optional[List[float]] = None,
-) -> Dict[str, Any]:
+    answer_key: str | None = None,
+    material: str | None = None,
+    student_embedding: list[float] | None = None,
+    answer_key_embedding: list[float] | None = None,
+    material_embedding: list[float] | None = None,
+) -> dict[str, Any]:
     """
     Compute combined similarity between student answer and reference materials/key.
     Uses vector cosine similarity if embeddings are present, otherwise falls back to text overlap.

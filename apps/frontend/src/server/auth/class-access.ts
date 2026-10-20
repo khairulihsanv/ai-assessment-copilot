@@ -5,7 +5,9 @@ export async function getClassAccess(classId: string, userId: string, role = "MA
   if (!res.ok) return null;
   const cls = await res.json();
   const isOwner = cls.dosenId === userId;
-  const enrollment = cls.enrollments?.find((e: { user?: { id: string }; userId?: string }) => (e.user?.id || e.userId) === userId);
+  const enrollment = cls.enrollments?.find(
+    (e: { user?: { id: string }; userId?: string }) => (e.user?.id || e.userId) === userId,
+  );
   if (!isOwner && !enrollment) return null;
   return { isOwner, isAssistant: enrollment?.role === "ASSISTANT" };
 }

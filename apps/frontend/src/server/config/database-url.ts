@@ -11,12 +11,15 @@ export function requireTestDatabaseUrl(value: string | undefined): string {
   if (
     !["postgres:", "postgresql:"].includes(url.protocol) ||
     !["localhost", "127.0.0.1", "[::1]", "postgres"].includes(url.hostname) ||
-    !["/test_db", "/dexa_test"].includes(url.pathname) ||
-    url.username !== "test_user" ||
+    !["/test_db", "/dexa_test", "/ai_assessment_test"].includes(url.pathname) ||
+    !["test_user", "postgres"].includes(url.username) ||
+    url.pathname.includes("copilot") ||
     [...url.searchParams.keys()].some((key) => !["schema", "sslmode"].includes(key)) ||
     (url.searchParams.has("schema") && url.searchParams.get("schema") !== "public")
   ) {
-    throw new Error("Database tes harus PostgreSQL lokal test_db/dexa_test milik test_user.");
+    throw new Error(
+      "Database tes harus PostgreSQL lokal terisolasi (test_db / dexa_test / ai_assessment_test).",
+    );
   }
   return value;
 }

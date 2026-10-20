@@ -2,16 +2,16 @@
  * Master E2E Test Harness for Dexa Assessment
  *
  * Automates:
- * 1. Database validation and migration on isolated test DB
+ * 1. Database validation and migration on isolated test DB (Alembic before seed)
  * 2. Deterministic fixture seeding
  * 3. AI stub server startup
- * 4. Backend server startup (compiled dist)
- * 5. Frontend server startup
- * 6. Playwright E2E execution
- * 7. Graceful resource cleanup
+ * 4. Backend FastAPI server startup via Uvicorn
+ * 5. Frontend Next.js server startup
+ * 6. Playwright target verification (--list) and execution (handles Windows quotes & spaces)
+ * 7. Guaranteed process cleanup on success, test failure, and startup failure
  */
 
-import { type ChildProcess, spawn } from "node:child_process";
+import { type ChildProcess, execSync, spawn, spawnSync } from "node:child_process";
 import crypto from "node:crypto";
 import net from "node:net";
 import path from "node:path";
@@ -20,19 +20,51 @@ import { requireTestDatabaseUrl } from "../apps/frontend/src/server/config/datab
 import { startAiStubServer } from "./ai-stub-server.js";
 import { seedE2EFixtures } from "./e2e-seed.js";
 
-// Utility to find free TCP port
-async function getFreePort(startingPort = 3000): Promise<number> {
+// Utility to mask credentials in database URLs for secure logging
+function maskDatabaseUrl(url: string): string {
+  return url.replace(/:\/\/[^:]+:([^@]+)@/, "://***:***@");
+}
+
+// Utility to find free TCP port with exclusion set and active connection test
+async function isPortAvailable(port: number): Promise<boolean> {
+  const canConnect = await new Promise<boolean>((resolve) => {
+    const socket = new net.Socket();
+    socket.setTimeout(250);
+    socket.once("connect", () => {
+      socket.destroy();
+      resolve(true); // Connected means port is busy!
+    });
+    socket.once("timeout", () => {
+      socket.destroy();
+      resolve(false);
+    });
+    socket.once("error", () => {
+      resolve(false);
+    });
+    socket.connect(port, "127.0.0.1");
+  });
+
+  if (canConnect) return false;
+
+  return await new Promise<boolean>((resolve) => {
+    const server = net.createServer();
+    server.unref();
+    server.once("error", () => resolve(false));
+    server.listen({ port, host: "127.0.0.1", exclusive: true }, () => {
+      server.close(() => resolve(true));
+    });
+  });
+}
+
+async function getFreePort(startingPort = 3010, excludePorts: number[] = []): Promise<number> {
   let port = startingPort;
   while (port < 65535) {
-    const isFree = await new Promise<boolean>((resolve) => {
-      const server = net.createServer();
-      server.unref();
-      server.on("error", () => resolve(false));
-      server.listen(port, "127.0.0.1", () => {
-        server.close(() => resolve(true));
-      });
-    });
-    if (isFree) return port;
+    if (excludePorts.includes(port)) {
+      port++;
+      continue;
+    }
+    const available = await isPortAvailable(port);
+    if (available) return port;
     port++;
   }
   throw new Error("No free port available");
@@ -60,31 +92,51 @@ async function main() {
   console.log("   DEXA ASSESSMENT E2E VERIFICATION HARNESS         ");
   console.log("====================================================");
 
-  // 1. Verify Test Database URL
+  // 1. Verify Test Database URL & Mask Credentials in Logs
   const testDbUrl =
     process.env.TEST_DATABASE_URL ||
-    "postgresql://test_user:test_password@127.0.0.1:54321/test_db?schema=public&sslmode=disable";
+    "postgresql://postgres:password@127.0.0.1:5432/ai_assessment_test";
 
   requireTestDatabaseUrl(testDbUrl);
   process.env.DATABASE_URL = testDbUrl;
   process.env.TEST_DATABASE_URL = testDbUrl;
-  console.log("[Harness] Test Database target validated (loopback isolated).");
-
-  // 2. Generate Random Secrets for this test session
-  const authSecret = crypto.randomBytes(32).toString("hex");
-  const internalSecret = crypto.randomBytes(32).toString("hex");
-  console.log("[Harness] Ephemeral random test secrets generated.");
-
-  // 3. Find available ports
-  const backendPort = await getFreePort(3001);
-  const aiStubPort = await getFreePort(3002);
-  const frontendPort = await getFreePort(3000);
   console.log(
-    `[Harness] Ports allocated -> Frontend: ${frontendPort}, Backend: ${backendPort}, AI Stub: ${aiStubPort}`,
+    "[Harness] Test Database target validated (loopback isolated):",
+    maskDatabaseUrl(testDbUrl),
   );
 
-  // 4. Seed Database Fixtures
-  console.log("[Harness] Seeding deterministic fixtures...");
+  // 2. Run Alembic Migrations on isolated test DB before seeding
+  console.log("[Harness] Running Alembic migrations on isolated test DB...");
+  const pythonBin = process.platform === "win32" ? "python" : "python3";
+  execSync(`${pythonBin} -m alembic upgrade head`, {
+    cwd: path.resolve(process.cwd(), "apps/backend"),
+    env: {
+      ...process.env,
+      DATABASE_URL: testDbUrl,
+      TEST_DATABASE_URL: testDbUrl,
+    },
+    stdio: "inherit",
+  });
+  console.log("[Harness] Alembic migrations completed successfully.");
+
+  // 3. Generate Random Secrets for this test session (consistent across frontend & FastAPI)
+  const authSecret = crypto.randomBytes(32).toString("hex");
+  console.log("[Harness] Ephemeral random test secrets generated (32+ chars).");
+
+  // 4. Find available ports (avoiding collisions and dev server ports)
+  const allocatedPorts: number[] = [3000, 3001];
+  const backendPort = await getFreePort(3011, allocatedPorts);
+  allocatedPorts.push(backendPort);
+  const aiStubPort = await getFreePort(3012, allocatedPorts);
+  allocatedPorts.push(aiStubPort);
+  const frontendPort = await getFreePort(3010, allocatedPorts);
+  allocatedPorts.push(frontendPort);
+  console.log(
+    `[Harness] Ports allocated -> Frontend: ${frontendPort}, Backend (FastAPI): ${backendPort}, AI Stub: ${aiStubPort}`,
+  );
+
+  // 5. Seed Database Fixtures
+  console.log("[Harness] Seeding deterministic fixtures into isolated test DB...");
   const prisma = new PrismaClient({ datasources: { db: { url: testDbUrl } } });
   try {
     await seedE2EFixtures(prisma);
@@ -93,94 +145,151 @@ async function main() {
     await prisma.$disconnect();
   }
 
-  // 5. Start AI Stub Server
-  console.log("[Harness] Starting AI Stub Server...");
-  const aiStubServer = await startAiStubServer(aiStubPort);
+  // Lifecycle variables for guaranteed cleanup
+  let aiStubServer: { close: () => void } | null = null;
+  let backendProcess: ChildProcess | null = null;
+  let frontendProcess: ChildProcess | null = null;
 
-  // 6. Start Backend Hono Server (compiled build)
-  console.log("[Harness] Starting Backend server (dist/index.js)...");
-  const backendEnv = {
-    ...process.env,
-    PORT: String(backendPort),
-    DATABASE_URL: testDbUrl,
-    TEST_DATABASE_URL: testDbUrl,
-    INTERNAL_API_SECRET: internalSecret,
-    GROQ_API_URL: `http://127.0.0.1:${aiStubPort}/v1/chat/completions`,
-    GROQ_API_KEY: "stub-test-key",
-    ALLOW_STUB_PROVIDERS: "true",
-    LLM_PROVIDER: "stub",
-    EMBEDDING_PROVIDER: "stub",
+  const killProcess = (proc: ChildProcess | null) => {
+    if (!proc || !proc.pid) return;
+    if (process.platform === "win32") {
+      try {
+        execSync(`taskkill /pid ${proc.pid} /T /F`, { stdio: "ignore" });
+      } catch {
+        // ignore if already exited
+      }
+    } else {
+      try {
+        proc.kill("SIGTERM");
+      } catch {
+        // ignore
+      }
+    }
   };
 
-  const backendProcess: ChildProcess = spawn("node", ["dist/index.js"], {
-    cwd: path.resolve(process.cwd(), "apps/backend"),
-    env: backendEnv,
-    stdio: "inherit",
-    shell: true,
-  });
+  let exitCode = 0;
 
-  const backendReady = await waitForUrl(`http://127.0.0.1:${backendPort}/health`, 20000);
-  if (!backendReady) {
-    throw new Error(
-      `[Harness] Backend failed to become healthy at http://127.0.0.1:${backendPort}/health`,
+  try {
+    // 6. Start AI Stub Server
+    console.log("[Harness] Starting AI Stub Server...");
+    aiStubServer = await startAiStubServer(aiStubPort);
+
+    // 7. Start FastAPI Backend Server via Uvicorn
+    console.log(`[Harness] Starting FastAPI Backend server on port ${backendPort}...`);
+    const backendEnv = {
+      ...process.env,
+      PORT: String(backendPort),
+      DATABASE_URL: testDbUrl,
+      TEST_DATABASE_URL: testDbUrl,
+      SECRET_KEY: authSecret,
+      INTERNAL_API_SECRET: authSecret,
+      GROQ_API_URL: `http://127.0.0.1:${aiStubPort}/v1/chat/completions`,
+      GROQ_API_KEY: "stub-test-key",
+      ALLOW_STUB_PROVIDERS: "true",
+      LLM_PROVIDER: "mock",
+      TEST_MOCK_LLM: "true",
+      TEST_MOCK_EMBEDDING: "true",
+      PYTHONUNBUFFERED: "1",
+    };
+
+    backendProcess = spawn(
+      pythonBin,
+      ["-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", String(backendPort)],
+      {
+        cwd: path.resolve(process.cwd(), "apps/backend"),
+        env: backendEnv,
+        stdio: "inherit",
+        shell: true,
+      },
     );
-  }
-  console.log("[Harness] Backend is ready & healthy.");
 
-  // 7. Start Frontend Next.js Server
-  console.log(`[Harness] Starting Frontend server on port ${frontendPort}...`);
-  const frontendEnv = {
-    ...process.env,
-    PORT: String(frontendPort),
-    DATABASE_URL: testDbUrl,
-    TEST_DATABASE_URL: testDbUrl,
-    AUTH_SECRET: authSecret,
-    INTERNAL_API_SECRET: internalSecret,
-    BACKEND_URL: `http://127.0.0.1:${backendPort}`,
-    ALLOW_STUB_PROVIDERS: "true",
-  };
+    const backendReady = await waitForUrl(`http://127.0.0.1:${backendPort}/health`, 25000);
+    if (!backendReady) {
+      throw new Error(
+        `[Harness] FastAPI Backend failed to become healthy at http://127.0.0.1:${backendPort}/health`,
+      );
+    }
+    console.log("[Harness] FastAPI Backend is ready & healthy.");
 
-  const frontendProcess: ChildProcess = spawn(
-    "npx",
-    ["next", "start", "-p", String(frontendPort)],
-    {
+    // 8. Start Frontend Next.js Server
+    console.log(`[Harness] Starting Frontend server on port ${frontendPort}...`);
+    const frontendEnv = {
+      ...process.env,
+      PORT: String(frontendPort),
+      DATABASE_URL: testDbUrl,
+      TEST_DATABASE_URL: testDbUrl,
+      AUTH_SECRET: authSecret,
+      SECRET_KEY: authSecret,
+      INTERNAL_API_SECRET: authSecret,
+      BACKEND_URL: `http://127.0.0.1:${backendPort}`,
+      ALLOW_STUB_PROVIDERS: "true",
+      COOKIE_SECURE: "false",
+    };
+
+    frontendProcess = spawn("npx", ["next", "start", "-p", String(frontendPort)], {
       cwd: path.resolve(process.cwd(), "apps/frontend"),
       env: frontendEnv,
       stdio: "inherit",
       shell: true,
-    },
-  );
+    });
 
-  const frontendReady = await waitForUrl(`http://127.0.0.1:${frontendPort}/login`, 30000);
-  if (!frontendReady) {
-    throw new Error(
-      `[Harness] Frontend failed to respond at http://127.0.0.1:${frontendPort}/login`,
+    const frontendReady = await waitForUrl(`http://127.0.0.1:${frontendPort}/login`, 35000);
+    if (!frontendReady) {
+      throw new Error(
+        `[Harness] Frontend failed to respond at http://127.0.0.1:${frontendPort}/login`,
+      );
+    }
+    console.log("[Harness] Frontend is ready.");
+
+    // 9. Verify and Execute Playwright E2E Tests
+    console.log("\n[Harness] Preparing Playwright E2E Test Suite...\n");
+    const playwrightEnv = {
+      ...process.env,
+      BASE_URL: `http://127.0.0.1:${frontendPort}`,
+      FRONTEND_PORT: String(frontendPort),
+      BACKEND_URL: `http://127.0.0.1:${backendPort}`,
+      INTERNAL_API_SECRET: authSecret,
+      SECRET_KEY: authSecret,
+      AUTH_SECRET: authSecret,
+      DATABASE_URL: testDbUrl,
+      TEST_DATABASE_URL: testDbUrl,
+    };
+
+    const userArgs = process.argv.slice(2);
+    const playwrightCli = path.resolve(process.cwd(), "node_modules/@playwright/test/cli.js");
+
+    // Pre-flight check: run --list to ensure targeted tests exist
+    console.log(`[Harness] Verifying target tests with --list...`);
+    const listResult = spawnSync(process.execPath, [playwrightCli, "test", ...userArgs, "--list"], {
+      env: playwrightEnv,
+      encoding: "utf-8",
+    });
+
+    if (listResult.status !== 0) {
+      console.error("[Harness] Failed to list tests:", listResult.stderr || listResult.stdout);
+      throw new Error(`[Harness] Playwright --list returned exit code ${listResult.status}`);
+    }
+
+    const listOutput = listResult.stdout || "";
+    console.log(listOutput.trim());
+
+    const totalMatch = listOutput.match(/Total:\s*(\d+)\s+test/i);
+    const testCount = totalMatch ? parseInt(totalMatch[1], 10) : 0;
+
+    if (testCount === 0) {
+      throw new Error(
+        `[Harness Error: No tests found] Criteria matched 0 tests. Do not treat 0 tests as success! Args: ${userArgs.join(" ")}`,
+      );
+    }
+
+    console.log(
+      `\n[Harness] Target test verification PASSED (${testCount} test(s) found). Running test execution...\n`,
     );
-  }
-  console.log("[Harness] Frontend is ready.");
 
-  // 8. Run Playwright E2E Tests
-  console.log("\n[Harness] Launching Playwright E2E Test Suite...\n");
-  const playwrightEnv = {
-    ...process.env,
-    BASE_URL: `http://127.0.0.1:${frontendPort}`,
-    FRONTEND_PORT: String(frontendPort),
-    BACKEND_URL: `http://127.0.0.1:${backendPort}`,
-    INTERNAL_API_SECRET: internalSecret,
-    DATABASE_URL: testDbUrl,
-    TEST_DATABASE_URL: testDbUrl,
-  };
-
-  const playwrightArgs = process.argv.slice(2);
-  const testArgs = playwrightArgs.length > 0 ? playwrightArgs : ["playwright", "test"];
-
-  let exitCode = 0;
-  try {
     exitCode = await new Promise<number>((resolve) => {
-      const pw = spawn("npx", testArgs, {
+      const pw = spawn(process.execPath, [playwrightCli, "test", ...userArgs], {
         env: playwrightEnv,
         stdio: "inherit",
-        shell: true,
       });
       pw.on("exit", (code) => resolve(code ?? 1));
       pw.on("error", (err) => {
@@ -189,29 +298,16 @@ async function main() {
       });
     });
   } finally {
-    // 9. Cleanup all spawned processes
+    // 10. Clean up all spawned processes (guaranteed even if startup failed)
     console.log("\n[Harness] Cleaning up spawned processes...");
-    aiStubServer.close();
-
-    const killProcess = (proc: ChildProcess) => {
-      if (!proc.pid) return;
-      if (process.platform === "win32") {
-        try {
-          spawn("taskkill", ["/pid", String(proc.pid), "/T", "/F"], { stdio: "ignore" });
-        } catch {
-          // ignore
-        }
-      } else {
-        try {
-          proc.kill("SIGTERM");
-        } catch {
-          // ignore
-        }
-      }
-    };
-
+    if (aiStubServer) {
+      try {
+        aiStubServer.close();
+      } catch {}
+    }
     killProcess(backendProcess);
     killProcess(frontendProcess);
+    console.log("[Harness] Cleanup complete.");
   }
 
   console.log(`[Harness] Completed with exit code: ${exitCode}`);

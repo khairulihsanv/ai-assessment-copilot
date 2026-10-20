@@ -2,8 +2,8 @@ import { Award, ChevronLeft, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
-import { auth } from "@/server/auth/auth";
 import { fetchFromBackend } from "@/server/api/backend-client";
+import { auth } from "@/server/auth/auth";
 import { formatDateTime } from "@/shared/utils";
 
 interface ResultPageProps {

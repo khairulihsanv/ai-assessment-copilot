@@ -17,14 +17,17 @@ export async function POST(
   const token = signInternalToken({ id: session.user.id, role: session.user.role });
   const body = await request.text();
 
-  const res = await forwardToBackend(`${BACKEND_URL}/classes/${classId}/assignments/${assignmentId}/reference-sets`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
+  const res = await forwardToBackend(
+    `${BACKEND_URL}/classes/${classId}/assignments/${assignmentId}/reference-sets`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body,
     },
-    body
-  });
+  );
 
   const data = await res.json();
   if (!res.ok) return NextResponse.json(data, { status: res.status });

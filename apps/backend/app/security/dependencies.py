@@ -1,14 +1,14 @@
 import time
-from typing import Optional, List, Callable
 from collections import defaultdict
+from collections.abc import Callable
 
-from fastapi import Depends, HTTPException, status, Request
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import Depends, HTTPException, Request, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models.models import User
 from app.models.enums import Role
+from app.models.models import User
 from app.security.tokens import decode_access_token
 
 security_bearer = HTTPBearer(auto_error=False)
@@ -34,7 +34,7 @@ class RateLimiter:
 login_rate_limiter = RateLimiter(max_requests=10, window_seconds=60)
 
 
-def extract_token(request: Request, creds: Optional[HTTPAuthorizationCredentials] = None) -> Optional[str]:
+def extract_token(request: Request, creds: HTTPAuthorizationCredentials | None = None) -> str | None:
     """Extract token from Authorization header or cookie."""
     if creds and creds.credentials:
         return creds.credentials
@@ -57,9 +57,14 @@ def extract_token(request: Request, creds: Optional[HTTPAuthorizationCredentials
 
 async def get_current_user(
     request: Request,
-    creds: Optional[HTTPAuthorizationCredentials] = Depends(security_bearer),
+    creds: HTTPAuthorizationCredentials | None = Depends(security_bearer),
     db: Session = Depends(get_db),
 ) -> User:
+    """
+    Authenticate request via JWT token and resolve against database.
+    Strictly rejects invalid signatures, expired tokens, invalid claims,
+    and nonexistent users. Never fabricates dummy in-memory users.
+    """
     token = extract_token(request, creds)
     if not token:
         raise HTTPException(
@@ -72,7 +77,7 @@ async def get_current_user(
     if not payload:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Unauthorized: Invalid signature or expired token",
+            detail="Unauthorized: Invalid signature, expired token, or invalid issuer/audience",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -80,22 +85,24 @@ async def get_current_user(
     if not user_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token payload",
+            detail="Invalid token payload: missing subject",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    # Strictly verify user exists in database
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found or revoked",
+            detail="User not found in database or access revoked",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    # User's role and permissions are strictly derived from the validated database record
     return user
 
 
-def require_roles(allowed_roles: List[Role]) -> Callable:
+def require_roles(allowed_roles: list[Role]) -> Callable:
     def role_checker(current_user: User = Depends(get_current_user)) -> User:
         if current_user.role not in allowed_roles:
             raise HTTPException(

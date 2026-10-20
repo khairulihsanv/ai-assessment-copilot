@@ -10,8 +10,8 @@ async function run() {
       name: "Test Dosen",
       email: `test-${Date.now()}@example.com`,
       passwordHash: "hash",
-      role: "DOSEN"
-    }
+      role: "DOSEN",
+    },
   });
   console.log("Created user successfully:", user.id);
   const found = await p.user.findUnique({ where: { id: user.id } });

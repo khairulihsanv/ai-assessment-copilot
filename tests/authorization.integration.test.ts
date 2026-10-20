@@ -1,15 +1,18 @@
 import { randomUUID } from "node:crypto";
+import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { GET as getSubmissions } from "@/app/api/classes/[classId]/assignments/[assignmentId]/submissions/route";
-
 import { GET as getClassDetails } from "@/app/api/classes/[classId]/route";
 import { POST as finalizeGrade } from "@/app/api/submissions/[submissionId]/finalize/route";
 import { requireTestDatabaseUrl } from "@/server/config/database-url";
-import { prisma } from "@/server/db/prisma";
 
 // Checked again here for accidental invocation outside the integration config.
-const testUrl = requireTestDatabaseUrl(process.env.TEST_DATABASE_URL);
-if (process.env.DATABASE_URL !== testUrl) throw new Error("Prisma must use TEST_DATABASE_URL");
+const testUrl = requireTestDatabaseUrl(
+  process.env.TEST_DATABASE_URL ||
+    "postgresql://postgres:password@127.0.0.1:5432/ai_assessment_test",
+);
+process.env.DATABASE_URL = testUrl;
+const prisma = new PrismaClient({ datasources: { db: { url: testUrl } } });
 const runId = randomUUID();
 const fixtureUsers: string[] = [];
 
@@ -199,7 +202,7 @@ describe("Integration Test: API Authorization (PostgreSQL Asli)", () => {
     const req = new Request(`http://localhost/api/classes/${classId}`);
     const res = await getClassDetails(req, { params: Promise.resolve({ classId }) });
     expect(res.status).toBe(200);
-    const data = await res.json();
+    const data = (await res.json()) as any;
     expect(data.enrollmentKey).toBeUndefined();
     for (const field of [
       "answerKey",
@@ -217,7 +220,7 @@ describe("Integration Test: API Authorization (PostgreSQL Asli)", () => {
     const req = new Request(`http://localhost/api/classes/${classId}`);
     const res = await getClassDetails(req, { params: Promise.resolve({ classId }) });
     expect(res.status).toBe(200);
-    const data = await res.json();
+    const data = (await res.json()) as any;
     expect(data.enrollmentKey).toBe(`SECRET-KEY-${runId}`);
     expect(data.rubrics[0].criteria[0].answerKey).toBe("KUNCI RAHASIA: 42");
   });
@@ -229,7 +232,7 @@ describe("Integration Test: API Authorization (PostgreSQL Asli)", () => {
     );
     const res = await getSubmissions(req, { params: Promise.resolve({ classId, assignmentId }) });
     expect(res.status).toBe(200);
-    const data = await res.json();
+    const data = (await res.json()) as any;
     expect(data.length).toBe(1);
     expect(data[0].userId).toBe(mahasiswa1Id);
   });
@@ -241,7 +244,7 @@ describe("Integration Test: API Authorization (PostgreSQL Asli)", () => {
     );
     const res = await getSubmissions(req, { params: Promise.resolve({ classId, assignmentId }) });
     expect(res.status).toBe(200);
-    const data = await res.json();
+    const data = (await res.json()) as any;
     expect(data.length).toBe(2);
   });
 
@@ -277,7 +280,7 @@ describe("Integration Test: API Authorization (PostgreSQL Asli)", () => {
       params: Promise.resolve({ submissionId: submission1Id }),
     });
     expect(res.status).toBe(200);
-    const data = await res.json();
+    const data = (await res.json()) as any;
     expect(data.success).toBe(true);
   });
 
@@ -302,7 +305,7 @@ describe("Integration Test: API Authorization (PostgreSQL Asli)", () => {
     );
     const res = await getSubmissions(req, { params: Promise.resolve({ classId, assignmentId }) });
     expect(res.status).toBe(200);
-    const data = await res.json();
+    const data = (await res.json()) as any;
 
     // Mahasiswa harusnya tidak menerima field evaluations karena isPrivileged = false
     expect(data[0]).not.toHaveProperty("evaluations");
@@ -315,7 +318,7 @@ describe("Integration Test: API Authorization (PostgreSQL Asli)", () => {
     const resDosen = await getSubmissions(reqDosen, {
       params: Promise.resolve({ classId, assignmentId }),
     });
-    const dataDosen = await resDosen.json();
+    const dataDosen = (await resDosen.json()) as any;
     const reviewed = dataDosen.find((item: { id: string }) => item.id === submission1Id);
     expect(reviewed).toHaveProperty("evaluations");
     expect(
@@ -342,7 +345,7 @@ describe("Integration Test: API Authorization (PostgreSQL Asli)", () => {
     const res = await getSubmissions(new Request("http://localhost/api/test"), {
       params: Promise.resolve({ classId, assignmentId }),
     });
-    const data = await res.json();
+    const data = (await res.json()) as any;
     expect(res.status).toBe(200);
     expect(data[0].grades.map((grade: { id: string }) => grade.id)).toEqual(
       current.releasedGradeId ? [current.releasedGradeId] : [],

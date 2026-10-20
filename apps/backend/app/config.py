@@ -1,4 +1,5 @@
-from typing import List
+import os
+
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -17,24 +18,27 @@ class Settings(BaseSettings):
 
     # Database
     DATABASE_URL: str = Field(
-        default="postgresql://postgres:postgres@localhost:5432/dexa_assessment",
+        default="postgresql://postgres:password@127.0.0.1:5432/ai_assessment_copilot",
         description="PostgreSQL Connection URL",
     )
 
     # Security
     SECRET_KEY: str = Field(
-        default="super-secret-dexa-assessment-key-change-in-production-2026",
+        default="",
         alias="INTERNAL_API_SECRET",
+        description="Mandatory secret for JWT HMAC signing (min 32 chars)",
     )
     JWT_SECRET_KEY: str = Field(
-        default="super-secret-dexa-assessment-jwt-key-change-in-production-2026",
+        default="",
         alias="NEXTAUTH_SECRET",
     )
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 12  # 12 hours
+    JWT_ISSUER: str = "dexa-backend"
+    JWT_AUDIENCE: str = "dexa-client"
 
     # CORS
-    CORS_ORIGINS: List[str] = [
+    CORS_ORIGINS: list[str] = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "http://localhost:3001",
@@ -55,3 +59,14 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+# Resolve SECRET_KEY fallback from environment variables
+if not settings.SECRET_KEY:
+    settings.SECRET_KEY = os.getenv("SECRET_KEY") or os.getenv("INTERNAL_API_SECRET") or os.getenv("AUTH_SECRET") or ""
+
+# Fail startup immediately if mandatory secret is missing or insecure
+if not settings.SECRET_KEY or len(settings.SECRET_KEY) < 32:
+    raise RuntimeError(
+        "FATAL SECURITY CONFIG ERROR: SECRET_KEY / INTERNAL_API_SECRET is mandatory, "
+        "must be configured via environment, and must contain at least 32 characters."
+    )

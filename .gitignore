@@ -61,3 +61,14 @@ ENV/
 
 # backups & temporary scratch
 scratch/
+backups/
+storage/
+/storage/
+apps/backend/storage/
+*.db
+*.sqlite
+*.sqlite3
+cookie.txt
+apps/frontend/CLAUDE.md
+apps/frontend/AGENTS.md
+

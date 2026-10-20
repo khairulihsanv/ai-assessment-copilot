@@ -1,33 +1,35 @@
 import uuid
+
 from sqlalchemy import (
-    Column,
-    String,
     Boolean,
-    Float,
-    Integer,
+    Column,
     DateTime,
-    Text,
+    Float,
     ForeignKey,
-    UniqueConstraint,
     Index,
-    Enum as SQLEnum,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
     func,
 )
+from sqlalchemy import (
+    Enum as SQLEnum,
+)
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.types import JSON
 from sqlalchemy.orm import relationship
+from sqlalchemy.types import JSON
 
 from app.database import Base
 from app.models.enums import (
-    Role,
-    ClassRole,
-    SubmissionType,
     AssignmentStatus,
-    SubmissionStatus,
-    SourceType,
+    ClassRole,
+    DocumentStatus,
     JobStatus,
     JobType,
-    DocumentStatus,
+    Role,
+    SourceType,
+    SubmissionType,
 )
 
 # Safe JSON type compatible with SQLite in tests and PostgreSQL in production
@@ -143,6 +145,7 @@ class Assignment(Base):
     dueDate = Column(DateTime, nullable=False)
     maxScore = Column(Float, default=100.0, nullable=False)
     allowLateSubmission = Column(Boolean, default=False, nullable=False)
+    allowScan = Column(Boolean, default=True, nullable=False)
     status = Column(SQLEnum(AssignmentStatus, name="AssignmentStatus", create_type=False), default=AssignmentStatus.DRAFT, nullable=False)
     createdAt = Column(DateTime, default=func.now(), nullable=False)
 
@@ -188,6 +191,10 @@ class SubmissionVersion(Base):
     content = Column(Text, nullable=True)
     fileUrl = Column(String, nullable=True)
     fileName = Column(String, nullable=True)
+    rawOcrText = Column(Text, nullable=True)
+    isEdited = Column(Boolean, default=False, nullable=False)
+    ocrStatus = Column(String, default="NONE", nullable=False)
+    pageCount = Column(Integer, default=1, nullable=False)
     submittedAt = Column(DateTime, default=func.now(), nullable=False)
 
     __table_args__ = (
@@ -195,8 +202,34 @@ class SubmissionVersion(Base):
     )
 
     submission = relationship("Submission", back_populates="versions")
+    pages = relationship("SubmissionPage", back_populates="version", cascade="all, delete-orphan", order_by="SubmissionPage.pageNumber.asc()")
     evaluations = relationship("EvaluationRun", back_populates="version", cascade="all, delete-orphan")
     grades = relationship("GradeRevision", back_populates="version")
+
+
+class SubmissionPage(Base):
+    __tablename__ = "submission_pages"
+
+    id = Column(String, primary_key=True, default=generate_id)
+    submissionVersionId = Column(String, ForeignKey("submission_versions.id", ondelete="CASCADE"), nullable=False)
+    pageNumber = Column(Integer, nullable=False)
+    imageUrl = Column(String, nullable=True)
+    imageName = Column(String, nullable=True)
+    mimeType = Column(String, nullable=True)
+    width = Column(Integer, nullable=True)
+    height = Column(Integer, nullable=True)
+    extractedText = Column(Text, nullable=True)
+    confirmedText = Column(Text, nullable=True)
+    ocrStatus = Column(String, default="SUCCESS", nullable=False)
+    ocrError = Column(Text, nullable=True)
+    source = Column(String, default="IMAGE", nullable=False)
+    createdAt = Column(DateTime, default=func.now(), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("submissionVersionId", "pageNumber", name="submission_pages_version_page_key"),
+    )
+
+    version = relationship("SubmissionVersion", back_populates="pages")
 
 
 class EvaluationRun(Base):

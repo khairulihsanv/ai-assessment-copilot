@@ -1,10 +1,16 @@
-from typing import Dict, Any
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models.models import User, Class, Enrollment, Assignment, Submission, GradeRevision
-from app.models.enums import Role, AssignmentStatus
+from app.models.enums import AssignmentStatus, Role
+from app.models.models import (
+    Assignment,
+    Class,
+    Enrollment,
+    GradeRevision,
+    Submission,
+    User,
+)
 from app.security.dependencies import get_current_user
 
 dashboard_router = APIRouter(prefix="/dashboard", tags=["dashboard"])

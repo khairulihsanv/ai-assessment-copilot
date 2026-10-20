@@ -3,7 +3,7 @@
 import { registerSchema } from "@dexa/contracts";
 import { cookies } from "next/headers";
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3001";
+const BACKEND_URL = process.env.BACKEND_URL || "http://127.0.0.1:3001";
 
 interface ActionResult {
   success: boolean;
@@ -88,7 +88,7 @@ export async function loginAction(formData: FormData): Promise<ActionResult> {
     const cookieStore = await cookies();
     cookieStore.set("dexa_session", access_token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.NODE_ENV === "production" && process.env.COOKIE_SECURE !== "false",
       sameSite: "lax",
       path: "/",
       maxAge: 12 * 60 * 60,

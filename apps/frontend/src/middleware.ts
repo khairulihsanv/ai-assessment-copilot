@@ -1,29 +1,53 @@
-import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
-function isTokenValid(token: string | undefined): boolean {
-  if (!token) return false;
+const SECRET =
+  process.env.INTERNAL_API_SECRET ||
+  process.env.AUTH_SECRET ||
+  process.env.SECRET_KEY ||
+  process.env.NEXTAUTH_SECRET;
+
+async function isTokenValid(token: string | undefined): Promise<boolean> {
+  if (!token || !SECRET) return false;
   try {
     const parts = token.split(".");
-    const part1 = parts[1];
-    if (parts.length !== 3 || !part1) return false;
-    const payload = JSON.parse(
-      Buffer.from(part1, "base64url").toString("utf-8"),
-    );
+    if (parts.length !== 3) return false;
+    const [headerB64, payloadB64, sigB64] = parts;
+    if (!headerB64 || !payloadB64 || !sigB64) return false;
+
+    const payload = JSON.parse(Buffer.from(payloadB64, "base64url").toString("utf-8"));
     if (!payload.sub) return false;
     if (payload.exp && payload.exp * 1000 < Date.now()) {
       return false;
     }
-    return true;
+    if (payload.iss && payload.iss !== "dexa-backend") {
+      return false;
+    }
+    if (payload.aud && payload.aud !== "dexa-client") {
+      return false;
+    }
+
+    const enc = new TextEncoder();
+    const data = enc.encode(`${headerB64}.${payloadB64}`);
+    const sigBin = Buffer.from(sigB64, "base64url");
+
+    const key = await crypto.subtle.importKey(
+      "raw",
+      enc.encode(SECRET),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["verify"],
+    );
+    return await crypto.subtle.verify("HMAC", key, sigBin, data);
   } catch {
     return false;
   }
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { nextUrl } = request;
   const token = request.cookies.get("dexa_session")?.value;
-  const loggedIn = isTokenValid(token);
+  const loggedIn = await isTokenValid(token);
 
   const pathname = nextUrl.pathname;
   const isAuthRoute = pathname.startsWith("/login") || pathname.startsWith("/register");

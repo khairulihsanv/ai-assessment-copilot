@@ -15,14 +15,11 @@
  * Usage: npx tsx scripts/test-db-server.ts   (port TEST_DB_PORT, default 54329)
  * URL:   postgresql://test_user:test_password@127.0.0.1:54329/test_db?schema=public
  */
-// @ts-ignore
-import { PGlite } from "@electric-sql/pglite";
-// @ts-ignore
-import { vector } from "@electric-sql/pglite-pgvector";
-// @ts-ignore
-import { PGLiteSocketServer } from "@electric-sql/pglite-socket";
 import fs from "node:fs";
 import path from "node:path";
+import { PGlite } from "@electric-sql/pglite";
+import { vector } from "@electric-sql/pglite-pgvector";
+import { PGLiteSocketServer } from "@electric-sql/pglite-socket";
 
 const port = Number(process.env.TEST_DB_PORT ?? 54329);
 const dataDir = process.env.TEST_DB_DIR; // undefined => in-memory
@@ -41,13 +38,11 @@ function extractPreparedStatements(buf: Uint8Array): string[] {
     const type = buf[offset];
     if (offset + 4 >= buf.length) break;
     const len =
-      (buf[offset + 1] << 24) |
-      (buf[offset + 2] << 16) |
-      (buf[offset + 3] << 8) |
-      buf[offset + 4];
+      (buf[offset + 1] << 24) | (buf[offset + 2] << 16) | (buf[offset + 3] << 8) | buf[offset + 4];
     if (len < 4) break;
 
-    if (type === 0x50) { // 'P' = Parse
+    if (type === 0x50) {
+      // 'P' = Parse
       let nullIndex = offset + 5;
       while (nullIndex < offset + 1 + len && buf[nullIndex] !== 0) {
         nullIndex++;
@@ -83,7 +78,7 @@ async function applyMigrations(db: PGlite) {
 
 async function main() {
   const db = await PGlite.create({ dataDir, extensions: { vector } });
-  
+
   await applyMigrations(db);
 
   // Patch execProtocolRawStream on PGlite instance to handle Prisma statement reuse
@@ -106,17 +101,17 @@ async function main() {
     host: "127.0.0.1",
     maxConnections: Number(process.env.TEST_DB_MAX_CONNECTIONS ?? 50),
   });
-  
+
   await server.start();
   console.log(`[test-db] PGlite+pgvector listening on 127.0.0.1:${port}`);
-  
+
   const stop = async () => {
     console.log("[test-db] Stopping server and closing database...");
     await server.stop();
     await db.close();
     process.exit(0);
   };
-  
+
   process.on("SIGINT", stop);
   process.on("SIGTERM", stop);
 }

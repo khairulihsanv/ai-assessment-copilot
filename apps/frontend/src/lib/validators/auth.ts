@@ -1,1 +1,1 @@
-export { loginSchema, registerSchema, type LoginInput, type RegisterInput } from "@dexa/contracts";
+export { type LoginInput, loginSchema, type RegisterInput, registerSchema } from "@dexa/contracts";

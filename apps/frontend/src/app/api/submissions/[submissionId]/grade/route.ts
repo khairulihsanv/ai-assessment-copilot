@@ -22,7 +22,7 @@ export async function POST(
 
   const res = await forwardToBackend(`${BACKEND_URL}/submissions/${submissionId}/grade`, {
     method: "POST",
-    headers: { Authorization: `Bearer ${token}` }
+    headers: { Authorization: `Bearer ${token}` },
   });
 
   const data = await res.json();

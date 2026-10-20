@@ -1,8 +1,12 @@
+import { createAssignmentSchema, updateAssignmentSchema } from "@dexa/contracts";
 import { Hono } from "hono";
 import { prisma } from "../db/prisma.js";
-import { createAssignmentSchema, updateAssignmentSchema } from "@dexa/contracts";
-import { internalAuthMiddleware, AuthContext } from "../middleware/auth.js";
-import { publicCriterionSelect, publicGradeSelect, withReleasedGrade } from "../utils/public-selects.js";
+import { type AuthContext, internalAuthMiddleware } from "../middleware/auth.js";
+import {
+  publicCriterionSelect,
+  publicGradeSelect,
+  withReleasedGrade,
+} from "../utils/public-selects.js";
 
 const assignmentsRouter = new Hono<AuthContext>();
 assignmentsRouter.use("*", internalAuthMiddleware);
@@ -56,26 +60,36 @@ assignmentsRouter.get("/", async (c) => {
       : assignments.map((assignment) => ({
           ...assignment,
           submissions: assignment.submissions.map(withReleasedGrade),
-        }))
+        })),
   );
 });
 
 assignmentsRouter.post("/", async (c) => {
   const user = c.get("user");
   if (user.role !== "DOSEN") return c.json({ error: "Hanya dosen yang dapat membuat tugas" }, 403);
-  
+
   const classId = c.req.param("classId") as string;
   const cls = await prisma.class.findUnique({ where: { id: classId } });
-  
+
   if (!cls || cls.dosenId !== user.id) {
     return c.json({ error: "Kelas tidak ditemukan atau Anda bukan pengajar di kelas ini" }, 403);
   }
 
   const body = await c.req.json();
   const parsed = createAssignmentSchema.safeParse(body);
-  if (!parsed.success) return c.json({ error: parsed.error.issues[0]?.message ?? "Data tugas tidak valid" }, 400);
+  if (!parsed.success)
+    return c.json({ error: parsed.error.issues[0]?.message ?? "Data tugas tidak valid" }, 400);
 
-  const { title, instructions, submissionType, dueDate, maxScore, allowLateSubmission, rubricId, status } = parsed.data;
+  const {
+    title,
+    instructions,
+    submissionType,
+    dueDate,
+    maxScore,
+    allowLateSubmission,
+    rubricId,
+    status,
+  } = parsed.data;
 
   if (rubricId) {
     const rubric = await prisma.rubric.findFirst({ where: { id: rubricId, classId } });
@@ -164,7 +178,7 @@ assignmentsRouter.get("/:assignmentId", async (c) => {
       : {
           ...assignment,
           submissions: assignment.submissions.map(withReleasedGrade),
-        }
+        },
   );
 });
 
@@ -256,7 +270,8 @@ assignmentsRouter.patch("/:assignmentId", async (c) => {
 
   const body = await c.req.json();
   const parsed = updateAssignmentSchema.safeParse(body);
-  if (!parsed.success) return c.json({ error: parsed.error.issues[0]?.message ?? "Data tidak valid" }, 400);
+  if (!parsed.success)
+    return c.json({ error: parsed.error.issues[0]?.message ?? "Data tidak valid" }, 400);
 
   if (parsed.data.rubricId) {
     const rubric = await prisma.rubric.findFirst({
@@ -297,8 +312,8 @@ assignmentsRouter.delete("/:assignmentId", async (c) => {
 });
 
 import crypto from "node:crypto";
-import { getStorage } from "../storage/storage.js";
 import { processDocumentVersion } from "../parsers/document-parser.js";
+import { getStorage } from "../storage/storage.js";
 
 assignmentsRouter.post("/:assignmentId/reference-documents", async (c) => {
   const user = c.get("user");
@@ -316,11 +331,15 @@ assignmentsRouter.post("/:assignmentId/reference-documents", async (c) => {
   const isAssistant = cls.enrollments[0]?.role === "ASSISTANT";
   if (!isDosen && !isAssistant) return c.json({ error: "Forbidden" }, 403);
 
-  const assignment = await prisma.assignment.findFirst({ where: { id: assignmentId, classId }, select: { id: true } });
+  const assignment = await prisma.assignment.findFirst({
+    where: { id: assignmentId, classId },
+    select: { id: true },
+  });
   if (!assignment) return c.json({ error: "Tugas tidak ditemukan" }, 404);
 
   const contentType = c.req.header("content-type") || "";
-  if (!contentType.includes("multipart/form-data")) return c.json({ error: "Invalid content type" }, 400);
+  if (!contentType.includes("multipart/form-data"))
+    return c.json({ error: "Invalid content type" }, 400);
 
   const formData = await c.req.parseBody();
   const file = formData["file"] as File | undefined;
@@ -342,7 +361,9 @@ assignmentsRouter.post("/:assignmentId/reference-documents", async (c) => {
 
   let document = await prisma.document.findFirst({ where: { assignmentId, sourceType } });
   if (!document) {
-    document = await prisma.document.create({ data: { assignmentId, sourceType, ownerId: user.id } });
+    document = await prisma.document.create({
+      data: { assignmentId, sourceType, ownerId: user.id },
+    });
   }
 
   const latestVersion = await prisma.documentVersion.findFirst({
@@ -366,13 +387,16 @@ assignmentsRouter.post("/:assignmentId/reference-documents", async (c) => {
   // Background task
   setTimeout(() => processDocumentVersion(version.id).catch(console.error), 0);
 
-  return c.json({
-    success: true,
-    documentId: document.id,
-    versionId: version.id,
-    versionNumber: version.versionNumber,
-    status: version.extractionStatus,
-  }, 202);
+  return c.json(
+    {
+      success: true,
+      documentId: document.id,
+      versionId: version.id,
+      versionNumber: version.versionNumber,
+      status: version.extractionStatus,
+    },
+    202,
+  );
 });
 
 assignmentsRouter.post("/:assignmentId/reference-sets", async (c) => {
@@ -385,11 +409,20 @@ assignmentsRouter.post("/:assignmentId/reference-sets", async (c) => {
   const cls = await prisma.class.findUnique({ where: { id: classId } });
   if (!cls || cls.dosenId !== user.id) return c.json({ error: "Forbidden" }, 403);
 
-  const assignment = await prisma.assignment.findFirst({ where: { id: assignmentId, classId }, select: { id: true } });
+  const assignment = await prisma.assignment.findFirst({
+    where: { id: assignmentId, classId },
+    select: { id: true },
+  });
   if (!assignment) return c.json({ error: "Tugas tidak ditemukan" }, 404);
 
   const body = await c.req.json().catch(() => null);
-  if (!body || !Array.isArray(body.documentVersionIds) || !body.documentVersionIds.length || body.documentVersionIds.length > 20 || body.documentVersionIds.some((id: unknown) => typeof id !== "string" || !id)) {
+  if (
+    !body ||
+    !Array.isArray(body.documentVersionIds) ||
+    !body.documentVersionIds.length ||
+    body.documentVersionIds.length > 20 ||
+    body.documentVersionIds.some((id: unknown) => typeof id !== "string" || !id)
+  ) {
     return c.json({ error: "Pilih 1–20 versi dokumen yang valid" }, 400);
   }
 

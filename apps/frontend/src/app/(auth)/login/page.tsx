@@ -1,24 +1,24 @@
 "use client";
 
-import { useState, useEffect, Suspense, useCallback } from "react";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
 import {
+  ArrowRight,
+  Building2,
+  CheckCircle2,
   Eye,
   EyeOff,
+  Info,
+  Loader2,
+  Lock,
   School,
   User,
   Zap,
-  Lock,
-  Building2,
-  CheckCircle2,
-  Loader2,
-  ArrowRight,
-  Info,
 } from "lucide-react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useState } from "react";
 
 function LoginForm() {
-  const router = useRouter();
+  const _router = useRouter();
   const searchParams = useSearchParams();
 
   const registered = searchParams.get("registered") === "true";
@@ -101,9 +101,14 @@ function LoginForm() {
         }
         sessionStorage.setItem("dexa_session_active", "1");
 
-        // Success! Redirect to target or dashboard
+        // Success! Redirect to target or dashboard (strictly internal callbackUrl)
         const callbackUrl = searchParams.get("callbackUrl");
-        window.location.assign(callbackUrl || "/dashboard");
+        const isSafeInternalUrl =
+          callbackUrl &&
+          callbackUrl.startsWith("/") &&
+          !callbackUrl.startsWith("//") &&
+          !callbackUrl.includes(":");
+        window.location.assign(isSafeInternalUrl ? callbackUrl : "/dashboard");
       }
     } catch (err: unknown) {
       console.error("Login error:", err);
@@ -116,11 +121,9 @@ function LoginForm() {
     <div className="space-y-6 animate-in fade-in-50 duration-500">
       <div className="text-center space-y-1 pb-2">
         <h2 className="text-2xl font-display font-extrabold text-[#111827] tracking-tight">
-          Portal Masuk
+          Masuk ke ruang kerja
         </h2>
-        <p className="text-xs text-[#6B7280]">
-          Autentikasi aman ke platform akademik SV UNS
-        </p>
+        <p className="text-xs text-[#6B7280]">Autentikasi aman ke platform akademik SV UNS</p>
       </div>
 
       {/* ─── REGISTRATION SUCCESS BANNER ─── */}
@@ -144,7 +147,8 @@ function LoginForm() {
             <span className="font-bold text-xs">Sesi Otomatis Berakhir</span>
           </div>
           <p className="text-xs text-amber-700 leading-relaxed">
-            Anda telah keluar dari website sebelumnya. Sesi login telah otomatis dibersihkan demi keamanan data akademik Anda. Silakan masuk kembali.
+            Anda telah keluar dari website sebelumnya. Sesi login telah otomatis dibersihkan demi
+            keamanan data akademik Anda. Silakan masuk kembali.
           </p>
         </div>
       )}
@@ -242,9 +246,7 @@ function LoginForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder={
-              role === "DOSEN"
-                ? "nama.dosen@staff.uns.ac.id"
-                : "mhs.vokasi@student.uns.ac.id"
+              role === "DOSEN" ? "nama.dosen@staff.uns.ac.id" : "mhs.vokasi@student.uns.ac.id"
             }
             className="w-full px-4 py-2.5 rounded-full bg-white border border-[#E5E7EB] text-xs font-sans text-[#111827] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[#1E4D3B] focus:ring-2 focus:ring-[#1E4D3B]/20 transition-all shadow-xs"
           />
@@ -295,12 +297,16 @@ function LoginForm() {
               onChange={(e) => setRememberMe(e.target.checked)}
               className="w-4 h-4 rounded text-[#1E4D3B] focus:ring-[#1E4D3B]/20 cursor-pointer accent-[#1E4D3B]"
             />
-            <label htmlFor="remember-me" className="text-xs text-[#374151] cursor-pointer select-none font-medium">
+            <label
+              htmlFor="remember-me"
+              className="text-xs text-[#374151] cursor-pointer select-none font-medium"
+            >
               Ingat sesi saya di perangkat ini
             </label>
           </div>
           <p className="text-[10px] text-[#6B7280] pl-6 leading-relaxed">
-            Jika tidak dicentang, sesi otomatis berakhir ketika Anda keluar dari website demi keamanan akun.
+            Jika tidak dicentang, sesi otomatis berakhir ketika Anda keluar dari website demi
+            keamanan akun.
           </p>
         </div>
 
@@ -334,24 +340,32 @@ function LoginForm() {
         </span>
       </div>
 
-      {/* SSO Campus Integration */}
-      <div className="grid grid-cols-2 gap-2.5">
-        <button
-          type="button"
-          onClick={() => alert("SSO Google Workspace UNS terintegrasi. Silakan masuk via form di atas untuk demo.")}
-          className="flex items-center justify-center gap-2 py-2 px-3 rounded-full bg-[#F9FAFB] hover:bg-[#F3F4F6] border border-[#E5E7EB] text-xs font-bold text-[#374151] transition cursor-pointer"
-        >
-          <Building2 size={15} className="text-[#1E4D3B]" />
-          <span>Workspace UNS</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => alert("SSO Akademik UNS terintegrasi. Silakan masuk via form di atas untuk demo.")}
-          className="flex items-center justify-center gap-2 py-2 px-3 rounded-full bg-[#F9FAFB] hover:bg-[#F3F4F6] border border-[#E5E7EB] text-xs font-bold text-[#374151] transition cursor-pointer"
-        >
-          <School size={15} className="text-[#F59E0B]" />
-          <span>SSO Akademik</span>
-        </button>
+      {/* SSO Campus Integration (Disabled - Belum tersedia) */}
+      <div className="space-y-1.5">
+        <div className="grid grid-cols-2 gap-2.5">
+          <button
+            type="button"
+            disabled
+            title="Integrasi SSO Google Workspace UNS belum tersedia"
+            className="flex items-center justify-center gap-2 py-2 px-3 rounded-full bg-[#F3F4F6] border border-[#E5E7EB] text-xs font-medium text-[#9CA3AF] cursor-not-allowed opacity-70"
+          >
+            <Building2 size={15} className="text-[#9CA3AF]" />
+            <span>Workspace UNS</span>
+          </button>
+          <button
+            type="button"
+            disabled
+            title="Integrasi SSO Akademik UNS belum tersedia"
+            className="flex items-center justify-center gap-2 py-2 px-3 rounded-full bg-[#F3F4F6] border border-[#E5E7EB] text-xs font-medium text-[#9CA3AF] cursor-not-allowed opacity-70"
+          >
+            <School size={15} className="text-[#9CA3AF]" />
+            <span>SSO Akademik</span>
+          </button>
+        </div>
+        <p className="text-[10px] text-center text-[#9CA3AF] italic">
+          * Masuk via SSO Kampus belum tersedia. Silakan masuk menggunakan form email & kata sandi
+          di atas.
+        </p>
       </div>
 
       {/* Security badge */}
@@ -361,8 +375,12 @@ function LoginForm() {
       </div>
 
       <div className="text-center pt-1">
-        <Link href="/register" className="text-xs font-medium text-[#4B5563] hover:text-[#1E4D3B] transition-colors">
-          Belum punya akun? <strong className="text-[#1E4D3B] underline underline-offset-4">Daftar sekarang</strong>
+        <Link
+          href="/register"
+          className="text-xs font-medium text-[#4B5563] hover:text-[#1E4D3B] transition-colors"
+        >
+          Belum punya akun?{" "}
+          <strong className="text-[#1E4D3B] underline underline-offset-4">Daftar sekarang</strong>
         </Link>
       </div>
     </div>
@@ -371,7 +389,14 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="p-12 text-center flex flex-col items-center justify-center space-y-4"><Loader2 size={32} className="animate-spin text-[#1E4D3B]" /><span className="text-xs font-mono text-[#6B7280]">Memuat Portal Masuk...</span></div>}>
+    <Suspense
+      fallback={
+        <div className="p-12 text-center flex flex-col items-center justify-center space-y-4">
+          <Loader2 size={32} className="animate-spin text-[#1E4D3B]" />
+          <span className="text-xs font-mono text-[#6B7280]">Memuat Portal Masuk...</span>
+        </div>
+      }
+    >
       <LoginForm />
     </Suspense>
   );

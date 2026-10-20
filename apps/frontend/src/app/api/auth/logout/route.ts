@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3001";
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get("dexa_session")?.value;
@@ -21,10 +21,15 @@ export async function POST() {
 
     const response = NextResponse.json({ success: true });
 
+    const isSecure =
+      process.env.COOKIE_SECURE !== "false" &&
+      process.env.NODE_ENV === "production" &&
+      (request.url.startsWith("https:") || request.headers.get("x-forwarded-proto") === "https");
+
     // Clear session cookie
     response.cookies.set("dexa_session", "", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: isSecure,
       sameSite: "lax",
       path: "/",
       maxAge: 0,

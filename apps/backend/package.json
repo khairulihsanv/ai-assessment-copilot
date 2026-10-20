@@ -6,9 +6,9 @@
   "scripts": {
     "dev": "python -m uvicorn app.main:app --host 0.0.0.0 --port 3001 --reload",
     "start": "python -m uvicorn app.main:app --host 0.0.0.0 --port 3001",
-    "build": "python -c \"print('Backend FastAPI ready')\"",
-    "typecheck": "python -c \"print('Backend FastAPI typecheck passed')\"",
-    "lint": "python -c \"print('Backend lint passed')\"",
-    "test": "pytest"
+    "build": "python -m compileall -q app",
+    "typecheck": "python -m mypy app --config-file mypy.ini",
+    "lint": "python -m ruff check app --ignore B008,BLE001,S110",
+    "test": "python -m pytest"
   }
 }

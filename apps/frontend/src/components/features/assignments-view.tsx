@@ -14,6 +14,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { formatRelativeTime } from "@/shared/utils";
 
 export interface ClassAssignmentPayload {
@@ -244,7 +245,7 @@ export function AssignmentsView({
               placeholder="Cari tugas atau mata kuliah..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-md bg-muted/40 border border-border text-xs font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-[#1E4D3B] shadow-none"
+              className="w-full pl-10 pr-4 py-2.5 rounded-md bg-muted/40 border border-border text-xs font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary shadow-none"
             />
           </div>
         </div>
@@ -460,7 +461,7 @@ export function AssignmentsView({
             placeholder="Cari judul tugas atau kelas..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-muted/40 text-foreground placeholder:text-muted-foreground text-xs font-medium rounded-md border border-border focus:outline-none focus:border-[#1E4D3B] focus:bg-card transition"
+            className="w-full pl-10 pr-4 py-2 bg-muted/40 text-foreground placeholder:text-muted-foreground text-xs font-medium rounded-md border border-border focus:outline-none focus:border-primary focus:bg-card transition"
           />
         </div>
 
@@ -470,7 +471,7 @@ export function AssignmentsView({
               aria-label="Filter kelas"
               value={selectedClassFilter}
               onChange={(e) => setSelectedClassFilter(e.target.value)}
-              className="px-4 py-2 rounded-md bg-muted/40 border border-border text-xs font-medium text-foreground focus:outline-none focus:border-[#1E4D3B] cursor-pointer"
+              className="px-4 py-2 rounded-md bg-muted/40 border border-border text-xs font-medium text-foreground focus:outline-none focus:border-primary cursor-pointer"
             >
               <option value="ALL">Semua Kelas Kuliah</option>
               {classes.map((c) => (
@@ -593,7 +594,7 @@ export function AssignmentsView({
                     </span>
                   </div>
 
-                  <div className="w-full h-2 bg-[#E5E7EB] rounded-md overflow-hidden flex">
+                  <div className="w-full h-2 bg-muted rounded-md overflow-hidden flex">
                     <div
                       className="h-full bg-primary transition-all"
                       style={{ width: `${Math.min(submissionPercent, 100)}%` }}
@@ -633,20 +634,23 @@ export function AssignmentsView({
 
       {/* ─── CREATE ASSIGNMENT MODAL ─── */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 bg-[#111827]/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-card rounded-lg border border-border shadow-2xl max-w-lg w-full max-h-[90dvh] overflow-y-auto p-6 space-y-4 animate-in zoom-in-95 duration-200">
+        <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+          <DialogContent
+            showCloseButton={false}
+            className="sm:max-w-lg max-h-[90dvh] overflow-y-auto p-6 space-y-4"
+          >
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-lg bg-primary/5 text-primary flex items-center justify-center">
                   <Plus size={18} />
                 </div>
                 <div>
-                  <h3 className="font-display text-base font-semibold text-foreground">
+                  <DialogTitle className="font-display text-base font-semibold text-foreground">
                     Buat Tugas Baru
-                  </h3>
-                  <p className="text-xs text-muted-foreground">
+                  </DialogTitle>
+                  <DialogDescription className="text-xs text-muted-foreground">
                     Rilis instruksi asesmen untuk kelas Anda
-                  </p>
+                  </DialogDescription>
                 </div>
               </div>
               <button
@@ -668,7 +672,7 @@ export function AssignmentsView({
                   id="select-class"
                   value={selectedClassId}
                   onChange={(e) => setSelectedClassId(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-md bg-muted/40 border border-border text-xs font-sans text-foreground focus:outline-none focus:border-[#1E4D3B]"
+                  className="w-full px-4 py-2.5 rounded-md bg-muted/40 border border-border text-xs font-sans text-foreground focus:outline-none focus:border-primary"
                 >
                   {classes.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -689,7 +693,7 @@ export function AssignmentsView({
                   placeholder="Contoh: Tugas 4: Implementasi Algoritma Red-Black Tree"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-md bg-muted/40 border border-border text-xs font-sans text-foreground focus:outline-none focus:border-[#1E4D3B]"
+                  className="w-full px-4 py-2.5 rounded-md bg-muted/40 border border-border text-xs font-sans text-foreground focus:outline-none focus:border-primary"
                 />
               </div>
 
@@ -704,7 +708,7 @@ export function AssignmentsView({
                   placeholder="Jelaskan kriteria pengerjaan, format berkas, dan batasan soal..."
                   value={newInstructions}
                   onChange={(e) => setNewInstructions(e.target.value)}
-                  className="w-full px-4 py-3 rounded-lg bg-muted/40 border border-border text-xs font-sans text-foreground focus:outline-none focus:border-[#1E4D3B] resize-none"
+                  className="w-full px-4 py-3 rounded-lg bg-muted/40 border border-border text-xs font-sans text-foreground focus:outline-none focus:border-primary resize-none"
                 />
               </div>
 
@@ -718,7 +722,7 @@ export function AssignmentsView({
                     type="datetime-local"
                     value={newDueDate}
                     onChange={(e) => setNewDueDate(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-md bg-muted/40 border border-border text-xs font-mono text-foreground focus:outline-none focus:border-[#1E4D3B]"
+                    className="w-full px-4 py-2.5 rounded-md bg-muted/40 border border-border text-xs font-mono text-foreground focus:outline-none focus:border-primary"
                   />
                 </div>
                 <div className="space-y-1">
@@ -732,7 +736,7 @@ export function AssignmentsView({
                     max={100}
                     value={newMaxScore}
                     onChange={(e) => setNewMaxScore(Number(e.target.value))}
-                    className="w-full px-4 py-2.5 rounded-md bg-muted/40 border border-border text-xs font-mono text-foreground focus:outline-none focus:border-[#1E4D3B]"
+                    className="w-full px-4 py-2.5 rounded-md bg-muted/40 border border-border text-xs font-mono text-foreground focus:outline-none focus:border-primary"
                   />
                 </div>
               </div>
@@ -745,22 +749,28 @@ export function AssignmentsView({
                   id="select-rubric2"
                   value={selectedRubricId}
                   onChange={(e) => setSelectedRubricId(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-md bg-muted/40 border border-border text-xs font-sans text-foreground focus:outline-none focus:border-[#1E4D3B]"
+                  className="w-full px-4 py-2.5 rounded-md bg-muted/40 border border-border text-xs font-sans text-foreground focus:outline-none focus:border-primary"
                 >
-                  <option value="">(Gunakan Belum ada rubrik Capstone)</option>
+                  <option value="">
+                    Tanpa Rubrik (Evaluasi AI memerlukan rubrik sebelum dijalankan)
+                  </option>
                   {rubrics.map((r) => (
                     <option key={r.id} value={r.id}>
                       {r.title} ({r.criteria?.length || 0} kriteria)
                     </option>
                   ))}
                 </select>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Tugas dapat disimpan tanpa rubrik, namun evaluasi AI memerlukan rubrik dengan
+                  kriteria penilaian.
+                </p>
               </div>
 
               <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-border">
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="px-5 py-2.5 rounded-md bg-muted text-xs font-bold text-muted-foreground hover:bg-[#E5E7EB] transition cursor-pointer"
+                  className="px-5 py-2.5 rounded-md bg-muted text-xs font-bold text-muted-foreground hover:bg-muted transition cursor-pointer"
                 >
                   Batal
                 </button>
@@ -773,8 +783,8 @@ export function AssignmentsView({
                 </button>
               </div>
             </form>
-          </div>
-        </div>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );

@@ -1,9 +1,9 @@
 import { Hono } from "hono";
 import { z } from "zod";
-import { prisma } from "../db/prisma.js";
-import { internalAuthMiddleware, AuthContext } from "../middleware/auth.js";
 import { extractTextFromFile } from "../ai/extract-text.js";
 import { GradingError, gradeSubmission } from "../ai/grading-client.js";
+import { prisma } from "../db/prisma.js";
+import { type AuthContext, internalAuthMiddleware } from "../middleware/auth.js";
 
 const submissionDetailsRouter = new Hono<AuthContext>();
 submissionDetailsRouter.use("*", internalAuthMiddleware);
@@ -124,7 +124,7 @@ submissionDetailsRouter.get("/:submissionId", async (c) => {
       ...submission,
       evaluations: [],
       grades: submission.grades.filter(
-        (g) => g.id === submission.releasedGradeId && g.status === "RELEASED"
+        (g) => g.id === submission.releasedGradeId && g.status === "RELEASED",
       ),
     });
   }
@@ -134,7 +134,8 @@ submissionDetailsRouter.get("/:submissionId", async (c) => {
 
 submissionDetailsRouter.post("/:submissionId/grade", async (c) => {
   const user = c.get("user");
-  if (user.role !== "DOSEN") return c.json({ error: "Hanya dosen yang dapat memicu penilaian AI" }, 403);
+  if (user.role !== "DOSEN")
+    return c.json({ error: "Hanya dosen yang dapat memicu penilaian AI" }, 403);
 
   const submissionId = c.req.param("submissionId");
   const submission = await prisma.submission.findUnique({
@@ -149,21 +150,26 @@ submissionDetailsRouter.post("/:submissionId/grade", async (c) => {
     return c.json({ error: "Pengumpulan tugas tidak ditemukan atau belum memiliki versi" }, 404);
   }
 
-  if (submission.assignment.class.dosenId !== user.id) return c.json({ error: "Anda bukan pengajar kelas ini" }, 403);
+  if (submission.assignment.class.dosenId !== user.id)
+    return c.json({ error: "Anda bukan pengajar kelas ini" }, 403);
 
   try {
-    const activeVersion = await prisma.submissionVersion.findUnique({ where: { id: submission.activeVersionId } });
+    const activeVersion = await prisma.submissionVersion.findUnique({
+      where: { id: submission.activeVersionId },
+    });
     if (!activeVersion) return c.json({ error: "Versi jawaban tidak ditemukan" }, 404);
 
     let studentAnswer = "";
     if (activeVersion.type === "TEXT") {
       studentAnswer = activeVersion.content || "";
     } else if (activeVersion.type === "PDF" || activeVersion.type === "DOCX") {
-      if (!activeVersion.fileUrl) return c.json({ error: "File dokumen tidak ditemukan di server" }, 400);
+      if (!activeVersion.fileUrl)
+        return c.json({ error: "File dokumen tidak ditemukan di server" }, 400);
       studentAnswer = await extractTextFromFile(activeVersion.fileUrl, activeVersion.type);
     }
 
-    if (!studentAnswer.trim()) return c.json({ error: "Jawaban mahasiswa kosong atau tidak dapat diekstraksi" }, 400);
+    if (!studentAnswer.trim())
+      return c.json({ error: "Jawaban mahasiswa kosong atau tidak dapat diekstraksi" }, 400);
 
     let rubricCriteria = submission.assignment.rubric?.criteria.map((cr) => ({
       id: cr.id,
@@ -179,28 +185,33 @@ submissionDetailsRouter.post("/:submissionId/grade", async (c) => {
     }));
 
     if (!rubricCriteria || rubricCriteria.length === 0) {
-      rubricCriteria = [{
-        id: "general-eval",
-        label: "Evaluasi Keseluruhan Instruksi Tugas",
-        description: "Kesesuaian dan kedalaman jawaban terhadap instruksi yang diberikan",
-        maxScore: submission.assignment.maxScore,
-        weight: 100,
-        expectedAnswer: null,
-        answerKey: null,
-        material: null,
-        answerKeyEmbedding: null,
-        materialEmbedding: null,
-      }];
+      rubricCriteria = [
+        {
+          id: "general-eval",
+          label: "Evaluasi Keseluruhan Instruksi Tugas",
+          description: "Kesesuaian dan kedalaman jawaban terhadap instruksi yang diberikan",
+          maxScore: submission.assignment.maxScore,
+          weight: 100,
+          expectedAnswer: null,
+          answerKey: null,
+          material: null,
+          answerKeyEmbedding: null,
+          materialEmbedding: null,
+        },
+      ];
     }
 
-    const gradingResult = await gradeSubmission({
-      assignmentId: submission.assignmentId,
-      assignmentTitle: submission.assignment.title,
-      assignmentInstructions: submission.assignment.instructions,
-      rubricCriteria,
-      studentAnswer,
-      maxScore: submission.assignment.maxScore,
-    }, user.id);
+    const gradingResult = await gradeSubmission(
+      {
+        assignmentId: submission.assignmentId,
+        assignmentTitle: submission.assignment.title,
+        assignmentInstructions: submission.assignment.instructions,
+        rubricCriteria,
+        studentAnswer,
+        maxScore: submission.assignment.maxScore,
+      },
+      user.id,
+    );
 
     const aiEvaluation = await prisma.evaluationRun.create({
       data: {
@@ -218,14 +229,22 @@ submissionDetailsRouter.post("/:submissionId/grade", async (c) => {
     return c.json({ success: true, aiEvaluation });
   } catch (error) {
     console.error("AI Grading error:", error);
-    if (error instanceof GradingError) return c.json({ error: error.message, code: error.code }, 400);
-    return c.json({ error: error instanceof Error ? error.message : "Terjadi kesalahan saat memproses penilaian AI" }, 500);
+    if (error instanceof GradingError)
+      return c.json({ error: error.message, code: error.code }, 400);
+    return c.json(
+      {
+        error:
+          error instanceof Error ? error.message : "Terjadi kesalahan saat memproses penilaian AI",
+      },
+      500,
+    );
   }
 });
 
 submissionDetailsRouter.post("/:submissionId/finalize", async (c) => {
   const user = c.get("user");
-  if (user.role !== "DOSEN") return c.json({ error: "Hanya dosen yang dapat memfinalisasi nilai" }, 403);
+  if (user.role !== "DOSEN")
+    return c.json({ error: "Hanya dosen yang dapat memfinalisasi nilai" }, 403);
 
   const submissionId = c.req.param("submissionId");
   const submission = await prisma.submission.findUnique({
@@ -234,21 +253,41 @@ submissionDetailsRouter.post("/:submissionId/finalize", async (c) => {
   });
 
   if (!submission) return c.json({ error: "Pengumpulan tugas tidak ditemukan" }, 404);
-  if (submission.assignment.class.dosenId !== user.id) return c.json({ error: "Anda bukan pengajar kelas ini" }, 403);
+  if (submission.assignment.class.dosenId !== user.id)
+    return c.json({ error: "Anda bukan pengajar kelas ini" }, 403);
 
   try {
     const body = await c.req.json();
     const parsed = finalizeSchema.safeParse(body);
-    if (!parsed.success) return c.json({ error: parsed.error.issues[0]?.message ?? "Data nilai tidak valid" }, 400);
+    if (!parsed.success)
+      return c.json({ error: parsed.error.issues[0]?.message ?? "Data nilai tidak valid" }, 400);
 
-    const { finalScore, finalFeedback, isAIAssisted, editedFromAI, expectedSubmissionVersionId, expectedReleasedGradeId } = parsed.data;
+    const {
+      finalScore,
+      finalFeedback,
+      isAIAssisted,
+      editedFromAI,
+      expectedSubmissionVersionId,
+      expectedReleasedGradeId,
+    } = parsed.data;
 
-    if (submission.activeVersionId !== expectedSubmissionVersionId || submission.releasedGradeId !== expectedReleasedGradeId) {
-      return c.json({ error: "Jawaban atau nilai telah berubah. Muat ulang sebelum merilis." }, 409);
+    if (
+      submission.activeVersionId !== expectedSubmissionVersionId ||
+      submission.releasedGradeId !== expectedReleasedGradeId
+    ) {
+      return c.json(
+        { error: "Jawaban atau nilai telah berubah. Muat ulang sebelum merilis." },
+        409,
+      );
     }
 
     if (finalScore > submission.assignment.maxScore) {
-      return c.json({ error: `Skor tidak boleh melebihi skor maksimal tugas (${submission.assignment.maxScore})` }, 400);
+      return c.json(
+        {
+          error: `Skor tidak boleh melebihi skor maksimal tugas (${submission.assignment.maxScore})`,
+        },
+        400,
+      );
     }
 
     const result = await prisma.$transaction(async (tx) => {
@@ -266,12 +305,16 @@ submissionDetailsRouter.post("/:submissionId/finalize", async (c) => {
       });
 
       const changed = await tx.submission.updateMany({
-        where: { id: submissionId, activeVersionId: expectedSubmissionVersionId, releasedGradeId: expectedReleasedGradeId },
+        where: {
+          id: submissionId,
+          activeVersionId: expectedSubmissionVersionId,
+          releasedGradeId: expectedReleasedGradeId,
+        },
         data: { releasedGradeId: grade.id },
       });
-      
+
       if (changed.count !== 1) throw new Error("GRADE_CONFLICT");
-      
+
       if (expectedReleasedGradeId) {
         await tx.gradeRevision.updateMany({
           where: { id: expectedReleasedGradeId, submissionId, status: "RELEASED" },
@@ -285,7 +328,10 @@ submissionDetailsRouter.post("/:submissionId/finalize", async (c) => {
     return c.json({ success: true, grade: result });
   } catch (error) {
     if (error instanceof Error && error.message === "GRADE_CONFLICT") {
-      return c.json({ error: "Jawaban atau nilai telah berubah. Muat ulang sebelum merilis." }, 409);
+      return c.json(
+        { error: "Jawaban atau nilai telah berubah. Muat ulang sebelum merilis." },
+        409,
+      );
     }
     console.error("Finalize grade error:", error);
     return c.json({ error: "Gagal memfinalisasi nilai tugas" }, 500);

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { AssignmentsView } from "@/components/features/assignments-view";
-import { auth } from "@/server/auth/auth";
 import { fetchFromBackend } from "@/server/api/backend-client";
+import { auth } from "@/server/auth/auth";
 
 export const metadata = {
   title: "Manajemen Tugas & Pembangun Rubrik — AI Assessment Copilot",
@@ -34,10 +34,6 @@ export default async function AssignmentsPage() {
   }
 
   return (
-    <AssignmentsView
-      userRole="MAHASISWA"
-      enrollments={data.enrollments}
-      userId={session.user.id}
-    />
+    <AssignmentsView userRole="MAHASISWA" enrollments={data.enrollments} userId={session.user.id} />
   );
 }

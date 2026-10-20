@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models.models import User, Class, Assignment, Submission, GradeRevision
 from app.models.enums import Role
+from app.models.models import Assignment, Class, GradeRevision, Submission, User
 from app.security.dependencies import get_current_user
 
 analytics_router = APIRouter(prefix="/analytics", tags=["analytics"])

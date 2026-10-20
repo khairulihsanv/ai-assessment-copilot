@@ -17,18 +17,23 @@ aiRouter.post("/extract-text", async (c) => {
   const file = formData.file as File | undefined;
 
   if (!file) return c.json({ error: "File tidak ditemukan" }, 400);
-  if (file.size > MAX_FILE_SIZE) return c.json({ error: "Ukuran file terlalu besar. Maksimal 10MB." }, 400);
+  if (file.size > MAX_FILE_SIZE)
+    return c.json({ error: "Ukuran file terlalu besar. Maksimal 10MB." }, 400);
 
   let fileType: "PDF" | "DOCX" | null = null;
   const fileName = file.name.toLowerCase();
 
   if (fileName.endsWith(".pdf") || file.type === "application/pdf") {
     fileType = "PDF";
-  } else if (fileName.endsWith(".docx") || file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+  } else if (
+    fileName.endsWith(".docx") ||
+    file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  ) {
     fileType = "DOCX";
   }
 
-  if (!fileType) return c.json({ error: "Tipe file tidak didukung. Harap unggah PDF atau DOCX." }, 400);
+  if (!fileType)
+    return c.json({ error: "Tipe file tidak didukung. Harap unggah PDF atau DOCX." }, 400);
 
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
@@ -38,7 +43,10 @@ aiRouter.post("/extract-text", async (c) => {
     return c.json({ success: true, text });
   } catch (error) {
     console.error("Error extracting text:", error);
-    return c.json({ error: error instanceof Error ? error.message : "Gagal mengekstrak teks dari file." }, 500);
+    return c.json(
+      { error: error instanceof Error ? error.message : "Gagal mengekstrak teks dari file." },
+      500,
+    );
   }
 });
 

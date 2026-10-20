@@ -1,5 +1,5 @@
 import { config } from "dotenv";
-import { gradeSubmission } from "../lib/ai/grading-client";
+import { gradeSubmission } from "../apps/backend/src/ai/grading-client.js";
 
 // Load environment variables from .env
 config({ path: ".env" });
@@ -144,7 +144,7 @@ async function runTests() {
       );
 
       console.log(`\n📋 Rincian Kriteria:`);
-      result.response.perCriterion.forEach((crit) => {
+      result.response.perCriterion.forEach((crit: { score: number; reasoning: string }) => {
         const isAuto = crit.reasoning.includes("[Auto-Graded]");
         const indicator = isAuto ? "⚡" : "🤖";
         console.log(`  - [${indicator}] Skor: ${crit.score} | Alasan: ${crit.reasoning}`);

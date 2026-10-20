@@ -15,7 +15,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
 
   const res = await forwardToBackend(`${BACKEND_URL}/reference-sets/${id}/approve`, {
     method: "POST",
-    headers: { Authorization: `Bearer ${token}` }
+    headers: { Authorization: `Bearer ${token}` },
   });
 
   const data = await res.json();

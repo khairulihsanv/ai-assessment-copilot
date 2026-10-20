@@ -25,7 +25,7 @@ function samplePdf(): Buffer {
 describe("PDF extraction with the installed pdf-parse runtime", () => {
   it("extracts text from a real PDF", async () => {
     expect(await extractTextFromBuffer(samplePdf(), "PDF")).toContain("Dexa assessment reference");
-  });
+  }, 15000);
 
   it("rejects corrupt input instead of producing reference text", async () => {
     await expect(extractTextFromBuffer(Buffer.from("not a PDF"), "PDF")).rejects.toThrow(

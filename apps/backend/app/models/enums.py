@@ -16,6 +16,7 @@ class SubmissionType(str, enum.Enum):
     PDF = "PDF"
     DOCX = "DOCX"
     ANY = "ANY"
+    SCAN = "SCAN"
 
 
 class AssignmentStatus(str, enum.Enum):

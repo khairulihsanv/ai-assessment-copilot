@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { prisma } from "../db/prisma.js";
-import { internalAuthMiddleware, type AuthContext } from "../middleware/auth.js";
+import { type AuthContext, internalAuthMiddleware } from "../middleware/auth.js";
 
 const dashboardRouter = new Hono<AuthContext>();
 dashboardRouter.use("*", internalAuthMiddleware);
@@ -110,9 +110,7 @@ dashboardRouter.get("/", async (c) => {
     }),
   ]);
 
-  const currentGrades = rawGrades.filter(
-    (g) => g.id === g.submission.releasedGradeId
-  );
+  const currentGrades = rawGrades.filter((g) => g.id === g.submission.releasedGradeId);
 
   return c.json({
     role: "MAHASISWA" as const,
