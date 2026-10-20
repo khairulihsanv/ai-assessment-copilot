@@ -25,7 +25,7 @@ export function DashboardTopbar({ user }: { user: WorkspaceUser }) {
   const { resolvedTheme, setTheme } = useThemeStore();
   return (
     <>
-      <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center justify-between gap-3 border-b bg-card px-4 sm:px-8">
+      <header className="workspace-topbar sticky top-0 z-20 flex shrink-0 items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <button
             type="button"
@@ -36,7 +36,7 @@ export function DashboardTopbar({ user }: { user: WorkspaceUser }) {
             <Menu size={20} />
           </button>
           <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-2 text-sm">
-            <span className="hidden text-muted-foreground sm:inline">Ruang kerja</span>
+            <span className="hidden text-muted-foreground sm:inline">Dexa Assessment</span>
             <ChevronRight size={14} className="hidden text-muted-foreground sm:block" />
             <Link
               className="truncate font-medium hover:underline"
@@ -59,6 +59,9 @@ export function DashboardTopbar({ user }: { user: WorkspaceUser }) {
           </nav>
         </div>
         <div className="flex shrink-0 items-center gap-2">
+          <span className="hidden border-r pr-4 mr-2 text-xs text-muted-foreground lg:block">
+            {user.role === "DOSEN" ? "Ruang mengajar" : "Ruang belajar"}
+          </span>
           <button
             type="button"
             onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}

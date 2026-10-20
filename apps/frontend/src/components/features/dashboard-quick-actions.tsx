@@ -33,9 +33,6 @@ export function DosenQuickActionGroup() {
         <span>Acuan & rubrik</span>
         <ArrowRight size={15} />
       </Link>
-      <Unavailable label="Ekspor rekap nilai (CSV)" icon={Download} />
-      <Unavailable label="Rekap BAP perkuliahan" />
-      <Unavailable label="Pengumuman ke mahasiswa" />
     </div>
   );
 }

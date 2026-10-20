@@ -1,0 +1,39 @@
+/* Original Dexa motion and tactile surfaces shared by marketing and the product. */
+.feature-icon { --icon-bg:#e1edff; --icon-fg:#2367d7; --icon-edge:#bad3fb; width:49px; height:49px; flex-shrink:0; display:inline-flex; align-items:center; justify-content:center; border:1.5px solid var(--icon-edge); border-radius:15px; background:var(--icon-bg); color:var(--icon-fg); box-shadow:0 3px 0 var(--icon-edge),inset 0 2px 0 #ffffffb0; transform:rotate(-3deg); transition:transform 200ms; }
+.feature-icon>svg { width:25px; height:25px; filter:drop-shadow(0 1px 0 #ffffffb0); }
+.feature-icon-lime { --icon-bg:#e6f7bd; --icon-fg:#648c24; --icon-edge:#cbe394; transform:rotate(3deg); }
+.feature-icon-peach { --icon-bg:#ffe5cb; --icon-fg:#cf772a; --icon-edge:#f6c998; transform:rotate(3deg); }
+.feature-icon-lilac { --icon-bg:#eee5ff; --icon-fg:#9164c7; --icon-edge:#dac5f8; transform:rotate(-5deg); }
+a:hover>.feature-icon,button:hover>.feature-icon { transform:rotate(0) translateY(-3px); }
+.dex-mascot { overflow:visible; }
+.dex-body-bounce { transform-origin:50% 70%; animation:dex-bounce .65s ease-in-out infinite; }
+.dex-leg { transform-box:fill-box; transform-origin:50% 0; }
+.dex-leg-front { animation:dex-stride .65s ease-in-out infinite; }.dex-leg-back{animation:dex-stride .65s -.325s ease-in-out infinite;}
+.dex-arm { transform-box:fill-box; transform-origin:50% 10%; }.dex-arm-front{animation:dex-arm-swing .65s ease-in-out infinite;}.dex-arm-back{animation:dex-arm-swing .65s -.325s ease-in-out infinite;}
+.dex-shadow { transform-origin:50% 88%; animation:dex-shadow .65s ease-in-out infinite; }
+.dex-eyes { transform-box:fill-box; transform-origin:center; animation:dex-blink 5.5s infinite; }
+.dex-speed { animation:dex-dash .65s ease-out infinite; }
+.dex-pose-wave .dex-body-bounce { animation:dex-hover 3.5s ease-in-out infinite; }.dex-pose-wave .dex-leg,.dex-pose-wave .dex-shadow,.dex-pose-wave .dex-arm-back{animation:none;}.dex-pose-wave .dex-arm-front{animation:dex-wave 1.6s ease-in-out infinite;transform-origin:128px 207px;transform-box:view-box;}.dex-pose-wave .dex-speed,.dex-pose-rest .dex-speed{display:none;}.dex-pose-rest *{animation:none;}
+@keyframes dex-bounce{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-12px) rotate(2deg)}}
+@keyframes dex-stride{0%,100%{transform:rotate(-24deg)}50%{transform:rotate(26deg)}}
+@keyframes dex-arm-swing{0%,100%{transform:rotate(21deg)}50%{transform:rotate(-23deg)}}
+@keyframes dex-shadow{0%,100%{transform:scaleX(1);opacity:.12}50%{transform:scaleX(.82);opacity:.075}}
+@keyframes dex-blink{0%,42%,46%,100%{transform:scaleY(1)}44%{transform:scaleY(.08)}}
+@keyframes dex-dash{0%{opacity:0;transform:translateX(9px)}35%{opacity:1}100%{opacity:0;transform:translateX(-12px)}}
+@keyframes dex-hover{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-8px) rotate(1deg)}}
+@keyframes dex-wave{0%,60%,100%{transform:rotate(0)}20%,40%{transform:rotate(35deg)}30%{transform:rotate(12deg)}}
+.motion-ready [data-reveal]:not([data-seen="true"]) { opacity:0; transform:translateY(26px); }
+[data-reveal] { transition:opacity 700ms ease var(--reveal-delay,0ms),transform 700ms cubic-bezier(.2,.8,.2,1) var(--reveal-delay,0ms); }
+.motion-paused *, [data-motion-paused="true"] * { animation-play-state:paused!important; }
+@media(prefers-reduced-motion:reduce){.dex-mascot *,[data-reveal]{animation:none!important;transition:none!important;}.motion-ready [data-reveal]:not([data-seen="true"]){opacity:1;transform:none;}}
+
+.bounce-button { display:inline-flex; min-height:50px; align-items:center; justify-content:center; gap:16px; padding:13px 23px; background:#146ef5; color:white; border:1px solid #0c59d1; border-radius:14px; box-shadow:0 4px 0 #0847af; font-size:13px; line-height:1.5; font-weight:600; transition:transform 150ms,box-shadow 150ms,background 150ms; }
+.bounce-button:hover { background:#267cfa; transform:translateY(-2px); box-shadow:0 6px 0 #0847af; }
+.bounce-button:active { transform:translateY(3px); box-shadow:0 1px 0 #0847af; }
+.bounce-button:disabled { opacity:.5; cursor:wait; transform:none; }
+.bounce-secondary { background:white; color:#193658; border-color:#dce5f2; box-shadow:0 3px 0 #dce5f2; }
+.bounce-secondary:hover { background:#f5f9ff; box-shadow:0 5px 0 #dce5f2; }
+.bounce-secondary:active { box-shadow:0 1px 0 #dce5f2; }
+.bounce-small { min-height:41px; font-size:11px; padding:10px 18px; border-radius:11px; gap:10px; }
+.bounce-lime { background:#d2f46a; color:#163347; border-color:#aaca47; box-shadow:0 4px 0 #93b632; }
+.bounce-lime:hover { background:#dcff75; box-shadow:0 6px 0 #93b632; }

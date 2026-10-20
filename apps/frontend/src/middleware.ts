@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 function isTokenValid(token: string | undefined): boolean {
   if (!token) return false;
@@ -7,9 +7,7 @@ function isTokenValid(token: string | undefined): boolean {
     const parts = token.split(".");
     const part1 = parts[1];
     if (parts.length !== 3 || !part1) return false;
-    const payload = JSON.parse(
-      Buffer.from(part1, "base64url").toString("utf-8"),
-    );
+    const payload = JSON.parse(Buffer.from(part1, "base64url").toString("utf-8"));
     if (!payload.sub) return false;
     if (payload.exp && payload.exp * 1000 < Date.now()) {
       return false;
@@ -36,7 +34,9 @@ export function middleware(request: NextRequest) {
     pathname.startsWith("/analytics") ||
     pathname.startsWith("/settings") ||
     pathname.startsWith("/grades") ||
-    pathname.startsWith("/copilot");
+    pathname.startsWith("/copilot") ||
+    pathname.startsWith("/calendar") ||
+    pathname.startsWith("/docs");
 
   if (isProtectedRoute && !loggedIn) {
     const loginUrl = new URL("/login", nextUrl);
@@ -65,6 +65,8 @@ export const config = {
     "/settings/:path*",
     "/grades/:path*",
     "/copilot/:path*",
+    "/calendar/:path*",
+    "/docs/:path*",
     "/login",
     "/register",
   ],
