@@ -1,5 +1,6 @@
 import { auth, getSessionToken } from "@/server/auth/auth";
 import { forwardToBackend } from "@/server/auth/internal";
+import { getErrorMessage } from "@/shared/utils/api-error";
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://127.0.0.1:3001";
 
@@ -48,7 +49,7 @@ export async function fetchFromBackend<T = any>(
       ok: false,
       data: null,
       status: res.status,
-      error: errorBody.detail || errorBody.error || `Backend returned status ${res.status}`,
+      error: getErrorMessage(errorBody, `Backend returned status ${res.status}`),
       json: async () => errorBody as T,
     };
   }

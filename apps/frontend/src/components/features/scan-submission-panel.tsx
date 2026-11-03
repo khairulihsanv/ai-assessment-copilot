@@ -30,6 +30,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
+import { getErrorMessage } from "@/shared/utils/api-error";
 
 export interface ScannedPageItem {
   id: string;
@@ -387,7 +388,7 @@ export function ScanSubmissionPanel({
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || "Gagal memproses OCR pada gambar jawaban.");
+        throw new Error(getErrorMessage(data, "Gagal memproses OCR pada gambar jawaban."));
       }
 
       // Update pages with OCR results
@@ -460,7 +461,7 @@ export function ScanSubmissionPanel({
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || data.detail || "Gagal menyimpan pengumpulan tugas.");
+        throw new Error(getErrorMessage(data, "Gagal menyimpan pengumpulan tugas."));
       }
 
       setSuccessMessage(

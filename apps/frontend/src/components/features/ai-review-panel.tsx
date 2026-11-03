@@ -31,6 +31,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAIGradingStream } from "@/hooks/useAIGradingStream";
+import { getErrorMessage } from "@/shared/utils/api-error";
 
 interface CriterionScore {
   criterionId: string;
@@ -237,7 +238,7 @@ export function AIReviewPanel({
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || "Gagal memfinalisasi nilai");
+        throw new Error(getErrorMessage(data, "Gagal memfinalisasi nilai"));
       }
 
       setExpectedReleasedGradeId(data.grade.id);

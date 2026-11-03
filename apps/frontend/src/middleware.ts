@@ -1,13 +1,10 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-
-const SECRET =
-  process.env.INTERNAL_API_SECRET ||
-  process.env.AUTH_SECRET ||
-  process.env.SECRET_KEY ||
-  process.env.NEXTAUTH_SECRET;
+import { resolveAuthSecret } from "@/shared/utils/auth-secret";
 
 async function isTokenValid(token: string | undefined): Promise<boolean> {
+  // INTERNAL_API_SECRET → SECRET_KEY → AUTH_SECRET → NEXTAUTH_SECRET (see resolveAuthSecret)
+  const SECRET = resolveAuthSecret();
   if (!token || !SECRET) return false;
   try {
     const parts = token.split(".");

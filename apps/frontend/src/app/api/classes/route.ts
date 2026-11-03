@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/server/auth/auth";
 import { forwardToBackend, signInternalToken } from "@/server/auth/internal";
+import { getErrorMessage } from "@/shared/utils/api-error";
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3001";
 
@@ -22,7 +23,7 @@ export async function GET() {
   const data = await res.json();
   if (!res.ok) {
     return NextResponse.json(
-      { error: data.error || "Failed to fetch classes" },
+      { error: getErrorMessage(data, "Failed to fetch classes") },
       { status: res.status },
     );
   }
@@ -52,7 +53,7 @@ export async function POST(request: Request) {
   const data = await res.json();
   if (!res.ok) {
     return NextResponse.json(
-      { error: data.error || "Failed to create class" },
+      { error: getErrorMessage(data, "Failed to create class") },
       { status: res.status },
     );
   }

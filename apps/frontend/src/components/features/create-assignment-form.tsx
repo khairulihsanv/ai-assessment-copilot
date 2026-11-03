@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { getErrorMessage } from "@/shared/utils/api-error";
 
 interface RubricItem {
   id: string;
@@ -89,7 +90,7 @@ export function CreateAssignmentForm({ classId, className, rubrics }: CreateAssi
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Gagal membuat tugas");
+        throw new Error(getErrorMessage(data, "Gagal membuat tugas"));
       }
 
       router.push(`/classes/${classId}/assignments/${data.id}`);

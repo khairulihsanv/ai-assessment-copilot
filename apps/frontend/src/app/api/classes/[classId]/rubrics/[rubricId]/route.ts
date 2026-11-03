@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/server/auth/auth";
 import { forwardToBackend, signInternalToken } from "@/server/auth/internal";
+import { getErrorMessage } from "@/shared/utils/api-error";
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3001";
 
@@ -22,7 +23,7 @@ export async function GET(
   const data = await res.json();
   if (!res.ok)
     return NextResponse.json(
-      { error: data.error || "Failed to fetch rubric" },
+      { error: getErrorMessage(data, "Failed to fetch rubric") },
       { status: res.status },
     );
   return NextResponse.json(data);
@@ -49,7 +50,7 @@ export async function DELETE(
   const data = await res.json();
   if (!res.ok)
     return NextResponse.json(
-      { error: data.error || "Failed to delete rubric" },
+      { error: getErrorMessage(data, "Failed to delete rubric") },
       { status: res.status },
     );
   return NextResponse.json(data);
@@ -81,7 +82,7 @@ export async function PUT(
   const data = await res.json();
   if (!res.ok)
     return NextResponse.json(
-      { error: data.error || "Failed to update rubric" },
+      { error: getErrorMessage(data, "Failed to update rubric") },
       { status: res.status },
     );
   return NextResponse.json(data);

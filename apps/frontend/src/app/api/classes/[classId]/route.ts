@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/server/auth/auth";
 import { forwardToBackend, signInternalToken } from "@/server/auth/internal";
+import { getErrorMessage } from "@/shared/utils/api-error";
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3001";
 
@@ -21,7 +22,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ cla
   const data = (await res.json()) as any;
   if (!res.ok)
     return NextResponse.json(
-      { error: data.detail || data.error || "Failed to fetch class" },
+      { error: getErrorMessage(data, "Failed to fetch class") },
       { status: res.status },
     );
   return NextResponse.json(data);
@@ -53,7 +54,7 @@ export async function PATCH(
   const data = (await res.json()) as any;
   if (!res.ok)
     return NextResponse.json(
-      { error: data.error || "Failed to update class" },
+      { error: getErrorMessage(data, "Failed to update class") },
       { status: res.status },
     );
   return NextResponse.json(data);
@@ -80,7 +81,7 @@ export async function DELETE(
   const data = (await res.json()) as any;
   if (!res.ok)
     return NextResponse.json(
-      { error: data.error || "Failed to delete class" },
+      { error: getErrorMessage(data, "Failed to delete class") },
       { status: res.status },
     );
   return NextResponse.json(data);

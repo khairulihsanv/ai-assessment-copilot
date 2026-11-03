@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/server/auth/auth";
 import { forwardToBackend, signInternalToken } from "@/server/auth/internal";
+import { getErrorMessage } from "@/shared/utils/api-error";
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3001";
 
@@ -19,7 +20,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ cla
   const data = await res.json();
   if (!res.ok)
     return NextResponse.json(
-      { error: data.error || "Failed to fetch rubrics" },
+      { error: getErrorMessage(data, "Failed to fetch rubrics") },
       { status: res.status },
     );
   return NextResponse.json(data);
@@ -51,7 +52,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ cla
   const data = await res.json();
   if (!res.ok)
     return NextResponse.json(
-      { error: data.error || "Gagal menyimpan rubrik penilaian" },
+      { error: getErrorMessage(data, "Gagal menyimpan rubrik penilaian") },
       { status: res.status },
     );
   return NextResponse.json(data, { status: 201 });

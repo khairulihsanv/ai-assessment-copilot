@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getErrorMessage } from "@/shared/utils/api-error";
 
 interface JoinClassModalProps {
   onSuccess?: () => void;
@@ -43,7 +44,7 @@ export function JoinClassModal({ onSuccess, trigger }: JoinClassModalProps) {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Gagal bergabung ke kelas");
+        throw new Error(getErrorMessage(data, "Gagal bergabung ke kelas"));
       }
 
       setOpen(false);
