@@ -3,19 +3,19 @@
 import {
   Award,
   BarChart3,
-  Bot,
   CheckSquare,
   ClipboardList,
   GraduationCap,
   LayoutDashboard,
+  ListChecks,
   LogOut,
-  Menu,
+  PanelLeft,
   Settings,
-  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { Brand } from "@/components/brand";
 import { cn, getInitials } from "@/shared/utils";
 import { useUIStore } from "@/stores/ui-store";
 import styles from "./workspace-navigation.module.css";
@@ -41,11 +41,7 @@ export function WorkspaceBrand({
       className={styles.brand}
       aria-label="Dexa Assessment — Ringkasan"
     >
-      <img src="/dexa-logo.png" alt="" width={36} height={36} className={styles.brandLogo} />
-      <span className={styles.brandText}>
-        <strong>Dexa Assessment</strong>
-        <span>{user.role === "DOSEN" ? "Ruang kerja dosen" : "Ruang belajar"}</span>
-      </span>
+      <Brand subtitle={user.role === "DOSEN" ? "Ruang kerja dosen" : "Ruang belajar"} />
     </Link>
   );
 }
@@ -62,23 +58,16 @@ export function WorkspaceNavigation({
   const pathname = usePathname();
   const isDosen = user.role === "DOSEN";
   const items = [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/classes", label: "Kelas Kuliah", icon: GraduationCap },
-    {
-      href: "/assignments",
-      label: isDosen ? "Tugas & Penugasan" : "Tugas & Evaluasi",
-      icon: ClipboardList,
-    },
+    { href: "/dashboard", label: "Ringkasan", icon: LayoutDashboard },
+    { href: "/classes", label: "Kelas", icon: GraduationCap },
+    { href: "/assignments", label: "Tugas", icon: ClipboardList },
     ...(isDosen
       ? [
-          { href: "/grading", label: "Koreksi & Asesmen AI", icon: Sparkles },
-          { href: "/rubrics", label: "Rubrik Penilaian", icon: CheckSquare },
-          { href: "/analytics", label: "Laporan & Analitik", icon: BarChart3 },
+          { href: "/grading", label: "Koreksi", icon: CheckSquare },
+          { href: "/rubrics", label: "Rubrik", icon: ListChecks },
+          { href: "/analytics", label: "Analitik", icon: BarChart3 },
         ]
-      : [
-          { href: "/grades", label: "Riwayat Nilai", icon: Award },
-          { href: "/copilot", label: "AI Study Copilot", icon: Bot },
-        ]),
+      : [{ href: "/grades", label: "Nilai saya", icon: Award }]),
   ];
 
   return (
@@ -86,7 +75,7 @@ export function WorkspaceNavigation({
       aria-label="Navigasi utama"
       className={cn(styles.navigation, compact && styles.compactNavigation)}
     >
-      <p className={compact ? "sr-only" : styles.sectionLabel}>Menu utama</p>
+      <p className="sr-only">Menu utama</p>
       <ul className={styles.navList}>
         {items.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(`${href}/`);
@@ -99,7 +88,7 @@ export function WorkspaceNavigation({
                 title={compact ? label : undefined}
                 className={styles.navLink}
               >
-                <Icon size={19} aria-hidden="true" />
+                <Icon size={18} aria-hidden="true" />
                 <span className={compact ? "sr-only" : styles.linkLabel}>{label}</span>
               </Link>
             </li>
@@ -110,13 +99,13 @@ export function WorkspaceNavigation({
       <Link
         href="/settings"
         onClick={onNavigate}
-        title={compact ? "Pengaturan Akun" : undefined}
+        title={compact ? "Pengaturan" : undefined}
         aria-current={pathname === "/settings" ? "page" : undefined}
         className={styles.navLink}
       >
-        <Settings size={19} aria-hidden="true" />
+        <Settings size={18} aria-hidden="true" />
         <span className={compact ? "sr-only" : styles.linkLabel}>
-          {isDosen ? "Pengaturan Akun" : "Pengaturan"}
+          Pengaturan
         </span>
       </Link>
     </nav>
@@ -187,7 +176,7 @@ export function DashboardSidebar({ user }: { user: WorkspaceUser }) {
           aria-expanded={sidebarOpen}
           aria-controls="desktop-workspace-navigation"
         >
-          <Menu size={20} aria-hidden="true" />
+          <PanelLeft size={18} aria-hidden="true" />
         </button>
       </div>
       <div id="desktop-workspace-navigation" className={styles.scrollArea}>

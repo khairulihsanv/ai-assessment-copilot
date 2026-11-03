@@ -147,6 +147,22 @@
 	--sidebar-accent-foreground: #214c3e;
 	--sidebar-border: #d8dfda;
 	--sidebar-ring: #1d4ed8;
+
+	/* Evidence highlights: AI quotes located in the student answer */
+	--evidence: #fbefc4;
+	--evidence-strong: #c9a227;
+	--evidence-active: #f2d36b;
+
+	/* Status (bg / border / fg) */
+	--success-bg: #e7f3ec;
+	--success-border: #b5d6c2;
+	--success-fg: #1c5a3b;
+	--warning-bg: #fbf3e1;
+	--warning-border: #e3cb94;
+	--warning-fg: #74500f;
+	--danger-bg: #fbeceb;
+	--danger-border: #ebbfbd;
+	--danger-fg: #9b1c1c;
 	color-scheme: light;
 }
 [data-theme="dark"],
@@ -198,6 +214,20 @@
 	--sidebar-accent-foreground: #a5d6b8;
 	--sidebar-border: #405047;
 	--sidebar-ring: #93c5fd;
+
+	--evidence: #46391a;
+	--evidence-strong: #c9a54a;
+	--evidence-active: #6a5520;
+
+	--success-bg: #16301f;
+	--success-border: #2f5a43;
+	--success-fg: #a5d6b8;
+	--warning-bg: #352912;
+	--warning-border: #6b5524;
+	--warning-fg: #f0d28c;
+	--danger-bg: #3a1d1d;
+	--danger-border: #6e3434;
+	--danger-fg: #fca5a5;
 	color-scheme: dark;
 }
 
@@ -300,19 +330,6 @@ h6 {
 }
 
 /* ─── Utility Classes ─── */
-.text-gradient-primary {
-	background: var(--primary);
-	-webkit-background-clip: text;
-	-webkit-text-fill-color: transparent;
-	background-clip: text;
-}
-
-.text-gradient-secondary {
-	background: var(--text-secondary);
-	-webkit-background-clip: text;
-	-webkit-text-fill-color: transparent;
-	background-clip: text;
-}
 
 .bg-surface {
 	background-color: var(--surface);
@@ -347,21 +364,46 @@ h6 {
 	border: 1px solid var(--border);
 }
 .badge-ai-draft {
-	background: #fffbeb;
-	border: 1px dashed #b45309;
-	color: #78350f;
-}
-[data-theme="dark"] .badge-ai-draft {
-	background: #352912;
-	border-color: #d6a858;
-	color: #fde68a;
+	background: var(--warning-bg);
+	border: 1px dashed var(--warning-border);
+	color: var(--warning-fg);
 }
 
 /* Final Grade badge style */
 .badge-final-grade {
-	background: var(--color-final-500);
-	border: 1px solid var(--color-final-600);
-	color: white;
+	background: var(--primary);
+	border: 1px solid var(--primary);
+	color: var(--primary-foreground);
+}
+
+/* Numbers that should line up in columns (scores, counts). */
+.tabular {
+	font-variant-numeric: tabular-nums;
+	font-feature-settings: "tnum" 1;
+}
+
+/* AI evidence quote located in the student answer. */
+mark.evidence {
+	background: var(--evidence);
+	color: inherit;
+	border-bottom: 2px solid var(--evidence-strong);
+	border-radius: 2px;
+	padding: 0 1px;
+	scroll-margin-block: 96px;
+	transition: background-color 0.2s;
+	cursor: pointer;
+}
+mark.evidence[data-active="true"] {
+	background: var(--evidence-active);
+	outline: 2px solid var(--evidence-strong);
+	outline-offset: 1px;
+}
+mark.evidence sup {
+	font-size: 10px;
+	font-weight: 600;
+	color: var(--muted-foreground);
+	margin-left: 1px;
+	font-variant-numeric: tabular-nums;
 }
 
 /* ─── Scrollbar Styling ─── */
@@ -436,6 +478,18 @@ h6 {
 	--color-card: var(--card);
 	--color-foreground: var(--foreground);
 	--color-background: var(--background);
+	--color-evidence: var(--evidence);
+	--color-evidence-strong: var(--evidence-strong);
+	--color-evidence-active: var(--evidence-active);
+	--color-success-bg: var(--success-bg);
+	--color-success-border: var(--success-border);
+	--color-success-fg: var(--success-fg);
+	--color-warning-bg: var(--warning-bg);
+	--color-warning-border: var(--warning-border);
+	--color-warning-fg: var(--warning-fg);
+	--color-danger-bg: var(--danger-bg);
+	--color-danger-border: var(--danger-border);
+	--color-danger-fg: var(--danger-fg);
 	--radius-sm: calc(var(--radius) * 0.6);
 	--radius-md: calc(var(--radius) * 0.8);
 	--radius-lg: var(--radius);

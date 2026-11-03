@@ -16,16 +16,16 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
   display: "swap",
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500"],
 });
 
 export const metadata: Metadata = {
   title: {
-    default: "Dexa Assessment | Intelligent Evaluation Platform",
+    default: "Dexa Assessment — koreksi tugas dengan draf AI, keputusan di tangan dosen",
     template: "%s | Dexa Assessment",
   },
   description:
-    "Dexa Assessment — Platform manajemen tugas dan evaluasi akademik cerdas dengan AI berlandaskan filosofi Human-in-the-Loop.",
+    "Dexa Assessment membantu dosen mengoreksi tugas: AI menyusun draf nilai per kriteria rubrik beserta kutipan bukti, dosen yang memutuskan dan merilis nilai.",
   keywords: [
     "Dexa Assessment",
     "Human-in-the-Loop",
@@ -46,12 +46,6 @@ export default function RootLayout({
       className={cn(inter.variable, jetbrainsMono.variable, "font-sans")}
       suppressHydrationWarning
     >
-      <head>
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
-        />
-      </head>
       <body className="min-h-screen antialiased bg-background text-foreground">
         <a href="#main-content" className="skip-to-content">
           Langsung ke konten utama

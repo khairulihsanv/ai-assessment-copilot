@@ -20,12 +20,10 @@ const labels: Record<string, string> = {
   classes: "Kelas",
   assignments: "Tugas",
   grading: "Koreksi",
-  rubrics: "Rubrik penilaian",
-  analytics: "Laporan",
+  rubrics: "Rubrik",
+  analytics: "Analitik",
   grades: "Nilai saya",
-  copilot: "Study Copilot",
   settings: "Pengaturan",
-  calendar: "Kalender",
 };
 
 export function DashboardTopbar({ user }: { user: WorkspaceUser }) {
