@@ -107,6 +107,8 @@ async def _chat_ollama(
         "stream": False,
         "format": schema if schema else "json",
         "keep_alive": settings.OLLAMA_KEEP_ALIVE,
+        # Reasoning models (qwen3, deepseek-r1, …) otherwise spend minutes "thinking" on CPU.
+        "think": settings.OLLAMA_THINK,
         "options": {
             "num_ctx": settings.OLLAMA_NUM_CTX,
             "temperature": settings.LLM_TEMPERATURE,
@@ -115,6 +117,9 @@ async def _chat_ollama(
 
     try:
         res = await client.post(f"{base}/api/chat", json=payload)
+        if res.status_code == 400 and "think" in (res.text or "").lower():
+            payload.pop("think", None)
+            res = await client.post(f"{base}/api/chat", json=payload)
         # Older Ollama builds reject JSON-schema formats: retry with plain JSON mode.
         if res.status_code == 400 and schema:
             payload["format"] = "json"

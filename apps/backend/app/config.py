@@ -62,6 +62,7 @@ class Settings(BaseSettings):
     OLLAMA_EMBED_MODEL: str = "nomic-embed-text"
     OLLAMA_NUM_CTX: int = 8192
     OLLAMA_KEEP_ALIVE: str = "30m"
+    OLLAMA_THINK: bool = False  # disable chain-of-thought on reasoning models (much faster on CPU)
 
     GROQ_API_KEY: str = ""
     GROQ_BASE_URL: str = "https://api.groq.com/openai/v1"
