@@ -33,7 +33,11 @@ from app.models.models import (
 from app.schemas.submission_schemas import FinalizeSchema, RevertFinalizeSchema
 from app.security.dependencies import get_current_user
 from app.services.embedding_service import generate_embedding_result
-from app.services.evaluator_service import evaluate_submission
+from app.services.evaluator_service import (
+    EvaluationFailedError,
+    evaluate_submission,
+    weighted_total,
+)
 from app.services.extractor_service import (
     CorruptDocumentError,
     EmptyExtractedTextError,
@@ -726,8 +730,9 @@ async def get_submission_detail(
 
     grades_data = []
     for g in sub.grades:
-        if is_privileged or g.status == "RELEASED":
-            grades_data.append({
+        # Students only ever see the currently released grade, never superseded/withdrawn ones.
+        if is_privileged or (g.status == "RELEASED" and g.id == sub.releasedGradeId):
+            grade_item: dict[str, Any] = {
                 "id": g.id,
                 "submissionId": g.submissionId,
                 "versionId": g.versionId,
@@ -738,23 +743,20 @@ async def get_submission_detail(
                 "editedFromAI": g.editedFromAI,
                 "gradedById": g.gradedById,
                 "createdAt": g.createdAt.isoformat() if g.createdAt else None,
-            })
+            }
+            if is_privileged:
+                grade_item["evaluationRunId"] = g.evaluationRunId
+                grade_item["perCriterionFinal"] = g.perCriterionFinal
+                grade_item["changeReason"] = g.changeReason
+            else:
+                grade_item["criteria"] = [
+                    {"criterionId": p.get("criterionId"), "finalScore": p.get("finalScore"), "finalFeedback": p.get("finalFeedback")}
+                    for p in (g.perCriterionFinal or [])
+                ]
+            grades_data.append(grade_item)
 
-    evals_data = []
-    if is_privileged:
-        for ev in sub.evaluations:
-            evals_data.append({
-                "id": ev.id,
-                "submissionId": ev.submissionId,
-                "versionId": ev.versionId,
-                "rawModelOutput": ev.rawModelOutput,
-                "perCriterionScore": ev.perCriterionScore,
-                "suggestedTotalScore": ev.suggestedTotalScore,
-                "suggestedFeedback": ev.suggestedFeedback,
-                "tokenUsage": ev.tokenUsage,
-                "status": ev.status,
-                "createdAt": ev.createdAt.isoformat() if ev.createdAt else None,
-            })
+    # Relationship is ordered newest first.
+    evals_data = [_serialize_evaluation(ev) for ev in sub.evaluations] if is_privileged else []
 
     versions_data = [
         {
@@ -849,8 +851,6 @@ async def get_submission_detail(
         "evaluations": evals_data,
         "versions": versions_data,
     }
-
-
 def retrieve_relevant_chunks(
     db: Session,
     assignment_id: str,
@@ -861,7 +861,7 @@ def retrieve_relevant_chunks(
 ) -> list[dict[str, Any]]:
     vec_str = "[" + ",".join(str(x) for x in query_vector) + "]"
     sql = text("""
-        SELECT 
+        SELECT
             ce."chunkId",
             ce."documentVersionId",
             dc."chunkIndex",
@@ -905,32 +905,56 @@ def retrieve_relevant_chunks(
     return results
 
 
-@submissions_router.post("/submissions/{submission_id}/grade")
-async def grade_submission_endpoint(
-    submission_id: str,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
+class _GradingContext:
+    """Everything the AI grader needs, detached from the request-scoped session."""
+
+    def __init__(self, sub: Submission, active_ver: SubmissionVersion):
+        assignment = sub.assignment
+        self.submission_id: str = sub.id
+        self.assignment_id: str = sub.assignmentId
+        self.version_id: str = active_ver.id
+        self.content: str = active_ver.content or ""
+        self.title: str = assignment.title
+        self.instructions: str = assignment.instructions
+        self.max_score: float = float(assignment.maxScore)
+        self.student_names: list[str] = [sub.user.name] if sub.user and sub.user.name else []
+        self.criteria: list[dict[str, Any]] = [
+            {
+                "id": cr.id,
+                "label": cr.label,
+                "description": cr.description,
+                "maxScore": cr.maxScore,
+                "weight": cr.weight,
+                "expectedAnswer": cr.expectedAnswer,
+                "answerKey": cr.answerKey,
+                "material": cr.material,
+            }
+            for cr in assignment.rubric.criteria
+        ]
+        self.rubric_snapshot: dict[str, Any] = {
+            "rubricId": assignment.rubric.id,
+            "title": assignment.rubric.title,
+            "criteria": [
+                {k: c[k] for k in ("id", "label", "description", "maxScore", "weight")} for c in self.criteria
+            ],
+        }
+
+
+def _load_gradable_submission(submission_id: str, current_user: User, db: Session) -> _GradingContext:
+    """Shared validation for POST /grade and GET /grade/stream."""
     if current_user.role != Role.DOSEN:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Hanya dosen yang dapat menjalankan penilaian AI")
 
     sub = db.query(Submission).filter(Submission.id == submission_id).first()
     if not sub:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Pengumpulan tugas tidak ditemukan")
-
     if sub.assignment.class_.dosenId != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Anda bukan pengajar kelas ini")
 
-    active_ver = (
-        db.query(SubmissionVersion)
-        .filter(SubmissionVersion.id == sub.activeVersionId)
-        .first()
-    )
+    active_ver = db.query(SubmissionVersion).filter(SubmissionVersion.id == sub.activeVersionId).first()
     if not active_ver:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Versi aktif tugas tidak ditemukan")
-
-    student_answer = active_ver.content or ""
-    if not student_answer.strip():
+    if not (active_ver.content or "").strip():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Teks jawaban mahasiswa kosong")
 
     if not sub.assignment.rubric or not sub.assignment.rubric.criteria:
@@ -938,77 +962,115 @@ async def grade_submission_endpoint(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Tugas belum memiliki rubrik penilaian. Evaluasi AI memerlukan rubrik dengan kriteria penilaian.",
         )
+    return _GradingContext(sub, active_ver)
 
-    criteria_list = [
-        {
-            "id": cr.id,
-            "label": cr.label,
-            "description": cr.description,
-            "maxScore": cr.maxScore,
-            "weight": cr.weight,
-            "answerKey": cr.answerKey,
-            "material": cr.material,
-            "answerKeyEmbedding": cr.answerKeyEmbedding,
-            "materialEmbedding": cr.materialEmbedding,
-        }
-        for cr in sub.assignment.rubric.criteria
-    ]
 
-    evidence_blocks = []
+async def _reference_evidence(ctx: _GradingContext) -> list[dict[str, Any]]:
+    """Top chunks from the lecturer's approved reference documents (optional context)."""
     try:
-        student_emb_res = await generate_embedding_result(student_answer)
-        evidence_blocks = retrieve_relevant_chunks(
-            db=db,
-            assignment_id=sub.assignmentId,
-            query_vector=student_emb_res.vector,
-            model=student_emb_res.model,
-            dimension=student_emb_res.dimension,
-            top_k=5,
-        )
+        emb = await generate_embedding_result(ctx.content)
+        with SessionLocal() as query_db:
+            return retrieve_relevant_chunks(
+                db=query_db,
+                assignment_id=ctx.assignment_id,
+                query_vector=emb.vector,
+                model=emb.model,
+                dimension=emb.dimension,
+                top_k=5,
+            )
     except Exception as e:
         logger.warning(f"Could not retrieve reference document evidence: {e}")
+        return []
 
-    result = await evaluate_submission(
-        assignment_title=sub.assignment.title,
-        assignment_instructions=sub.assignment.instructions,
-        assignment_max_score=sub.assignment.maxScore,
-        criteria=criteria_list,
-        student_answer=student_answer,
-        evidence_blocks=evidence_blocks,
+
+async def _run_evaluation(ctx: _GradingContext, reference_blocks: list[dict[str, Any]]) -> dict[str, Any]:
+    return await evaluate_submission(
+        assignment_title=ctx.title,
+        assignment_instructions=ctx.instructions,
+        assignment_max_score=ctx.max_score,
+        criteria=ctx.criteria,
+        student_answer=ctx.content,
+        evidence_blocks=reference_blocks,
+        student_names=ctx.student_names,
     )
 
+
+def _save_evaluation(
+    ctx: _GradingContext,
+    result: dict[str, Any],
+    reference_blocks: list[dict[str, Any]],
+    db: Session | None = None,
+) -> dict[str, Any]:
+    """Persist a successful draft. Failed runs are never stored."""
+    if db is not None:
+        return _persist_evaluation(db, ctx, result, reference_blocks)
+    with SessionLocal() as tx_db:
+        return _persist_evaluation(tx_db, ctx, result, reference_blocks)
+
+
+def _persist_evaluation(
+    tx_db: Session, ctx: _GradingContext, result: dict[str, Any], reference_blocks: list[dict[str, Any]]
+) -> dict[str, Any]:
     ev_run = EvaluationRun(
-        submissionId=sub.id,
-        versionId=active_ver.id,
+        submissionId=ctx.submission_id,
+        versionId=ctx.version_id,
+        rubricVersionSnapshot=ctx.rubric_snapshot,
         rawModelOutput=result["rawOutput"],
         perCriterionScore=result["response"]["perCriterion"],
         suggestedTotalScore=result["response"]["suggestedTotalScore"],
         suggestedFeedback=result["response"]["suggestedFeedback"],
         tokenUsage=result["tokenUsage"],
         status=result.get("status", "COMPLETED"),
-        evidence=evidence_blocks,
+        evidence=reference_blocks,
         evaluatorConfig=result.get("evaluatorConfig"),
     )
-    db.add(ev_run)
-    db.commit()
-    db.refresh(ev_run)
+    tx_db.add(ev_run)
+    tx_db.commit()
+    tx_db.refresh(ev_run)
+    return _serialize_evaluation(ev_run)
 
+
+def _serialize_evaluation(ev: EvaluationRun) -> dict[str, Any]:
     return {
-        "success": True,
-        "aiEvaluation": {
-            "id": ev_run.id,
-            "submissionId": ev_run.submissionId,
-            "versionId": ev_run.versionId,
-            "perCriterionScore": ev_run.perCriterionScore,
-            "suggestedTotalScore": ev_run.suggestedTotalScore,
-            "suggestedFeedback": ev_run.suggestedFeedback,
-            "tokenUsage": ev_run.tokenUsage,
-            "status": ev_run.status,
-            "evidence": ev_run.evidence,
-            "evaluatorConfig": ev_run.evaluatorConfig,
-            "createdAt": ev_run.createdAt.isoformat() if ev_run.createdAt else None,
-        },
+        "id": ev.id,
+        "submissionId": ev.submissionId,
+        "versionId": ev.versionId,
+        "perCriterionScore": ev.perCriterionScore,
+        "suggestedTotalScore": ev.suggestedTotalScore,
+        "suggestedFeedback": ev.suggestedFeedback,
+        "tokenUsage": ev.tokenUsage,
+        "status": ev.status,
+        "evidence": ev.evidence,
+        "evaluatorConfig": ev.evaluatorConfig,
+        "rubricVersionSnapshot": ev.rubricVersionSnapshot,
+        "createdAt": ev.createdAt.isoformat() if ev.createdAt else None,
     }
+
+
+@submissions_router.post("/submissions/{submission_id}/grade")
+async def grade_submission_endpoint(
+    submission_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    ctx = _load_gradable_submission(submission_id, current_user, db)
+    reference_blocks = await _reference_evidence(ctx)
+    try:
+        result = await _run_evaluation(ctx, reference_blocks)
+    except EvaluationFailedError as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Draf AI tidak dapat dibuat: {e}",
+        ) from e
+
+    return {"success": True, "aiEvaluation": _save_evaluation(ctx, result, reference_blocks, db)}
+
+
+SSE_KEEPALIVE_SECONDS = 8.0
+
+
+def _sse(event: str, payload: dict[str, Any]) -> str:
+    return f"event: {event}\ndata: {json.dumps(payload)}\n\n"
 
 
 @submissions_router.get("/submissions/{submission_id}/grade/stream")
@@ -1018,127 +1080,47 @@ async def grade_submission_stream(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    if current_user.role != Role.DOSEN:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+    ctx = _load_gradable_submission(submission_id, current_user, db)
 
-    sub = db.query(Submission).filter(Submission.id == submission_id).first()
-    if not sub or sub.assignment.class_.dosenId != current_user.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
-
-    active_ver = (
-        db.query(SubmissionVersion)
-        .filter(SubmissionVersion.id == sub.activeVersionId)
-        .first()
-    )
-    if not active_ver or not active_ver.content:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Konten tidak ditemukan")
-
-    if not sub.assignment.rubric or not sub.assignment.rubric.criteria:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Tugas belum memiliki rubrik penilaian. Evaluasi AI memerlukan rubrik dengan kriteria penilaian.",
-        )
-
-    criteria_list = [
-        {
-            "id": cr.id,
-            "label": cr.label,
-            "description": cr.description,
-            "maxScore": cr.maxScore,
-            "weight": cr.weight,
-            "answerKey": cr.answerKey,
-            "material": cr.material,
-            "answerKeyEmbedding": cr.answerKeyEmbedding,
-            "materialEmbedding": cr.materialEmbedding,
-        }
-        for cr in sub.assignment.rubric.criteria
-    ]
+    def step(n: int, message: str, progress: int) -> str:
+        return _sse("status", {"step": n, "totalSteps": 4, "message": message, "progress": progress})
 
     async def event_generator():
+        task: asyncio.Task | None = None
         try:
-            # Step 1: Init context & rubric
-            yield f"event: status\ndata: {json.dumps({'step': 1, 'totalSteps': 4, 'message': 'Mempersiapkan konteks evaluasi dan rubrik...', 'progress': 25})}\n\n"
-            await asyncio.sleep(0.2)
+            yield step(1, "Menyiapkan rubrik dan jawaban mahasiswa…", 10)
 
+            yield step(2, "Mencari bagian jawaban yang relevan per kriteria…", 25)
+            reference_blocks = await _reference_evidence(ctx)
             if await request.is_disconnected():
                 return
 
-            # Step 2: Semantic embedding & reference retrieval
-            yield f"event: status\ndata: {json.dumps({'step': 2, 'totalSteps': 4, 'message': 'Menganalisis kemiripan semantik dan bukti dokumen acuan...', 'progress': 50})}\n\n"
-            evidence_blocks = []
-            try:
-                student_emb_res = await generate_embedding_result(active_ver.content or "")
-                with SessionLocal() as query_db:
-                    evidence_blocks = retrieve_relevant_chunks(
-                        db=query_db,
-                        assignment_id=sub.assignmentId,
-                        query_vector=student_emb_res.vector,
-                        model=student_emb_res.model,
-                        dimension=student_emb_res.dimension,
-                        top_k=5,
-                    )
-            except Exception as e:
-                logger.warning(f"Error retrieving evidence in stream: {e}")
+            yield step(3, "Model menyusun draf penilaian per kriteria…", 40)
+            task = asyncio.create_task(_run_evaluation(ctx, reference_blocks))
+            while True:
+                done, _ = await asyncio.wait({task}, timeout=SSE_KEEPALIVE_SECONDS)
+                if done:
+                    break
+                if await request.is_disconnected():
+                    task.cancel()
+                    return
+                # Comment line keeps proxies/EventSource from timing out during long local inference.
+                yield ": keep-alive\n\n"
 
-            if await request.is_disconnected():
-                return
+            result = task.result()
 
-            # Step 3: Run AI evaluation
-            yield f"event: status\ndata: {json.dumps({'step': 3, 'totalSteps': 4, 'message': 'Menjalankan evaluasi AI berbasis bukti rubrik...', 'progress': 75})}\n\n"
-
-            res = await evaluate_submission(
-                assignment_title=sub.assignment.title,
-                assignment_instructions=sub.assignment.instructions,
-                assignment_max_score=sub.assignment.maxScore,
-                criteria=criteria_list,
-                student_answer=active_ver.content,
-                evidence_blocks=evidence_blocks,
-            )
-
-            if await request.is_disconnected():
-                return
-
-            # Step 4: Save draft evaluation run
-            yield f"event: status\ndata: {json.dumps({'step': 4, 'totalSteps': 4, 'message': 'Menyimpan draft rekomendasi penilaian...', 'progress': 95})}\n\n"
-
-            with SessionLocal() as tx_db:
-                ev_run = EvaluationRun(
-                    submissionId=sub.id,
-                    versionId=active_ver.id,
-                    rawModelOutput=res["rawOutput"],
-                    perCriterionScore=res["response"]["perCriterion"],
-                    suggestedTotalScore=res["response"]["suggestedTotalScore"],
-                    suggestedFeedback=res["response"]["suggestedFeedback"],
-                    tokenUsage=res["tokenUsage"],
-                    status=res.get("status", "COMPLETED"),
-                    evidence=evidence_blocks,
-                    evaluatorConfig=res.get("evaluatorConfig"),
-                )
-                tx_db.add(ev_run)
-                tx_db.commit()
-                tx_db.refresh(ev_run)
-
-                output_payload = {
-                    "success": True,
-                    "aiEvaluation": {
-                        "id": ev_run.id,
-                        "submissionId": ev_run.submissionId,
-                        "versionId": ev_run.versionId,
-                        "rawModelOutput": ev_run.rawModelOutput,
-                        "perCriterionScore": ev_run.perCriterionScore,
-                        "suggestedTotalScore": ev_run.suggestedTotalScore,
-                        "suggestedFeedback": ev_run.suggestedFeedback,
-                        "tokenUsage": ev_run.tokenUsage,
-                        "status": ev_run.status,
-                        "evidence": ev_run.evidence,
-                        "evaluatorConfig": ev_run.evaluatorConfig,
-                        "createdAt": ev_run.createdAt.isoformat() if ev_run.createdAt else None,
-                    },
-                }
-                yield f"event: done\ndata: {json.dumps(output_payload)}\n\n"
+            yield step(4, "Menyimpan draf untuk ditinjau dosen…", 90)
+            payload = _save_evaluation(ctx, result, reference_blocks)
+            yield _sse("done", {"success": True, "aiEvaluation": payload})
+        except EvaluationFailedError as e:
+            yield _sse("error", {"success": False, "message": f"Draf AI tidak dapat dibuat: {e}"})
+        except asyncio.CancelledError:
+            if task is not None:
+                task.cancel()
+            raise
         except Exception as e:
-            logger.error(f"Error during AI grading stream: {e}")
-            yield f"event: error\ndata: {json.dumps({'success': False, 'message': str(e)})}\n\n"
+            logger.error(f"Error during AI grading stream: {e}", exc_info=e)
+            yield _sse("error", {"success": False, "message": "Terjadi kesalahan saat menyusun draf AI."})
 
     return StreamingResponse(
         event_generator(),
@@ -1178,11 +1160,58 @@ async def finalize_grade(
             detail="Jawaban atau nilai telah berubah. Muat ulang sebelum merilis.",
         )
 
-    if req.finalScore > sub.assignment.maxScore:
+    max_score = float(sub.assignment.maxScore)
+    final_score = float(req.finalScore)
+    per_criterion_final: list[dict[str, Any]] | None = None
+
+    if req.evaluationRunId:
+        ev_run = (
+            db.query(EvaluationRun)
+            .filter(EvaluationRun.id == req.evaluationRunId, EvaluationRun.submissionId == submission_id)
+            .first()
+        )
+        if not ev_run:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Draf AI yang dirujuk tidak ditemukan untuk tugas ini")
+
+    if req.perCriterion:
+        rubric = sub.assignment.rubric
+        if not rubric or not rubric.criteria:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tugas tidak memiliki rubrik; kirim nilai total saja")
+        criteria_by_id = {cr.id: cr for cr in rubric.criteria}
+        seen: set[str] = set()
+        for item in req.perCriterion:
+            cr = criteria_by_id.get(item.criterionId)
+            if cr is None:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Kriteria {item.criterionId} bukan bagian dari rubrik tugas ini")
+            if item.criterionId in seen:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Kriteria '{cr.label}' dikirim lebih dari sekali")
+            seen.add(item.criterionId)
+            if item.finalScore > cr.maxScore:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Skor kriteria '{cr.label}' tidak boleh melebihi {cr.maxScore}",
+                )
+        missing = [cr.label for cr in rubric.criteria if cr.id not in seen]
+        if missing:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Skor final belum diisi untuk: {', '.join(missing)}")
+
+        per_criterion_final = [item.model_dump() for item in req.perCriterion]
+        # The server, not the client, decides the weighted total.
+        final_score = weighted_total(
+            [{"criterionId": p["criterionId"], "score": p["finalScore"]} for p in per_criterion_final],
+            [{"id": cr.id, "maxScore": cr.maxScore, "weight": cr.weight} for cr in rubric.criteria],
+            max_score,
+        )
+
+    if final_score > max_score:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Skor tidak boleh melebihi skor maksimal tugas ({sub.assignment.maxScore})",
         )
+
+    edited_from_ai = req.editedFromAI
+    if per_criterion_final is not None:
+        edited_from_ai = edited_from_ai or any(p["decision"] in ("edited", "rejected") for p in per_criterion_final)
 
     # Supersede previous released grade
     if req.expectedReleasedGradeId:
@@ -1198,16 +1227,18 @@ async def finalize_grade(
         if prev_grade:
             prev_grade.status = "SUPERSEDED"
 
-    # Create new GradeRevision
     new_grade = GradeRevision(
         submissionId=submission_id,
         versionId=req.expectedSubmissionVersionId,
         status="RELEASED",
-        finalScore=req.finalScore,
+        finalScore=final_score,
         finalFeedback=req.finalFeedback,
-        isAIAssisted=req.isAIAssisted,
-        editedFromAI=req.editedFromAI,
+        isAIAssisted=req.isAIAssisted or bool(req.evaluationRunId),
+        editedFromAI=edited_from_ai,
         gradedById=current_user.id,
+        evaluationRunId=req.evaluationRunId,
+        perCriterionFinal=per_criterion_final,
+        changeReason=req.changeReason,
     )
     db.add(new_grade)
     db.commit()
@@ -1227,6 +1258,9 @@ async def finalize_grade(
             "finalFeedback": new_grade.finalFeedback,
             "isAIAssisted": new_grade.isAIAssisted,
             "editedFromAI": new_grade.editedFromAI,
+            "evaluationRunId": new_grade.evaluationRunId,
+            "perCriterionFinal": new_grade.perCriterionFinal,
+            "changeReason": new_grade.changeReason,
             "gradedById": new_grade.gradedById,
             "createdAt": new_grade.createdAt.isoformat() if new_grade.createdAt else None,
         },

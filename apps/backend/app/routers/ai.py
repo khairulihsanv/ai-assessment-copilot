@@ -4,6 +4,7 @@ from app.config import settings
 from app.models.models import User
 from app.security.dependencies import get_current_user
 from app.services.extractor_service import extract_text_from_buffer
+from app.services.llm_client import active_model_name, check_health
 
 ai_router = APIRouter(prefix="/ai", tags=["ai"])
 
@@ -49,11 +50,18 @@ async def extract_text_endpoint(
         )
 
 
+@ai_router.get("/status")
+async def ai_status_endpoint(current_user: User = Depends(get_current_user)):
+    """Whether the configured model (and embedding model) can serve AI drafts right now."""
+    return await check_health()
+
+
 @ai_router.post("/test")
 async def ai_test_endpoint(current_user: User = Depends(get_current_user)):
     return {
         "status": "ok",
+        "provider": settings.LLM_PROVIDER,
         "groq_configured": bool(settings.GROQ_API_KEY),
         "ollama_url": settings.OLLAMA_BASE_URL,
-        "default_model": settings.GROQ_MODEL if settings.GROQ_API_KEY else settings.OLLAMA_MODEL,
+        "default_model": active_model_name(),
     }
