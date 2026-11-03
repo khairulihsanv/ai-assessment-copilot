@@ -177,8 +177,19 @@ class Submission(Base):
     assignment = relationship("Assignment", back_populates="submissions")
     user = relationship("User", back_populates="submissions")
     versions = relationship("SubmissionVersion", back_populates="submission", cascade="all, delete-orphan", order_by="SubmissionVersion.versionNumber.desc()")
-    evaluations = relationship("EvaluationRun", back_populates="submission", cascade="all, delete-orphan")
-    grades = relationship("GradeRevision", back_populates="submission", cascade="all, delete-orphan")
+    evaluations = relationship(
+        "EvaluationRun",
+        back_populates="submission",
+        cascade="all, delete-orphan",
+        order_by="EvaluationRun.createdAt.desc()",
+    )
+    grades = relationship(
+        "GradeRevision",
+        back_populates="submission",
+        cascade="all, delete-orphan",
+        order_by="GradeRevision.createdAt.desc()",
+        foreign_keys="GradeRevision.submissionId",
+    )
 
 
 class SubmissionVersion(Base):
@@ -278,9 +289,16 @@ class GradeRevision(Base):
     changeReason = Column(String, nullable=True)
     legacyProvenance = Column(String, nullable=True)
 
+    # FR-06/07: which AI draft the lecturer reviewed, and their per-criterion decisions.
+    evaluationRunId = Column(String, ForeignKey("evaluation_runs.id", ondelete="SET NULL"), nullable=True)
+    perCriterionFinal = Column(JsonType, nullable=True)
+
+    __table_args__ = (Index("grade_revisions_evaluationRunId_idx", "evaluationRunId"),)
+
     submission = relationship("Submission", back_populates="grades")
     version = relationship("SubmissionVersion", back_populates="grades")
     graded_by = relationship("User", back_populates="graded_grades")
+    evaluation_run = relationship("EvaluationRun")
 
 
 class Document(Base):

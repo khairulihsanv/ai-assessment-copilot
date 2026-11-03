@@ -1,4 +1,5 @@
 import os
+from typing import Literal
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -50,19 +51,46 @@ class Settings(BaseSettings):
     MAX_FILE_SIZE_MB: int = 10
 
     # AI & LLM Providers
+    # Provider untuk menyusun DRAF penilaian. Default: Ollama lokal (data tidak keluar dari server).
+    LLM_PROVIDER: Literal["ollama", "groq", "gemini"] = "ollama"
+    LLM_TIMEOUT_SECONDS: float = 300.0
+    LLM_TEMPERATURE: float = 0.1
+    LLM_MAX_RETRIES: int = 1
+
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
+    OLLAMA_MODEL: str = "qwen2.5:7b"
+    OLLAMA_EMBED_MODEL: str = "nomic-embed-text"
+    OLLAMA_NUM_CTX: int = 8192
+    OLLAMA_KEEP_ALIVE: str = "30m"
+
     GROQ_API_KEY: str = ""
     GROQ_BASE_URL: str = "https://api.groq.com/openai/v1"
     GROQ_MODEL: str = "llama-3.3-70b-versatile"
+
+    GEMINI_API_KEY: str = ""
+    GEMINI_BASE_URL: str = "https://generativelanguage.googleapis.com/v1beta"
+    GEMINI_MODEL: str = "gemini-2.0-flash"
+
     EMBEDDING_API_KEY: str = ""
-    OLLAMA_BASE_URL: str = "http://localhost:11434"
-    OLLAMA_MODEL: str = "llama3"
+
+    # Retrieval & privasi
+    EVIDENCE_TOP_K: int = 3
+    STUDENT_TEXT_MAX_CHARS: int = 24000
+    ANONYMIZE_STUDENT_DATA: bool = True
 
 
 settings = Settings()
 
 # Resolve SECRET_KEY fallback from environment variables
 if not settings.SECRET_KEY:
-    settings.SECRET_KEY = os.getenv("SECRET_KEY") or os.getenv("INTERNAL_API_SECRET") or os.getenv("AUTH_SECRET") or ""
+    # Same precedence as the frontend (middleware.ts, server/auth/*): keep these in sync.
+    settings.SECRET_KEY = (
+        os.getenv("INTERNAL_API_SECRET")
+        or os.getenv("SECRET_KEY")
+        or os.getenv("AUTH_SECRET")
+        or os.getenv("NEXTAUTH_SECRET")
+        or ""
+    )
 
 # Fail startup immediately if mandatory secret is missing or insecure
 if not settings.SECRET_KEY or len(settings.SECRET_KEY) < 32:

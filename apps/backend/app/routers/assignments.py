@@ -510,6 +510,16 @@ async def get_assignment_result(
             "isAIAssisted": released_grade.isAIAssisted,
             "status": released_grade.status,
             "createdAt": released_grade.createdAt.isoformat() if released_grade.createdAt else None,
+            # Only the lecturer's final decision per criterion — never AI scores or AI feedback.
+            "criteria": [
+                {
+                    "criterionId": item.get("criterionId"),
+                    "finalScore": item.get("finalScore"),
+                    "finalFeedback": item.get("finalFeedback"),
+                }
+                for item in (released_grade.perCriterionFinal or [])
+                if isinstance(item, dict)
+            ],
         },
     }
 
