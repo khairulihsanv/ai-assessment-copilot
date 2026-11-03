@@ -25,8 +25,9 @@ interface FinalCriterion {
 
 export const metadata = { title: "Hasil penilaian" };
 
+const scoreFormat = new Intl.NumberFormat("id-ID", { maximumFractionDigits: 2 });
 function formatScore(n: number) {
-  return Number.isInteger(n) ? String(n) : n.toFixed(1).replace(/\.0$/, "");
+  return scoreFormat.format(n);
 }
 
 export default async function AssignmentResultPage({ params }: ResultPageProps) {

@@ -69,7 +69,7 @@ function BarList({
   empty: string;
 }) {
   return (
-    <section aria-label={title} className="rounded-xl border border-border bg-card p-4">
+    <section aria-label={title} className="min-w-0 rounded-xl border border-border bg-card p-4">
       <h2 className="text-base font-semibold">{title}</h2>
       <p className="text-xs text-muted-foreground">{description}</p>
       {rows.length === 0 ? (
@@ -79,7 +79,7 @@ function BarList({
           {rows.map((r) => (
             <li key={r.key} title={`${r.label}: ${format(r.value)}`}>
               <div className="flex items-baseline justify-between gap-3 text-sm">
-                <span className="min-w-0 truncate">
+                <span className="min-w-0 break-words">
                   {r.label}
                   {r.sublabel && (
                     <span className="ml-1.5 text-xs text-muted-foreground">{r.sublabel}</span>
@@ -90,7 +90,7 @@ function BarList({
               <div className="mt-1.5 h-2 rounded-full bg-muted" aria-hidden="true">
                 <div
                   className="h-2 rounded-full bg-primary"
-                  style={{ width: `${max > 0 ? Math.max(2, (r.value / max) * 100) : 0}%` }}
+                  style={{ width: `${max > 0 && r.value > 0 ? Math.max(2, (r.value / max) * 100) : 0}%` }}
                 />
               </div>
             </li>

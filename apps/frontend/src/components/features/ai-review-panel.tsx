@@ -443,9 +443,10 @@ export function AIReviewPanel({
           };
         })
       : undefined;
+    // "Edited from AI" means the lecturer changed or rejected at least one suggested score.
+    // Rewording the feedback is normal editing work and does not count.
     const editedFromAI = Boolean(
-      perCriterion?.some((p) => p.decision === "edited" || p.decision === "rejected") ||
-        (evaluation && finalFeedback.trim() !== (evaluation.suggestedFeedback ?? "").trim()),
+      perCriterion?.some((p) => p.decision === "edited" || p.decision === "rejected"),
     );
 
     try {
@@ -483,7 +484,15 @@ export function AIReviewPanel({
   // ─── Render ─────────────────────────────────────────────────────────────
   const config = evaluation?.evaluatorConfig ?? null;
   const modelName = config?.model || status?.model;
-  const isLocal = config?.provider ? config.provider === "ollama" : status?.local;
+  const provider = config?.provider;
+  const isLocal =
+    provider === "ollama"
+      ? true
+      : provider === "groq" || provider === "gemini"
+        ? false
+        : provider
+          ? undefined
+          : status?.local;
   const anonymized = config?.anonymized ?? status?.anonymized;
   const progress =
     currentStep?.progress ?? (currentStep ? (currentStep.step / currentStep.totalSteps) * 100 : 0);
