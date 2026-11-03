@@ -20,6 +20,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getErrorMessage } from "@/shared/utils/api-error";
 
 interface CriterionItem {
   id: string;
@@ -253,7 +254,7 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Gagal ekstrak teks");
+      if (!res.ok) throw new Error(getErrorMessage(data, "Gagal ekstrak teks"));
 
       updateCriterion(index, field, data.text);
     } catch (err: unknown) {
@@ -331,7 +332,7 @@ export function RubricEditor({ classId, initialData, onSuccess, onCancel }: Rubr
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || "Gagal menyimpan rubrik");
+        throw new Error(getErrorMessage(data, "Gagal menyimpan rubrik"));
       }
 
       router.refresh();

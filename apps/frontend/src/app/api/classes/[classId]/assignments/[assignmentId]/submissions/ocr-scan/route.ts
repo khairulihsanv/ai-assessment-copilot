@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/server/auth/auth";
 import { forwardToBackend, signInternalToken } from "@/server/auth/internal";
+import { getErrorMessage } from "@/shared/utils/api-error";
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://127.0.0.1:3001";
 
@@ -38,7 +39,7 @@ export async function POST(
   const data = (await res.json().catch(() => ({}))) as any;
   if (!res.ok) {
     return NextResponse.json(
-      { error: data.error || data.detail || "Gagal memproses pemindaian OCR" },
+      { error: getErrorMessage(data, "Gagal memproses pemindaian OCR") },
       { status: res.status },
     );
   }

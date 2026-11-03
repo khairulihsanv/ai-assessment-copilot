@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { formatRelativeTime } from "@/shared/utils";
+import { getErrorMessage } from "@/shared/utils/api-error";
 
 export interface ClassAssignmentPayload {
   id: string;
@@ -179,7 +180,7 @@ export function AssignmentsView({
         router.refresh();
       } else {
         const data = await res.json();
-        alert(data.error || "Gagal membuat tugas.");
+        alert(getErrorMessage(data, "Gagal membuat tugas."));
       }
     } catch {
       alert("Terjadi kesalahan jaringan.");

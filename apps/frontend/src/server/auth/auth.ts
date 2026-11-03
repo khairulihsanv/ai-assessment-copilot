@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
+import { resolveAuthSecret } from "@/shared/utils/auth-secret";
 
 export type Role = "DOSEN" | "MAHASISWA" | "ADMIN";
 
@@ -33,11 +34,8 @@ export async function auth(): Promise<Session | null> {
   const token = await getSessionToken();
   if (!token) return null;
 
-  const secret =
-    process.env.INTERNAL_API_SECRET ||
-    process.env.AUTH_SECRET ||
-    process.env.SECRET_KEY ||
-    process.env.NEXTAUTH_SECRET;
+  // INTERNAL_API_SECRET → SECRET_KEY → AUTH_SECRET → NEXTAUTH_SECRET (see resolveAuthSecret)
+  const secret = resolveAuthSecret();
 
   if (!secret) {
     console.error("[Auth] No authentication secret configured in environment.");

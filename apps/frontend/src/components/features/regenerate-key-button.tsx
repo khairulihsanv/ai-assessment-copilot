@@ -3,6 +3,7 @@
 import { Check, Copy, Key, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { getErrorMessage } from "@/shared/utils/api-error";
 
 interface RegenerateKeyButtonProps {
   classId: string;
@@ -40,7 +41,7 @@ export function RegenerateKeyButton({ classId, initialKey }: RegenerateKeyButton
         setCurrentKey(data.enrollmentKey);
         router.refresh();
       } else {
-        alert(data.error || "Gagal memperbarui kode kelas");
+        alert(getErrorMessage(data, "Gagal memperbarui kode kelas"));
       }
     } catch {
       alert("Terjadi kesalahan jaringan");

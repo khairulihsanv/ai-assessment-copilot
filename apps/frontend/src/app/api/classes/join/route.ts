@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/server/auth/auth";
 import { forwardToBackend, signInternalToken } from "@/server/auth/internal";
+import { getErrorMessage } from "@/shared/utils/api-error";
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3001";
 
@@ -30,7 +31,7 @@ export async function POST(request: Request) {
     const data = await res.json();
     if (!res.ok) {
       return NextResponse.json(
-        { error: data.error || "Gagal bergabung kelas" },
+        { error: getErrorMessage(data, "Gagal bergabung kelas") },
         { status: res.status },
       );
     }

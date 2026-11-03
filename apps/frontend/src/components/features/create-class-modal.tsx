@@ -16,6 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { getErrorMessage } from "@/shared/utils/api-error";
 
 interface CreateClassModalProps {
   onSuccess?: () => void;
@@ -49,7 +50,7 @@ export function CreateClassModal({ onSuccess, trigger }: CreateClassModalProps) 
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Gagal membuat kelas");
+        throw new Error(getErrorMessage(data, "Gagal membuat kelas"));
       }
 
       setOpen(false);

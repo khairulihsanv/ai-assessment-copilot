@@ -20,6 +20,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { RubricEditor } from "@/components/features/rubric-editor";
 import { formatDate } from "@/shared/utils";
+import { getErrorMessage } from "@/shared/utils/api-error";
 
 interface Criterion {
   id: string;
@@ -85,7 +86,7 @@ export function RubricManagementView({
       });
       const data = await res.json();
       if (!res.ok) {
-        alert(data.error || "Gagal menghapus rubrik");
+        alert(getErrorMessage(data, "Gagal menghapus rubrik"));
       } else {
         router.refresh();
       }

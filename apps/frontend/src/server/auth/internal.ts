@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
+import { resolveAuthSecret } from "@/shared/utils/auth-secret";
 
 export async function getSessionToken(): Promise<string | undefined> {
   try {
@@ -16,10 +17,11 @@ export async function getSessionToken(): Promise<string | undefined> {
  */
 export function signInternalToken(user?: { id?: string; role?: string }): string {
   if (!user || !user.id) return "";
-  const secret =
-    process.env.SECRET_KEY ||
-    process.env.INTERNAL_API_SECRET ||
-    "dexa-assessment-secure-auth-secret-key-32chars-min-2026";
+  // INTERNAL_API_SECRET → SECRET_KEY → AUTH_SECRET → NEXTAUTH_SECRET (see resolveAuthSecret)
+  const secret = resolveAuthSecret();
+  if (!secret) {
+    throw new Error("INTERNAL_API_SECRET belum dikonfigurasi; tidak dapat menandatangani token internal.");
+  }
   const now = Math.floor(Date.now() / 1000);
   return jwt.sign(
     {

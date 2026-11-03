@@ -16,6 +16,7 @@ import {
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
+import { getErrorMessage } from "@/shared/utils/api-error";
 
 function LoginForm() {
   const _router = useRouter();
@@ -90,7 +91,7 @@ function LoginForm() {
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok || !data.success) {
-        setError(data.error || "Email atau kata sandi tidak cocok. Silakan coba lagi.");
+        setError(getErrorMessage(data, "Email atau kata sandi tidak cocok. Silakan coba lagi."));
         setLoading(false);
       } else {
         // Save preference for session guard

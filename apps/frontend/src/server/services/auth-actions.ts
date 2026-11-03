@@ -2,6 +2,7 @@
 
 import { registerSchema } from "@dexa/contracts";
 import { cookies } from "next/headers";
+import { getErrorMessage } from "@/shared/utils/api-error";
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://127.0.0.1:3001";
 
@@ -46,7 +47,7 @@ export async function registerAction(formData: FormData): Promise<ActionResult> 
     if (!res.ok) {
       return {
         success: false,
-        error: data.detail || "Email sudah terdaftar atau data pendaftaran tidak sah.",
+        error: getErrorMessage(data, "Email sudah terdaftar atau data pendaftaran tidak sah."),
       };
     }
 
@@ -80,7 +81,7 @@ export async function loginAction(formData: FormData): Promise<ActionResult> {
     if (!res.ok) {
       return {
         success: false,
-        error: data.detail || "Email atau kata sandi tidak cocok.",
+        error: getErrorMessage(data, "Email atau kata sandi tidak cocok."),
       };
     }
 
