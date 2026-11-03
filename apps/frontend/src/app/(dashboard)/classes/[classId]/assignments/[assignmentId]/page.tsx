@@ -98,7 +98,7 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
               </span>
             )}
             {isPastDue && (
-              <span className="font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-md bg-[#ffdad6] text-[#ba1a1a]">
+              <span className="font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-md bg-danger-bg text-danger-fg">
                 Tenggat Berakhir
               </span>
             )}
@@ -110,7 +110,7 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
 
           <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
             <div
-              className={`flex items-center gap-1.5 ${isPastDue ? "text-[#ba1a1a] font-semibold" : ""}`}
+              className={`flex items-center gap-1.5 ${isPastDue ? "text-danger-fg font-semibold" : ""}`}
             >
               <Clock className="w-3.5 h-3.5" />
               <span>
@@ -219,6 +219,12 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
                   </span>
                 )}
               </div>
+              <Link
+                href={`/classes/${classId}/assignments/${assignmentId}/result`}
+                className="inline-flex text-sm font-medium text-primary underline underline-offset-4"
+              >
+                Lihat rincian per kriteria
+              </Link>
             </div>
           )}
 
@@ -294,7 +300,7 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
                                 {sub.user.name}
                               </span>
                               {isLate && (
-                                <span className="font-mono text-[10px] font-bold px-1.5 py-0.2 rounded bg-[#ffdad6] text-[#ba1a1a]">
+                                <span className="font-mono text-[10px] font-bold px-1.5 py-0.2 rounded bg-danger-bg text-danger-fg">
                                   Terlambat
                                 </span>
                               )}

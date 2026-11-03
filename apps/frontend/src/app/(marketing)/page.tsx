@@ -3,7 +3,9 @@ import Link from "next/link";
 import { Brand } from "@/components/brand";
 
 export const metadata: Metadata = {
-  title: { absolute: "Dexa Assessment — draf AI per kriteria, keputusan nilai tetap di tangan dosen" },
+  title: {
+    absolute: "Dexa Assessment — draf AI per kriteria, keputusan nilai tetap di tangan dosen",
+  },
 };
 
 const steps = [
@@ -35,8 +37,14 @@ const steps = [
 
 const responsibilities = [
   ["Membaca jawaban terhadap setiap kriteria rubrik", "Menentukan skor akhir setiap kriteria"],
-  ["Mengutip bagian jawaban yang menjadi dasar saran", "Memeriksa apakah kutipan benar-benar relevan"],
-  ["Menandai kriteria yang tidak didukung bukti", "Menilai manual bila AI tidak yakin atau tidak tersedia"],
+  [
+    "Mengutip bagian jawaban yang menjadi dasar saran",
+    "Memeriksa apakah kutipan benar-benar relevan",
+  ],
+  [
+    "Menandai kriteria yang tidak didukung bukti",
+    "Menilai manual bila AI tidak yakin atau tidak tersedia",
+  ],
   ["Menyusun draf umpan balik", "Menulis umpan balik akhir untuk mahasiswa"],
   ["Menghitung total berbobot sebagai saran", "Merilis, memperbarui, atau menarik nilai"],
 ];
@@ -255,7 +263,10 @@ export default function LandingPage() {
                   <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
                     {role.points.map((p) => (
                       <li key={p} className="flex gap-2">
-                        <span aria-hidden="true" className="mt-2 h-1 w-1 shrink-0 rounded-full bg-primary" />
+                        <span
+                          aria-hidden="true"
+                          className="mt-2 h-1 w-1 shrink-0 rounded-full bg-primary"
+                        />
                         <span>{p}</span>
                       </li>
                     ))}

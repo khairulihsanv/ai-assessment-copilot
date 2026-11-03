@@ -9,14 +9,6 @@ export default async function SettingsPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
   const isDosen = session.user.role === "DOSEN";
-  const unavailablePreferences = isDosen
-    ? [
-        "Notifikasi penyerahan tugas baru",
-        "Preferensi peringatan confidence AI",
-        "Sinkronisasi SIAKAD",
-      ]
-    : ["Notifikasi tugas dan nilai", "Sinkronisasi SIAKAD"];
-
   return (
     <div className="max-w-4xl space-y-6 pb-12">
       <div className="border-b border-border pb-6">
@@ -46,30 +38,6 @@ export default async function SettingsPage() {
         </div>
       </section>
       <AppearancePreferences />
-      <section
-        aria-labelledby="other-preferences-heading"
-        className="rounded-xl border border-border bg-card p-5 sm:p-6"
-      >
-        <h2 id="other-preferences-heading" className="text-lg font-semibold text-foreground">
-          Preferensi lainnya
-        </h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Pengaturan berikut belum tersedia untuk diubah.
-        </p>
-        <ul className="mt-4 divide-y divide-border">
-          {unavailablePreferences.map((label) => (
-            <li
-              key={label}
-              className="flex flex-wrap items-center justify-between gap-2 py-4 text-sm"
-            >
-              <span className="text-foreground">{label}</span>
-              <span className="rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
-                Belum tersedia
-              </span>
-            </li>
-          ))}
-        </ul>
-      </section>
     </div>
   );
 }

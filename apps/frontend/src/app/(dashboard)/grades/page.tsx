@@ -1,6 +1,5 @@
 import { Award } from "lucide-react";
 import { redirect } from "next/navigation";
-import { ExportTranscriptButton } from "@/components/features/dashboard-quick-actions";
 import { fetchFromBackend } from "@/server/api/backend-client";
 import { auth } from "@/server/auth/auth";
 import { formatDate } from "@/shared/utils";
@@ -43,8 +42,6 @@ export default async function GradesPage() {
             Daftar perolehan skor tugas yang telah disahkan oleh dosen pengampu mata kuliah.
           </p>
         </div>
-
-        <ExportTranscriptButton />
       </div>
 
       {ok && data ? (

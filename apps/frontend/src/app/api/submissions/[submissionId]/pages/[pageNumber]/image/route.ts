@@ -5,7 +5,7 @@ import { forwardToBackend, signInternalToken } from "@/server/auth/internal";
 const BACKEND_URL = process.env.BACKEND_URL || "http://127.0.0.1:3001";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ submissionId: string; pageNumber: string }> },
 ) {
   const session = await auth();
@@ -17,7 +17,7 @@ export async function GET(
   const token = signInternalToken({ id: session.user.id, role: session.user.role });
 
   const res = await forwardToBackend(
-    `${BACKEND_URL}/submissions/${submissionId}/pages/${pageNumber}/image`,
+    `${BACKEND_URL}/submissions/${submissionId}/pages/${pageNumber}/image${new URL(request.url).search}`,
     {
       headers: { Authorization: `Bearer ${token}` },
     },

@@ -21,13 +21,18 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           <ul className="mt-6 space-y-3 text-sm text-muted-foreground">
             {points.map((p) => (
               <li key={p} className="flex gap-3">
-                <span aria-hidden="true" className="mt-2 h-1 w-1 shrink-0 rounded-full bg-primary" />
+                <span
+                  aria-hidden="true"
+                  className="mt-2 h-1 w-1 shrink-0 rounded-full bg-primary"
+                />
                 <span>{p}</span>
               </li>
             ))}
           </ul>
         </div>
-        <p className="text-xs text-muted-foreground">Draf AI bukan nilai. Nilai adalah keputusan dosen.</p>
+        <p className="text-xs text-muted-foreground">
+          Draf AI bukan nilai. Nilai adalah keputusan dosen.
+        </p>
       </aside>
 
       <main id="main-content" className="flex flex-col px-4 py-8 sm:px-6">

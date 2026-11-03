@@ -164,16 +164,13 @@ export function RubricManagementView({
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold text-foreground">
-                Sistem Penilaian Vector Embedding
-              </span>
-              <span className="font-mono text-[9px] bg-card border border-border text-primary px-2 py-0.5 rounded-full font-bold">
-                Classification + Cosine Similarity
+                Bagaimana rubrik dipakai AI
               </span>
             </div>
             <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-              Setiap Kunci Jawaban dan Materi di-embed menjadi representasi vektor. Saat AI menilai,
-              jawaban mahasiswa dibandingkan secara semantik — meminimalkan halusinasi dan menjaga
-              objektivitas.
+              Kunci jawaban dan materi menjadi acuan saat AI menyusun draf per kriteria. Setiap
+              kutipan bukti diperiksa benar-benar ada di jawaban mahasiswa, tetapi draf tetap bisa
+              keliru dan perlu ditinjau dosen.
             </p>
           </div>
         </div>

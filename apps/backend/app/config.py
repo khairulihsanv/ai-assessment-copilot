@@ -52,7 +52,8 @@ class Settings(BaseSettings):
 
     # AI & LLM Providers
     # Provider untuk menyusun DRAF penilaian. Default: Ollama lokal (data tidak keluar dari server).
-    LLM_PROVIDER: Literal["ollama", "groq", "gemini"] = "ollama"
+    # "mock" is only for automated tests (TEST_MOCK_LLM=true); it never produces real drafts.
+    LLM_PROVIDER: Literal["ollama", "groq", "gemini", "mock"] = "ollama"
     LLM_TIMEOUT_SECONDS: float = 300.0
     LLM_TEMPERATURE: float = 0.1
     LLM_MAX_RETRIES: int = 1

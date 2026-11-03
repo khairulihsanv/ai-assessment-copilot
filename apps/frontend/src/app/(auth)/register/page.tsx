@@ -95,7 +95,9 @@ function RegisterForm() {
                 key={opt.value}
                 className={cn(
                   "flex cursor-pointer flex-col gap-0.5 rounded-lg border px-3 py-2.5 text-sm",
-                  role === opt.value ? "border-primary bg-secondary" : "border-input bg-card hover:bg-muted",
+                  role === opt.value
+                    ? "border-primary bg-secondary"
+                    : "border-input bg-card hover:bg-muted",
                 )}
               >
                 <span className="flex items-center gap-2 font-medium">

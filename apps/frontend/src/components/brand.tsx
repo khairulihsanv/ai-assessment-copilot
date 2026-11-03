@@ -12,7 +12,12 @@ export function BrandMark({ size = 28, className }: { size?: number; className?:
         "inline-flex shrink-0 items-center justify-center rounded-md bg-primary font-semibold text-primary-foreground",
         className,
       )}
-      style={{ width: size, height: size, fontSize: Math.round(size * 0.44), letterSpacing: "-0.04em" }}
+      style={{
+        width: size,
+        height: size,
+        fontSize: Math.round(size * 0.44),
+        letterSpacing: "-0.04em",
+      }}
     >
       Dx
     </span>

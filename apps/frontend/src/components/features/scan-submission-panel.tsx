@@ -949,11 +949,11 @@ export function ScanSubmissionPanel({
                   <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 font-semibold">
                     Halaman Kosong / Tidak Terdeteksi
                   </span>
-                ) : (
+                ) : typeof activePage.confidence === "number" && activePage.confidence > 0 ? (
                   <span className="text-[10px] font-mono text-muted-foreground">
-                    Akurasi: {Math.round((activePage.confidence || 0.85) * 100)}%
+                    Keyakinan OCR: {Math.round(activePage.confidence * 100)}%
                   </span>
-                )}
+                ) : null}
               </div>
 
               {activePage.error && (

@@ -13,9 +13,7 @@ interface SubmissionReviewPageProps {
   }>;
 }
 
-export const metadata = {
-  title: "Studio Penilaian AI & Validasi Dosen — Dexa Assessment",
-};
+export const metadata = { title: "Tinjau jawaban" };
 
 export default async function SubmissionReviewPage({ params }: SubmissionReviewPageProps) {
   const session = await auth();
@@ -67,29 +65,22 @@ export default async function SubmissionReviewPage({ params }: SubmissionReviewP
   const displayContent = activeVersion?.content || "";
 
   return (
-    <div className="space-y-6 animate-in fade-in-50 duration-300">
-      {/* Breadcrumbs */}
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+    <div className="space-y-5">
+      <div className="space-y-1">
         <Link
           href={`/classes/${classId}/assignments/${assignmentId}`}
-          className="hover:text-foreground flex items-center gap-1"
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
-          <ChevronLeft className="w-3.5 h-3.5" />
-          <span>Kembali ke Penugasan: {submission.assignment.title}</span>
+          <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+          {submission.assignment.title}
         </Link>
-      </div>
-
-      <div className="border-b border-border/40 pb-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div>
-            <h1 className="text-2xl font-bold font-display text-foreground">
-              Koreksi Jawaban: {submission.user.name}
-            </h1>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Tugas: {submission.assignment.title} • Skor Maksimal: {submission.assignment.maxScore}
-            </p>
-          </div>
-        </div>
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-[28px]">
+          {submission.user.name}
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          Skor maksimal {submission.assignment.maxScore}
+          {activeVersion.versionNumber > 1 ? ` · versi ke-${activeVersion.versionNumber}` : ""}
+        </p>
       </div>
 
       <AIReviewPanel

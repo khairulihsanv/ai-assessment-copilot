@@ -104,9 +104,7 @@ export function WorkspaceNavigation({
         className={styles.navLink}
       >
         <Settings size={18} aria-hidden="true" />
-        <span className={compact ? "sr-only" : styles.linkLabel}>
-          Pengaturan
-        </span>
+        <span className={compact ? "sr-only" : styles.linkLabel}>Pengaturan</span>
       </Link>
     </nav>
   );

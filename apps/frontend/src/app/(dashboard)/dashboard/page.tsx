@@ -1,7 +1,6 @@
 import { ArrowRight, CheckCircle2, Clock } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { JadwalKuliahButton } from "@/components/features/dashboard-quick-actions";
 import { DosenDashboard } from "@/components/features/dosen-dashboard";
 import { fetchFromBackend } from "@/server/api/backend-client";
 import { auth } from "@/server/auth/auth";
@@ -125,9 +124,6 @@ async function StudentDashboard({
         <p className="mt-2 text-sm text-muted-foreground">
           Lanjutkan tugas dan baca umpan balik dari dosen Anda.
         </p>
-        <div className="mt-4">
-          <JadwalKuliahButton />
-        </div>
       </header>
       <section className="grid grid-cols-3 divide-x divide-border border-y border-border">
         <Metric label="Kelas diikuti" value={enrollments.length} note="Keanggotaan Anda" />

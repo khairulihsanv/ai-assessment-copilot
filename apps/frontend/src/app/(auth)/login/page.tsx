@@ -24,7 +24,8 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (searchParams.get("error")) setError("Email atau kata sandi tidak cocok. Silakan periksa kembali.");
+    if (searchParams.get("error"))
+      setError("Email atau kata sandi tidak cocok. Silakan periksa kembali.");
     const emailParam = searchParams.get("email");
     if (emailParam) setEmail(emailParam);
     const role = searchParams.get("role")?.toUpperCase();
@@ -62,7 +63,10 @@ function LoginForm() {
 
       const callbackUrl = searchParams.get("callbackUrl");
       const safe =
-        callbackUrl && callbackUrl.startsWith("/") && !callbackUrl.startsWith("//") && !callbackUrl.includes(":");
+        callbackUrl &&
+        callbackUrl.startsWith("/") &&
+        !callbackUrl.startsWith("//") &&
+        !callbackUrl.includes(":");
       window.location.assign(safe ? callbackUrl : "/dashboard");
     } catch {
       setError("Server tidak dapat dihubungi. Periksa koneksi Anda lalu coba lagi.");
@@ -74,7 +78,9 @@ function LoginForm() {
     <div className="space-y-6">
       <div className="space-y-1">
         <h2 className="text-2xl font-semibold tracking-tight">Masuk ke ruang kerja</h2>
-        <p className="text-sm text-muted-foreground">Gunakan email dan kata sandi akun Dexa Anda.</p>
+        <p className="text-sm text-muted-foreground">
+          Gunakan email dan kata sandi akun Dexa Anda.
+        </p>
       </div>
 
       {registered && (
@@ -142,10 +148,18 @@ function LoginForm() {
           Akun demo (opsional, hanya tersedia jika data demo dipasang di server):
         </p>
         <div className="grid grid-cols-2 gap-2">
-          <button type="button" onClick={() => fillDemo("DOSEN")} className="dexa-link min-h-10 px-3 py-2 text-sm">
+          <button
+            type="button"
+            onClick={() => fillDemo("DOSEN")}
+            className="dexa-link min-h-10 px-3 py-2 text-sm"
+          >
             Isi akun dosen
           </button>
-          <button type="button" onClick={() => fillDemo("MAHASISWA")} className="dexa-link min-h-10 px-3 py-2 text-sm">
+          <button
+            type="button"
+            onClick={() => fillDemo("MAHASISWA")}
+            className="dexa-link min-h-10 px-3 py-2 text-sm"
+          >
             Isi akun mahasiswa
           </button>
         </div>

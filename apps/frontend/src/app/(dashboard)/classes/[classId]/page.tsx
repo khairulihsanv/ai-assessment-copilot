@@ -375,7 +375,7 @@ export default async function ClassDetailPage({ params }: ClassDetailPageProps) 
             </div>
           ) : (
             <div className="rounded-lg border border-border overflow-hidden bg-card shadow-none">
-              <div className="divide-y divide-[#F3F4F6]">
+              <div className="divide-y divide-border">
                 {cls.enrollments.map(
                   (enr: {
                     id: string;

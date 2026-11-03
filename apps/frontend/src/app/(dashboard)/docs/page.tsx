@@ -81,7 +81,7 @@ export default async function DocsPage() {
           <p>
             Untuk evaluasi tugas pemrograman teknis atau pengujian dataset CSV, AI mengekstrak keluaran berkas dan mengomparasi terhadap test suite otomatis:
           </p>
-          <div className="p-4 bg-[#0F172A] text-[#38BDF8] rounded-lg font-mono text-[11px] overflow-x-auto">
+          <div className="p-4 bg-muted text-foreground rounded-lg font-mono text-[11px] overflow-x-auto">
             <code>
               {`POST /api/evaluations/batch-run\nContent-Type: text/csv\n\nstudent_id,submission_path,rubric_id,status\n2108561042,sarah_rb_tree.py,rubric-04,PENDING_REVIEW`}
             </code>

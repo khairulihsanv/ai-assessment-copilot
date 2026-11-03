@@ -250,71 +250,66 @@ test.describe
       await expect(studentPage.locator("text=Nilai & Evaluasi Akhir")).not.toBeVisible();
 
       // 3. Dosen MENJALANKAN Evaluasi AI melalui UI
-      const startAiBtn = dosenPage
-        .locator(
-          "button:has-text('Mulai Analisis AI'), button:has-text('Mulai Koreksi AI Sekarang')",
-        )
-        .first();
+      const startAiBtn = dosenPage.getByRole("button", { name: "Jalankan AI", exact: true });
       await expect(startAiBtn).toBeVisible({ timeout: 10000 });
       await startAiBtn.click();
 
-      // Verifikasi progress streaming AI muncul di UI dan tunggu sampai rekomendasi AI selesai di-stream
-      await expect(
-        dosenPage.locator("text=Saran Skor AI").or(dosenPage.locator("text=Saran AI")).first(),
-      ).toBeVisible({ timeout: 35000 });
-      await expect(dosenPage.locator("text=Saran Skor AI")).toBeVisible({ timeout: 35000 });
+      // Tunggu draf AI selesai di-stream: tombol "Terima semua saran" muncul bila ada saran per kriteria
+      const acceptAllBtn = dosenPage.getByRole("button", { name: "Terima semua saran" });
+      await expect(acceptAllBtn).toBeVisible({ timeout: 35000 });
 
       // Verifikasi draf AI tetap privat dan tidak terlihat oleh mahasiswa
       await studentPage.reload();
       await expect(studentPage.locator("text=Nilai & Evaluasi Akhir")).not.toBeVisible();
 
-      // Dosen meninjau saran AI, lalu dapat menyalin saran AI ke form keputusan
-      const copyBtn = dosenPage
-        .locator("button:has-text('Salin Semua Saran AI ke Keputusan Dosen')")
-        .first();
-      if (await copyBtn.isVisible()) {
-        await copyBtn.click();
+      // Dosen menerima semua saran, lalu mengubah setiap skor final ke skor maksimal kriteria
+      await acceptAllBtn.click();
+      const scoreInputs = dosenPage.locator("input[id^='score-']");
+      const criteriaCount = await scoreInputs.count();
+      expect(criteriaCount).toBeGreaterThan(0);
+      for (let i = 0; i < criteriaCount; i++) {
+        const input = scoreInputs.nth(i);
+        await input.fill((await input.getAttribute("max")) ?? "0");
       }
-
-      // Dosen memodifikasi / menetapkan nilai dan catatan umpan balik resmi
-      await dosenPage.fill("#finalScore", "88");
       await dosenPage.fill(
-        "#finalFeedback",
+        "#final-feedback",
         "Penjelasan mekanisme Raft sangat baik dan tepat. Pemahaman role transition sudah akurat.",
       );
 
-      // 4. Dosen Finalisasi & Publikasikan Nilai
-      const publishBtn = dosenPage.locator(
-        "button[type='submit']:has-text('Finalisasi & Publikasikan Nilai')",
-      );
-      await publishBtn.click();
-
-      // Tunggu konfirmasi sukses di layar dosen
+      // 4. Dosen merilis nilai (dengan konfirmasi)
+      await dosenPage.getByRole("button", { name: "Rilis nilai ke mahasiswa" }).click();
+      await dosenPage.getByRole("button", { name: "Ya, rilis" }).click();
       await expect(
-        dosenPage.locator("text=Nilai final berhasil disimpan dan dipublikasikan ke mahasiswa"),
-      ).toBeVisible({ timeout: 10000 });
+        dosenPage.locator("text=Nilai dirilis dan sekarang terlihat oleh mahasiswa"),
+      ).toBeVisible({
+        timeout: 10000,
+      });
 
       // 5. Mahasiswa Reload dan Melihat Nilai yang Dirilis Beserta Feedback
       await studentPage.reload();
       await expect(studentPage.locator("text=Nilai & Evaluasi Akhir")).toBeVisible({
         timeout: 10000,
       });
-      await expect(studentPage.locator("text=88 / 100")).toBeVisible();
+      await expect(studentPage.locator("text=100 / 100")).toBeVisible();
       await expect(
         studentPage.locator("text=Penjelasan mekanisme Raft sangat baik dan tepat"),
       ).toBeVisible();
 
       // 6. Uji Semantik Nilai: Nilai Sah 0 Tetap Ditampilkan sebagai 0 (Bukan Null / Belum Dinilai)
-      await dosenPage.fill("#finalScore", "0");
+      for (let i = 0; i < criteriaCount; i++) {
+        await scoreInputs.nth(i).fill("0");
+      }
       await dosenPage.fill(
-        "#finalFeedback",
+        "#final-feedback",
         "Format jawaban tidak memenuhi standar kode etik penulisan (Skor 0 diberikan sah).",
       );
-      const updateBtn = dosenPage.locator("button[type='submit']:has-text('Perbarui Nilai Final')");
-      await updateBtn.click();
+      await dosenPage.getByRole("button", { name: "Perbarui nilai yang dirilis" }).click();
+      await dosenPage.getByRole("button", { name: "Ya, rilis" }).click();
       await expect(
-        dosenPage.locator("text=Nilai final berhasil disimpan dan dipublikasikan"),
-      ).toBeVisible({ timeout: 10000 });
+        dosenPage.locator("text=Nilai dirilis dan sekarang terlihat oleh mahasiswa"),
+      ).toBeVisible({
+        timeout: 10000,
+      });
 
       // Mahasiswa melihat nilai 0 secara sah
       await studentPage.reload();
@@ -418,19 +413,15 @@ test.describe
       );
 
       // Dosen menjalankan penilaian AI via UI button
-      const triggerAiBtn = dosenPage
-        .locator(
-          "button:has-text('Mulai Analisis AI'), button:has-text('Mulai Koreksi AI Sekarang')",
-        )
-        .first();
+      const triggerAiBtn = dosenPage.getByRole("button", { name: "Jalankan AI", exact: true });
       await expect(triggerAiBtn).toBeVisible({ timeout: 10000 });
       await triggerAiBtn.click();
 
-      // Verifikasi progres streaming AI muncul dan menyelesaikan saran evaluasi
-      await expect(
-        dosenPage.locator("text=Saran Skor AI").or(dosenPage.locator("text=Saran AI")).first(),
-      ).toBeVisible({ timeout: 35000 });
-      await expect(dosenPage.locator("text=Saran Skor AI")).toBeVisible({ timeout: 35000 });
+      // Draf AI selesai: saran per kriteria dan tombol "Terima semua saran" tampil
+      await expect(dosenPage.getByRole("button", { name: "Terima semua saran" })).toBeVisible({
+        timeout: 35000,
+      });
+      await expect(dosenPage.locator("text=Saran AI").first()).toBeVisible();
 
       await studentContext.close();
       await dosenContext.close();

@@ -14,7 +14,16 @@ interface AuthFieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "id
 }
 
 /** Labelled input with persistent label, hint/error text and an optional show-password toggle. */
-export function AuthField({ id, label, hint, error, aside, type = "text", className, ...props }: AuthFieldProps) {
+export function AuthField({
+  id,
+  label,
+  hint,
+  error,
+  aside,
+  type = "text",
+  className,
+  ...props
+}: AuthFieldProps) {
   const [reveal, setReveal] = useState(false);
   const hintId = useId();
   const isPassword = type === "password";
@@ -51,12 +60,19 @@ export function AuthField({ id, label, hint, error, aside, type = "text", classN
             aria-pressed={reveal}
             className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-lg text-muted-foreground hover:text-foreground"
           >
-            {reveal ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
+            {reveal ? (
+              <EyeOff size={16} aria-hidden="true" />
+            ) : (
+              <Eye size={16} aria-hidden="true" />
+            )}
           </button>
         )}
       </div>
       {(error || hint) && (
-        <p id={hintId} className={cn("text-xs", error ? "text-danger-fg" : "text-muted-foreground")}>
+        <p
+          id={hintId}
+          className={cn("text-xs", error ? "text-danger-fg" : "text-muted-foreground")}
+        >
           {error || hint}
         </p>
       )}
@@ -73,9 +89,20 @@ const toneClass: Record<Tone, string> = {
 };
 
 /** Inline message. Errors are announced immediately (role=alert); others politely (role=status). */
-export function AuthAlert({ tone = "error", title, children }: { tone?: Tone; title?: string; children: ReactNode }) {
+export function AuthAlert({
+  tone = "error",
+  title,
+  children,
+}: {
+  tone?: Tone;
+  title?: string;
+  children: ReactNode;
+}) {
   return (
-    <div role={tone === "error" ? "alert" : "status"} className={cn("rounded-lg border px-3.5 py-3 text-sm", toneClass[tone])}>
+    <div
+      role={tone === "error" ? "alert" : "status"}
+      className={cn("rounded-lg border px-3.5 py-3 text-sm", toneClass[tone])}
+    >
       {title && <p className="font-semibold">{title}</p>}
       <div className={title ? "mt-0.5" : undefined}>{children}</div>
     </div>

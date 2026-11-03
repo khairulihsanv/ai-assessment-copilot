@@ -272,7 +272,7 @@ export function AssignmentsView({
             onClick={() => setActiveTab("NEED_GRADE")}
             className={`px-4 py-2 rounded-md text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
               activeTab === "NEED_GRADE"
-                ? "bg-[#DC2626] text-white shadow-none"
+                ? "bg-primary text-primary-foreground shadow-none"
                 : "bg-card text-muted-foreground hover:bg-rose-50 border border-border"
             }`}
           >
@@ -286,7 +286,7 @@ export function AssignmentsView({
             onClick={() => setActiveTab("ACTIVE")}
             className={`px-4 py-2 rounded-md text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
               activeTab === "ACTIVE"
-                ? "bg-[#2563EB] text-white shadow-none"
+                ? "bg-primary text-primary-foreground shadow-none"
                 : "bg-card text-muted-foreground hover:bg-blue-50 border border-border"
             }`}
           >
@@ -306,7 +306,7 @@ export function AssignmentsView({
             onClick={() => setActiveTab("ARCHIVED")}
             className={`px-4 py-2 rounded-md text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
               activeTab === "ARCHIVED"
-                ? "bg-[#10B981] text-white shadow-none"
+                ? "bg-primary text-primary-foreground shadow-none"
                 : "bg-card text-muted-foreground hover:bg-emerald-50 border border-border"
             }`}
           >
@@ -360,14 +360,14 @@ export function AssignmentsView({
                   <div className="text-[11px] font-mono text-muted-foreground">
                     {t.mySubmission ? (
                       t.mySubmission.grades?.[0] !== undefined ? (
-                        <span className="font-bold text-[#10B981]">
+                        <span className="font-bold text-success-fg">
                           Nilai: {t.mySubmission.grades[0].finalScore} / {t.maxScore}
                         </span>
                       ) : (
                         <span className="text-primary font-bold">Menunggu Review</span>
                       )
                     ) : (
-                      <span className="text-[#DC2626] font-bold">Belum Kumpul</span>
+                      <span className="text-danger-fg font-bold">Belum Kumpul</span>
                     )}
                   </div>
 
@@ -500,8 +500,8 @@ export function AssignmentsView({
               onClick={() => setActiveTab("NEED_GRADE")}
               className={`px-4 py-1.5 rounded-md text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
                 activeTab === "NEED_GRADE"
-                  ? "bg-[#DC2626] text-white shadow-none"
-                  : "text-muted-foreground hover:text-[#DC2626]"
+                  ? "bg-primary text-primary-foreground shadow-none"
+                  : "text-muted-foreground hover:text-danger-fg"
               }`}
             >
               <span>Ada pengumpulan</span>

@@ -26,7 +26,7 @@ test.describe("Dashboard dosen: alur dan isolasi tampilan", () => {
     await page.goto("/login");
     await page.locator("#email").fill(email);
     await page.locator("#password").fill(FIXTURE_PASSWORD);
-    await page.getByRole("button", { name: "Masuk ke Portal Akademik", exact: true }).click();
+    await page.getByRole("button", { name: "Masuk", exact: true }).click();
     await expect(page).toHaveURL(/\/dashboard$/);
     await expect(page.locator("#main-content h1")).toBeVisible();
     authenticatedSessions.set(email, await page.context().cookies());

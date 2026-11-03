@@ -102,7 +102,12 @@ export function useAIGradingStream(): UseAIGradingStreamReturn {
         const url = `/api/submissions/${submissionId}/grade/stream`;
         setGrading(true);
         setError(null);
-        setCurrentStep({ step: 0, totalSteps: 4, message: "Menghubungkan ke layanan AI…", progress: 5 });
+        setCurrentStep({
+          step: 0,
+          totalSteps: 4,
+          message: "Menghubungkan ke layanan AI…",
+          progress: 5,
+        });
         rejectCurrentRef.current = reject;
 
         let opened = false;

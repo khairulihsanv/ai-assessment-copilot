@@ -119,7 +119,7 @@ export function DosenDashboard({
           <section className={styles.metrics} aria-label="Ringkasan pekerjaan">
             <div className={styles.priorityMetric}>
               <div className={styles.metricLabel}>
-                <span className={styles.blueDot} />
+                <span className={styles.accentDot} />
                 Perlu dikoreksi
               </div>
               <div className={styles.metricValue}>
