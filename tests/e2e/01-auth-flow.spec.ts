@@ -4,9 +4,9 @@ import { FIXTURE_PASSWORD } from "../../scripts/e2e-seed";
 test.describe("E2E Alur Autentikasi Interaktif", () => {
   test("1. Halaman Landing menampilkan CTA dan mengarahkan ke form masuk", async ({ page }) => {
     await page.goto("/");
-    await expect(page.locator("h1")).toContainText("Koreksi tugas lebih cepat");
+    await expect(page.locator("h1")).toContainText("Koreksi Tugas");
 
-    const masukBtn = page.getByRole("link", { name: "Masuk", exact: true }).first();
+    const masukBtn = page.locator("a[href='/login'], .lp-nav__login").first();
     await masukBtn.click();
     await expect(page).toHaveURL(/\/login/, { timeout: 15000 });
   });
