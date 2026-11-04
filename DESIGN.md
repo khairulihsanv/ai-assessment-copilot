@@ -13,6 +13,9 @@ Inter is the main face; numbers and technical identifiers may use the existing m
 ## Navigation and behavior
 The desktop sidebar is 232px with a compact option. On small screens a native modal drawer provides focus containment and Escape dismissal. The top bar has context navigation, functional theme toggle and account settings; no pretend search or notification actions. Role-sensitive routes are preserved. The default theme is light; a saved user preference remains respected.
 
+## Public and auth screens
+Two deliberate exceptions to the quiet workbench style, both requested by the product owner: the landing page keeps its existing expressive design (`landing.css`), and login/register use a playful card layout with the Dexa owl mascot (an original SVG in `components/auth/auth-illustration.tsx`, coloured by the `--illus-*` tokens). Everything behind login stays in the workbench style. Honesty rules below still apply: no social or SSO buttons until those sign-ins exist.
+
 ## Honesty and content
 Public workflow examples must be labeled as illustrations. AI suggestions are drafts; only lecturer-released grades are final. Never imply RAG is fully implemented or promise zero hallucinations. Empty states explain the next real action. Auth forms keep working credentials and registration; demo credentials are explicitly optional. Placeholder SSO claims and nonfunctional session switches are removed from presentation, not treated as implemented features.
 

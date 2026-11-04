@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { Loader2, Lock, Mail } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
@@ -77,7 +77,9 @@ function LoginForm() {
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <h2 className="text-2xl font-semibold tracking-tight">Masuk ke ruang kerja</h2>
+        <h2 className="text-[28px] leading-tight font-semibold tracking-tight">
+          Masuk ke ruang kerja
+        </h2>
         <p className="text-sm text-muted-foreground">
           Gunakan email dan kata sandi akun Dexa Anda.
         </p>
@@ -105,6 +107,7 @@ function LoginForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="nama@kampus.ac.id"
+          icon={<Mail size={17} />}
         />
         <AuthField
           id="password"
@@ -114,7 +117,8 @@ function LoginForm() {
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          hint="Lupa kata sandi? Hubungi admin program studi untuk mengatur ulang."
+          hint="Lupa kata sandi? Hubungi admin program studi."
+          icon={<Lock size={17} />}
         />
 
         <label htmlFor="remember-me" className="flex items-start gap-2.5 text-sm">
@@ -136,36 +140,38 @@ function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
         >
           {loading && <Loader2 size={16} className="animate-spin" aria-hidden="true" />}
           {loading ? "Memeriksa…" : "Masuk"}
         </button>
       </form>
 
-      <div className="space-y-2 border-t border-border pt-5">
-        <p className="text-xs text-muted-foreground">
-          Akun demo (opsional, hanya tersedia jika data demo dipasang di server):
-        </p>
+      <div className="space-y-3">
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <span aria-hidden="true" className="h-px flex-1 bg-border" />
+          atau coba akun demo
+          <span aria-hidden="true" className="h-px flex-1 bg-border" />
+        </div>
         <div className="grid grid-cols-2 gap-2">
           <button
             type="button"
             onClick={() => fillDemo("DOSEN")}
-            className="dexa-link min-h-10 px-3 py-2 text-sm"
+            className="min-h-11 rounded-xl border border-border px-1 text-sm font-medium hover:bg-muted sm:px-3"
           >
             Isi akun dosen
           </button>
           <button
             type="button"
             onClick={() => fillDemo("MAHASISWA")}
-            className="dexa-link min-h-10 px-3 py-2 text-sm"
+            className="min-h-11 rounded-xl border border-border px-1 text-sm font-medium hover:bg-muted sm:px-3"
           >
             Isi akun mahasiswa
           </button>
         </div>
       </div>
 
-      <p className="text-sm text-muted-foreground">
+      <p className="text-center text-sm text-muted-foreground">
         Belum punya akun?{" "}
         <Link href="/register" className="font-medium text-primary underline underline-offset-4">
           Daftar

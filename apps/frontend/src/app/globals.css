@@ -163,6 +163,20 @@
 	--danger-bg: #fbeceb;
 	--danger-border: #ebbfbd;
 	--danger-fg: #9b1c1c;
+
+	/* Auth screens and mascot illustration */
+	--auth-canvas: #e3eee5;
+	--auth-panel: #d3e7d9;
+	--illus-outline: #16382c;
+	--illus-ink: #1f4d3b;
+	--illus-green: #4c9a76;
+	--illus-green-dark: #347a5a;
+	--illus-cream: #fdf6e6;
+	--illus-paper: #ffffff;
+	--illus-muted: #c4d6c9;
+	--illus-mustard: #f2b94b;
+	--illus-coral: #f0826c;
+	--illus-highlight: #f6d774;
 	color-scheme: light;
 }
 [data-theme="dark"],
@@ -228,6 +242,9 @@
 	--danger-bg: #3a1d1d;
 	--danger-border: #6e3434;
 	--danger-fg: #fca5a5;
+
+	--auth-canvas: #0c1310;
+	--auth-panel: #2b4a3a;
 	color-scheme: dark;
 }
 
@@ -478,6 +495,8 @@ mark.evidence sup {
 	--color-card: var(--card);
 	--color-foreground: var(--foreground);
 	--color-background: var(--background);
+	--color-auth-canvas: var(--auth-canvas);
+	--color-auth-panel: var(--auth-panel);
 	--color-evidence: var(--evidence);
 	--color-evidence-strong: var(--evidence-strong);
 	--color-evidence-active: var(--evidence-active);

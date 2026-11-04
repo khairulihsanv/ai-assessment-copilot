@@ -11,6 +11,8 @@ interface AuthFieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "id
   error?: string;
   /** Extra element on the label row (e.g. a link). */
   aside?: ReactNode;
+  /** Leading icon, separated from the value by a thin divider. */
+  icon?: ReactNode;
 }
 
 /** Labelled input with persistent label, hint/error text and an optional show-password toggle. */
@@ -20,6 +22,7 @@ export function AuthField({
   hint,
   error,
   aside,
+  icon,
   type = "text",
   className,
   ...props
@@ -38,14 +41,23 @@ export function AuthField({
         {aside}
       </div>
       <div className="relative">
+        {icon && (
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-3 left-0 flex w-11 items-center justify-center border-r border-border text-muted-foreground"
+          >
+            {icon}
+          </span>
+        )}
         <input
           id={id}
           type={isPassword && reveal ? "text" : type}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}
           className={cn(
-            "h-11 w-full rounded-lg border border-input bg-card px-3 text-sm text-foreground placeholder:text-muted-foreground",
+            "h-12 w-full rounded-xl border border-input bg-card px-3 text-sm text-foreground placeholder:text-muted-foreground",
             "focus-visible:border-primary focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring",
+            icon && "pl-14",
             error && "border-danger-fg",
             isPassword && "pr-11",
             className,
@@ -58,7 +70,7 @@ export function AuthField({
             onClick={() => setReveal((v) => !v)}
             aria-label={reveal ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
             aria-pressed={reveal}
-            className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-lg text-muted-foreground hover:text-foreground"
+            className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-xl text-muted-foreground hover:text-foreground"
           >
             {reveal ? (
               <EyeOff size={16} aria-hidden="true" />
