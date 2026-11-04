@@ -73,9 +73,11 @@ function RegisterForm() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 short:space-y-3">
       <div className="space-y-1">
-        <h2 className="text-[28px] leading-tight font-semibold tracking-tight">Buat akun</h2>
+        <h2 className="text-[28px] short:text-2xl leading-tight font-semibold tracking-tight">
+          Buat akun
+        </h2>
         <p className="text-sm text-muted-foreground">Satu akun untuk semua kelas Anda.</p>
       </div>
 
@@ -86,15 +88,15 @@ function RegisterForm() {
       )}
       {error && <AuthAlert tone="error">{error}</AuthAlert>}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4 short:space-y-2.5">
         <fieldset className="space-y-1.5">
-          <legend className="mb-1.5 text-sm font-medium">Saya mendaftar sebagai</legend>
+          <legend className="mb-1.5 text-sm font-medium short:mb-1">Saya mendaftar sebagai</legend>
           <div className="grid grid-cols-2 gap-2">
             {roleOptions.map((opt) => (
               <label
                 key={opt.value}
                 className={cn(
-                  "flex cursor-pointer flex-col gap-0.5 rounded-xl border px-3 py-2.5 text-sm",
+                  "flex cursor-pointer flex-col gap-0.5 rounded-xl border px-3 py-2.5 text-sm short:py-2",
                   role === opt.value
                     ? "border-primary bg-secondary"
                     : "border-input bg-card hover:bg-muted",
@@ -111,7 +113,7 @@ function RegisterForm() {
                   />
                   {opt.label}
                 </span>
-                <span className="text-xs text-muted-foreground">{opt.hint}</span>
+                <span className="text-xs text-muted-foreground short:hidden">{opt.hint}</span>
               </label>
             ))}
           </div>
@@ -139,34 +141,36 @@ function RegisterForm() {
           placeholder="nama@kampus.ac.id"
           icon={<Mail size={17} />}
         />
-        <AuthField
-          id="password"
-          label="Kata sandi"
-          type="password"
-          autoComplete="new-password"
-          required
-          minLength={6}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          hint="Minimal 6 karakter."
-          icon={<Lock size={17} />}
-        />
-        <AuthField
-          id="confirmPassword"
-          label="Ulangi kata sandi"
-          type="password"
-          autoComplete="new-password"
-          required
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          error={mismatch ? "Kata sandi belum sama." : undefined}
-          icon={<Lock size={17} />}
-        />
+        <div className="space-y-4 short:grid short:grid-cols-2 short:gap-2 short:space-y-0">
+          <AuthField
+            id="password"
+            label="Kata sandi"
+            type="password"
+            autoComplete="new-password"
+            required
+            minLength={6}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            hint="Minimal 6 karakter."
+            icon={<Lock size={17} />}
+          />
+          <AuthField
+            id="confirmPassword"
+            label="Ulangi kata sandi"
+            type="password"
+            autoComplete="new-password"
+            required
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            error={mismatch ? "Kata sandi belum sama." : undefined}
+            icon={<Lock size={17} />}
+          />
+        </div>
 
         <button
           type="submit"
           disabled={loading || success}
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+          className="flex h-12 short:h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
         >
           {loading && <Loader2 size={16} className="animate-spin" aria-hidden="true" />}
           {loading ? "Mendaftarkan…" : "Daftar"}

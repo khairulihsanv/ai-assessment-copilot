@@ -3,6 +3,8 @@
 @import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
+/* Desktop windows too short for the roomy auth layout (e.g. a laptop with browser zoom). */
+@custom-variant short (@media (min-width: 1024px) and (max-height: 760px));
 
 /* ─── Custom Theme (Tailwind v4 CSS-first config) ─── */
 @theme {
@@ -165,8 +167,9 @@
 	--danger-fg: #9b1c1c;
 
 	/* Auth screens and mascot illustration */
-	--auth-canvas: #e3eee5;
-	--auth-panel: #d3e7d9;
+	--auth-canvas: #f1f6f2;
+	--auth-dot: rgb(22 56 44 / 0.16);
+	--auth-dot-active: #2f8a63;
 	--illus-outline: #16382c;
 	--illus-ink: #1f4d3b;
 	--illus-green: #4c9a76;
@@ -244,7 +247,8 @@
 	--danger-fg: #fca5a5;
 
 	--auth-canvas: #0c1310;
-	--auth-panel: #2b4a3a;
+	--auth-dot: rgb(165 214 184 / 0.16);
+	--auth-dot-active: #a5d6b8;
 	color-scheme: dark;
 }
 
@@ -393,6 +397,57 @@ h6 {
 	color: var(--primary-foreground);
 }
 
+/* Auth screens: cursor-reactive dots, frosted surfaces, gently floating chips. */
+.auth-dots {
+	position: fixed;
+	inset: 0;
+	pointer-events: none;
+	background-image: radial-gradient(var(--auth-dot) 1.25px, transparent 1.25px);
+	background-size: 26px 26px;
+}
+.auth-dots::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background-image: radial-gradient(var(--auth-dot-active) 1.75px, transparent 1.75px);
+	background-size: 26px 26px;
+	mask-image: radial-gradient(
+		circle 170px at var(--mx, -999px) var(--my, -999px),
+		black 0%,
+		transparent 100%
+	);
+	-webkit-mask-image: radial-gradient(
+		circle 170px at var(--mx, -999px) var(--my, -999px),
+		black 0%,
+		transparent 100%
+	);
+}
+.auth-glass {
+	background: color-mix(in srgb, var(--card) 74%, transparent);
+	border: 1px solid color-mix(in srgb, var(--border) 75%, transparent);
+	box-shadow: 0 18px 50px -24px rgb(22 56 44 / 0.28);
+	-webkit-backdrop-filter: blur(14px);
+	backdrop-filter: blur(14px);
+}
+.auth-chip {
+	/* Chips overlap the mascot, so they stay nearly opaque to remain crisp and readable. */
+	background: color-mix(in srgb, var(--card) 94%, transparent);
+	-webkit-backdrop-filter: none;
+	backdrop-filter: none;
+}
+.auth-float {
+	animation: auth-float 6s ease-in-out infinite;
+}
+@keyframes auth-float {
+	0%,
+	100% {
+		transform: translateY(0);
+	}
+	50% {
+		transform: translateY(-7px);
+	}
+}
+
 /* Numbers that should line up in columns (scores, counts). */
 .tabular {
 	font-variant-numeric: tabular-nums;
@@ -496,7 +551,6 @@ mark.evidence sup {
 	--color-foreground: var(--foreground);
 	--color-background: var(--background);
 	--color-auth-canvas: var(--auth-canvas);
-	--color-auth-panel: var(--auth-panel);
 	--color-evidence: var(--evidence);
 	--color-evidence-strong: var(--evidence-strong);
 	--color-evidence-active: var(--evidence-active);

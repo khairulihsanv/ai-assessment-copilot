@@ -75,9 +75,9 @@ function LoginForm() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 short:space-y-3">
       <div className="space-y-1">
-        <h2 className="text-[28px] leading-tight font-semibold tracking-tight">
+        <h2 className="text-[28px] short:text-2xl leading-tight font-semibold tracking-tight">
           Masuk ke ruang kerja
         </h2>
         <p className="text-sm text-muted-foreground">
@@ -92,12 +92,12 @@ function LoginForm() {
       )}
       {sessionEnded && (
         <AuthAlert tone="info" title="Sesi berakhir">
-          Anda keluar dari sesi sebelumnya. Silakan masuk kembali.
+          Silakan masuk kembali.
         </AuthAlert>
       )}
       {error && <AuthAlert tone="error">{error}</AuthAlert>}
 
-      <form onSubmit={handleSubmit} className="space-y-4" noValidate={false}>
+      <form onSubmit={handleSubmit} className="space-y-4 short:space-y-2.5" noValidate={false}>
         <AuthField
           id="email"
           label="Email"
@@ -131,7 +131,7 @@ function LoginForm() {
           />
           <span>
             Ingat saya di perangkat ini
-            <span className="block text-xs text-muted-foreground">
+            <span className="block text-xs text-muted-foreground short:hidden">
               Jika tidak dicentang, sesi berakhir saat tab ditutup.
             </span>
           </span>
@@ -140,14 +140,14 @@ function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+          className="flex h-12 short:h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
         >
           {loading && <Loader2 size={16} className="animate-spin" aria-hidden="true" />}
           {loading ? "Memeriksa…" : "Masuk"}
         </button>
       </form>
 
-      <div className="space-y-3">
+      <div className="space-y-3 short:space-y-2">
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           <span aria-hidden="true" className="h-px flex-1 bg-border" />
           atau coba akun demo
@@ -157,14 +157,14 @@ function LoginForm() {
           <button
             type="button"
             onClick={() => fillDemo("DOSEN")}
-            className="min-h-11 rounded-xl border border-border px-1 text-sm font-medium hover:bg-muted sm:px-3"
+            className="min-h-11 short:min-h-10 rounded-xl border border-border px-1 text-sm font-medium hover:bg-muted sm:px-3"
           >
             Isi akun dosen
           </button>
           <button
             type="button"
             onClick={() => fillDemo("MAHASISWA")}
-            className="min-h-11 rounded-xl border border-border px-1 text-sm font-medium hover:bg-muted sm:px-3"
+            className="min-h-11 short:min-h-10 rounded-xl border border-border px-1 text-sm font-medium hover:bg-muted sm:px-3"
           >
             Isi akun mahasiswa
           </button>

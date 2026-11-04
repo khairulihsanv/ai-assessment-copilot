@@ -33,7 +33,7 @@ export function AuthField({
   const describedBy = error || hint ? hintId : undefined;
 
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-1.5 short:space-y-1">
       <div className="flex items-center justify-between gap-2">
         <label htmlFor={id} className="text-sm font-medium text-foreground">
           {label}
@@ -55,7 +55,7 @@ export function AuthField({
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}
           className={cn(
-            "h-12 w-full rounded-xl border border-input bg-card px-3 text-sm text-foreground placeholder:text-muted-foreground",
+            "h-12 short:h-11 w-full rounded-xl border border-input bg-card px-3 text-sm text-foreground placeholder:text-muted-foreground",
             "focus-visible:border-primary focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring",
             icon && "pl-14",
             error && "border-danger-fg",
@@ -113,10 +113,10 @@ export function AuthAlert({
   return (
     <div
       role={tone === "error" ? "alert" : "status"}
-      className={cn("rounded-lg border px-3.5 py-3 text-sm", toneClass[tone])}
+      className={cn("rounded-lg border px-3.5 py-2.5 text-sm short:py-2", toneClass[tone])}
     >
-      {title && <p className="font-semibold">{title}</p>}
-      <div className={title ? "mt-0.5" : undefined}>{children}</div>
+      {title && <span className="font-semibold">{title}. </span>}
+      {children}
     </div>
   );
 }
