@@ -6,18 +6,17 @@ import {
   CheckSquare,
   ClipboardList,
   GraduationCap,
-  LayoutDashboard,
+  House,
   ListChecks,
   LogOut,
-  PanelLeft,
+  type LucideIcon,
   Settings,
 } from "lucide-react";
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Brand } from "@/components/brand";
+import { OwlMark } from "@/components/owl-mark";
 import { cn, getInitials } from "@/shared/utils";
-import { useUIStore } from "@/stores/ui-store";
 import styles from "./workspace-navigation.module.css";
 
 export interface WorkspaceUser {
@@ -25,6 +24,59 @@ export interface WorkspaceUser {
   name: string;
   email: string;
   role: string;
+}
+
+type NavItem = { href: string; label: string; icon: LucideIcon };
+
+const COMMON_ITEMS: NavItem[] = [
+  { href: "/dashboard", label: "Beranda", icon: House },
+  { href: "/classes", label: "Kelas", icon: GraduationCap },
+  { href: "/assignments", label: "Tugas", icon: ClipboardList },
+];
+const LECTURER_ITEMS: NavItem[] = [
+  { href: "/grading", label: "Koreksi", icon: CheckSquare },
+  { href: "/rubrics", label: "Rubrik", icon: ListChecks },
+  { href: "/analytics", label: "Analitik", icon: BarChart3 },
+];
+const STUDENT_ITEMS: NavItem[] = [{ href: "/grades", label: "Nilai", icon: Award }];
+
+function navItems(role: string): NavItem[] {
+  return [...COMMON_ITEMS, ...(role === "DOSEN" ? LECTURER_ITEMS : STUDENT_ITEMS)];
+}
+
+/** Marks the clicked link at once, before the next page has arrived. */
+function NavLabel({ label, hidden }: { label: string; hidden?: boolean }) {
+  const { pending } = useLinkStatus();
+  return (
+    <span data-pending={pending || undefined} className={cn(!hidden && styles.linkLabel)}>
+      {hidden ? <span className="sr-only">{label}</span> : label}
+    </span>
+  );
+}
+
+function NavEntry({
+  item,
+  active,
+  onNavigate,
+  className,
+}: {
+  item: NavItem;
+  active: boolean;
+  onNavigate?: () => void;
+  className?: string;
+}) {
+  const Icon = item.icon;
+  return (
+    <Link
+      href={item.href}
+      onClick={onNavigate}
+      aria-current={active ? "page" : undefined}
+      className={className}
+    >
+      <Icon size={19} aria-hidden="true" />
+      <NavLabel label={item.label} />
+    </Link>
+  );
 }
 
 export function WorkspaceBrand({
@@ -39,86 +91,60 @@ export function WorkspaceBrand({
       href="/dashboard"
       onClick={onNavigate}
       className={styles.brand}
-      aria-label="Dexa Assessment — Ringkasan"
+      aria-label="Dexa Assessment — Beranda"
     >
-      <Brand subtitle={user.role === "DOSEN" ? "Ruang kerja dosen" : "Ruang belajar"} />
+      <OwlMark size={34} />
+      <span className={styles.brandText}>
+        <span className={styles.brandName}>dexa</span>
+        <span className={styles.brandRole}>
+          {user.role === "DOSEN" ? "Ruang kerja dosen" : "Ruang belajar"}
+        </span>
+      </span>
     </Link>
   );
 }
 
+/** Full list with labels, for the phone and tablet drawer. */
 export function WorkspaceNavigation({
   user,
-  compact = false,
   onNavigate,
 }: {
   user: WorkspaceUser;
-  compact?: boolean;
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
-  const isDosen = user.role === "DOSEN";
-  const items = [
-    { href: "/dashboard", label: "Ringkasan", icon: LayoutDashboard },
-    { href: "/classes", label: "Kelas", icon: GraduationCap },
-    { href: "/assignments", label: "Tugas", icon: ClipboardList },
-    ...(isDosen
-      ? [
-          { href: "/grading", label: "Koreksi", icon: CheckSquare },
-          { href: "/rubrics", label: "Rubrik", icon: ListChecks },
-          { href: "/analytics", label: "Analitik", icon: BarChart3 },
-        ]
-      : [{ href: "/grades", label: "Nilai saya", icon: Award }]),
-  ];
-
   return (
-    <nav
-      aria-label="Navigasi utama"
-      className={cn(styles.navigation, compact && styles.compactNavigation)}
-    >
-      <p className="sr-only">Menu utama</p>
+    <nav aria-label="Navigasi utama" className={styles.navigation}>
       <ul className={styles.navList}>
-        {items.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href || pathname.startsWith(`${href}/`);
-          return (
-            <li key={href}>
-              <Link
-                href={href}
-                onClick={onNavigate}
-                aria-current={active ? "page" : undefined}
-                title={compact ? label : undefined}
-                className={styles.navLink}
-              >
-                <Icon size={18} aria-hidden="true" />
-                <span className={compact ? "sr-only" : styles.linkLabel}>{label}</span>
-              </Link>
-            </li>
-          );
-        })}
+        {navItems(user.role).map((item) => (
+          <li key={item.href}>
+            <NavEntry
+              item={item}
+              active={isActive(pathname, item.href)}
+              onNavigate={onNavigate}
+              className={styles.navLink}
+            />
+          </li>
+        ))}
       </ul>
       <div className={styles.navDivider} />
-      <Link
-        href="/settings"
-        onClick={onNavigate}
-        title={compact ? "Pengaturan" : undefined}
-        aria-current={pathname === "/settings" ? "page" : undefined}
+      <NavEntry
+        item={{ href: "/settings", label: "Pengaturan", icon: Settings }}
+        active={pathname === "/settings"}
+        onNavigate={onNavigate}
         className={styles.navLink}
-      >
-        <Settings size={18} aria-hidden="true" />
-        <span className={compact ? "sr-only" : styles.linkLabel}>Pengaturan</span>
-      </Link>
+      />
     </nav>
   );
 }
 
-export function WorkspaceAccount({
-  user,
-  compact = false,
-}: {
-  user: WorkspaceUser;
-  compact?: boolean;
-}) {
+function isActive(pathname: string, href: string) {
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function useLogout() {
   const [leaving, setLeaving] = useState(false);
-  const handleLogout = async () => {
+  const logout = async () => {
     if (leaving) return;
     setLeaving(true);
     sessionStorage.removeItem("dexa_session_active");
@@ -130,9 +156,28 @@ export function WorkspaceAccount({
     }
     window.location.assign("/login");
   };
+  return { leaving, logout };
+}
 
+export function LogoutButton({ className }: { className?: string }) {
+  const { leaving, logout } = useLogout();
   return (
-    <div className={cn(styles.account, compact && styles.compactAccount)}>
+    <button
+      type="button"
+      onClick={logout}
+      disabled={leaving}
+      className={cn(styles.logoutButton, className)}
+      title="Keluar dari akun"
+      aria-label="Keluar dari akun"
+    >
+      <LogOut size={18} aria-hidden="true" />
+    </button>
+  );
+}
+
+export function WorkspaceAccount({ user }: { user: WorkspaceUser }) {
+  return (
+    <div className={styles.account}>
       <span className={styles.accountAvatar} aria-hidden="true">
         {getInitials(user.name)}
       </span>
@@ -140,47 +185,54 @@ export function WorkspaceAccount({
         <p title={user.name}>{user.name}</p>
         <span>{user.role === "DOSEN" ? "Dosen" : "Mahasiswa"}</span>
       </div>
-      <button
-        type="button"
-        onClick={handleLogout}
-        disabled={leaving}
-        className={styles.logoutButton}
-        title="Keluar dari Akun"
-        aria-label="Keluar dari akun"
-      >
-        <LogOut size={18} aria-hidden="true" />
-      </button>
+      <LogoutButton />
     </div>
   );
 }
 
+/** Lecturer: icon rail on the left of the frame. */
 export function DashboardSidebar({ user }: { user: WorkspaceUser }) {
-  const { sidebarOpen, toggleSidebar } = useUIStore();
+  const pathname = usePathname();
   return (
-    <aside
-      className={cn(styles.palette, styles.sidebar)}
-      data-workspace-sidebar
-      data-collapsed={!sidebarOpen}
-      aria-label="Sidebar ruang kerja"
-    >
-      <div className={styles.brandRow}>
-        {sidebarOpen && <WorkspaceBrand user={user} />}
-        <button
-          type="button"
-          onClick={toggleSidebar}
-          className={styles.collapseButton}
-          aria-label={sidebarOpen ? "Ciutkan sidebar" : "Perluas sidebar"}
-          title={sidebarOpen ? "Ciutkan sidebar" : "Perluas sidebar"}
-          aria-expanded={sidebarOpen}
-          aria-controls="desktop-workspace-navigation"
-        >
-          <PanelLeft size={18} aria-hidden="true" />
-        </button>
+    <aside className={styles.rail} data-workspace-sidebar aria-label="Menu ruang kerja">
+      <Link href="/dashboard" className={styles.railBrand} aria-label="Dexa Assessment — Beranda">
+        <OwlMark size={38} />
+      </Link>
+      <nav aria-label="Navigasi utama" className={styles.railNav}>
+        {navItems(user.role).map((item) => (
+          <NavEntry
+            key={item.href}
+            item={item}
+            active={isActive(pathname, item.href)}
+            className={styles.railLink}
+          />
+        ))}
+      </nav>
+      <div className={styles.railFooter}>
+        <NavEntry
+          item={{ href: "/settings", label: "Pengaturan", icon: Settings }}
+          active={pathname === "/settings"}
+          className={styles.railLink}
+        />
+        <LogoutButton />
       </div>
-      <div id="desktop-workspace-navigation" className={styles.scrollArea}>
-        <WorkspaceNavigation user={user} compact={!sidebarOpen} />
-      </div>
-      <WorkspaceAccount user={user} compact={!sidebarOpen} />
     </aside>
+  );
+}
+
+/** Student: pills in the top bar. */
+export function StudentPills({ user }: { user: WorkspaceUser }) {
+  const pathname = usePathname();
+  return (
+    <nav aria-label="Navigasi utama" className={styles.pills}>
+      {navItems(user.role).map((item) => (
+        <NavEntry
+          key={item.href}
+          item={item}
+          active={isActive(pathname, item.href)}
+          className={styles.pill}
+        />
+      ))}
+    </nav>
   );
 }

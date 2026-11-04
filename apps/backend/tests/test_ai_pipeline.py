@@ -563,3 +563,19 @@ def test_failed_job_is_reported_once_after_the_stream(client, graded_env, monkey
     assert first["state"] == "failed"
     assert "Draf AI tidak dapat dibuat" in first["error"]
     assert client.get(f"/submissions/{sub_id}/grade/job", headers=headers).json() == {"state": "idle"}
+
+
+def test_dashboard_reports_pending_per_class_drafts_and_recent(client, graded_env, db_session):
+    headers = {"Authorization": f"Bearer {graded_env['token']}"}
+    sub_id = graded_env["sub"].id
+
+    before = client.get("/dashboard", headers=headers).json()["dosenData"]
+    assert before["classes"][0]["pending"] == 1
+    assert before["queue"][0]["hasDraft"] is False
+    assert before["recent"][0]["id"] == sub_id
+    assert before["recent"][0]["released"] is False
+
+    assert client.post(f"/submissions/{sub_id}/grade", headers=headers).status_code == 200
+
+    after = client.get("/dashboard", headers=headers).json()["dosenData"]
+    assert after["queue"][0]["hasDraft"] is True

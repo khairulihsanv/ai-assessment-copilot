@@ -48,7 +48,7 @@ export function AssignmentCard({
         return (
           <Badge
             variant="outline"
-            className="text-xs bg-rose-500/10 text-rose-500 border-rose-500/20"
+            className="text-xs bg-danger-bg text-danger-fg border-danger-border"
           >
             PDF Dokumen
           </Badge>
@@ -57,7 +57,7 @@ export function AssignmentCard({
         return (
           <Badge
             variant="outline"
-            className="text-xs bg-blue-500/10 text-blue-500 border-blue-500/20"
+            className="text-xs bg-secondary text-secondary-foreground border-border"
           >
             DOCX Word
           </Badge>
@@ -66,7 +66,7 @@ export function AssignmentCard({
         return (
           <Badge
             variant="outline"
-            className="text-xs bg-amber-500/10 text-amber-500 border-amber-500/20"
+            className="text-xs bg-warning-bg text-warning-fg border-warning-border"
           >
             Teks Esai
           </Badge>
@@ -90,7 +90,7 @@ export function AssignmentCard({
       ) : (
         <Badge
           variant="outline"
-          className="text-xs gap-1 border-amber-500/40 text-amber-600 bg-amber-500/10 dark:text-amber-400"
+          className="text-xs gap-1 border-warning-border text-warning-fg bg-warning-bg "
         >
           <Clock className="w-3 h-3" />
           Belum Mengumpulkan
@@ -100,7 +100,7 @@ export function AssignmentCard({
 
     if (studentSubmission.releasedGradeId && studentSubmission.grades.length > 0) {
       return (
-        <Badge className="text-xs gap-1 bg-emerald-600 hover:bg-emerald-700 text-white">
+        <Badge className="text-xs gap-1 bg-success-bg text-success-fg border border-success-border hover:bg-success-bg">
           <CheckCircle2 className="w-3 h-3" />
           Nilai: {studentSubmission.grades[0]?.finalScore ?? "-"} / {maxScore}
         </Badge>
@@ -110,7 +110,7 @@ export function AssignmentCard({
     return (
       <Badge
         variant="secondary"
-        className="text-xs gap-1 bg-violet-500/10 text-violet-600 border border-violet-500/20 dark:text-violet-400"
+        className="text-xs gap-1 bg-secondary text-secondary-foreground border border-border "
       >
         <Sparkles className="w-3 h-3" />
         Menunggu Koreksi Dosen

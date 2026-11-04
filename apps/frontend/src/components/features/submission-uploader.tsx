@@ -219,7 +219,7 @@ export function SubmissionUploader({
       )}
 
       {success && (
-        <div className="p-3.5 text-sm rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-2">
+        <div className="p-3.5 text-sm rounded-xl bg-success-bg border border-success-border text-success-fg  font-medium flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
           <span>
             Jawaban berhasil dikumpulkan! Dosen dapat memeriksa langsung atau dibantu oleh AI.

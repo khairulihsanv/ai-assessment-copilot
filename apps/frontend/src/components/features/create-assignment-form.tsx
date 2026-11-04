@@ -131,7 +131,7 @@ export function CreateAssignmentForm({ classId, className, rubrics }: CreateAssi
       </div>
 
       {error && (
-        <div className="p-3.5 text-xs rounded-lg bg-rose-50 border border-rose-200 text-rose-700 font-medium flex items-center gap-2">
+        <div className="p-3.5 text-xs rounded-lg bg-danger-bg border border-danger-border text-danger-fg font-medium flex items-center gap-2">
           <AlertCircle className="w-4 h-4 flex-shrink-0" />
           <span>{error}</span>
         </div>
@@ -141,7 +141,7 @@ export function CreateAssignmentForm({ classId, className, rubrics }: CreateAssi
         {/* Title */}
         <div className="space-y-1.5">
           <Label htmlFor="title" className="text-xs font-semibold text-foreground">
-            Judul Penugasan <span className="text-rose-600">*</span>
+            Judul Penugasan <span className="text-danger-fg">*</span>
           </Label>
           <Input
             id="title"
@@ -157,7 +157,7 @@ export function CreateAssignmentForm({ classId, className, rubrics }: CreateAssi
         {/* Instructions */}
         <div className="space-y-1.5">
           <Label htmlFor="instructions" className="text-xs font-semibold text-foreground">
-            Instruksi & Soal Tugas <span className="text-rose-600">*</span>
+            Instruksi & Soal Tugas <span className="text-danger-fg">*</span>
           </Label>
           <Textarea
             id="instructions"
@@ -208,7 +208,7 @@ export function CreateAssignmentForm({ classId, className, rubrics }: CreateAssi
               className="text-xs font-semibold text-foreground flex items-center gap-1.5"
             >
               <Clock className="w-3.5 h-3.5 text-primary" />
-              Tenggat Waktu (Deadline) <span className="text-rose-600">*</span>
+              Tenggat Waktu (Deadline) <span className="text-danger-fg">*</span>
             </Label>
             <Input
               id="dueDate"

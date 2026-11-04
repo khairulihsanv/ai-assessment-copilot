@@ -90,7 +90,9 @@ function BarList({
               <div className="mt-1.5 h-2 rounded-full bg-muted" aria-hidden="true">
                 <div
                   className="h-2 rounded-full bg-primary"
-                  style={{ width: `${max > 0 && r.value > 0 ? Math.max(2, (r.value / max) * 100) : 0}%` }}
+                  style={{
+                    width: `${max > 0 && r.value > 0 ? Math.max(2, (r.value / max) * 100) : 0}%`,
+                  }}
                 />
               </div>
             </li>

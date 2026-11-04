@@ -537,14 +537,14 @@ export function ScanSubmissionPanel({
       )}
 
       {cameraError && (
-        <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-sm font-medium flex items-center gap-2">
+        <div className="p-3.5 rounded-xl bg-warning-bg border border-warning-border text-warning-fg  text-sm font-medium flex items-center gap-2">
           <HelpCircle className="w-4 h-4 flex-shrink-0" />
           <span>{cameraError}</span>
         </div>
       )}
 
       {successMessage && (
-        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-sm font-medium flex items-center gap-2">
+        <div className="p-4 rounded-xl bg-success-bg border border-success-border text-success-fg  text-sm font-medium flex items-center gap-2">
           <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
           <span>{successMessage}</span>
         </div>
@@ -823,7 +823,7 @@ export function ScanSubmissionPanel({
       {/* ========================================================= */}
       {step === "VERIFY" && activePage && (
         <div className="space-y-6">
-          <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-700 dark:text-blue-300 text-xs font-medium flex items-center justify-between gap-3">
+          <div className="p-3.5 rounded-xl bg-secondary border border-border text-secondary-foreground  text-xs font-medium flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <Edit3 className="w-4 h-4 flex-shrink-0" />
               <span>
@@ -863,11 +863,11 @@ export function ScanSubmissionPanel({
                 >
                   <span>Halaman {p.pageNumber}</span>
                   {isEmpty ? (
-                    <span className="w-2 h-2 rounded-full bg-amber-500" title="Teks kosong" />
+                    <span className="w-2 h-2 rounded-full bg-warning-bg" title="Teks kosong" />
                   ) : isEdited ? (
-                    <span className="w-2 h-2 rounded-full bg-blue-400" title="Diedit manual" />
+                    <span className="w-2 h-2 rounded-full bg-secondary" title="Diedit manual" />
                   ) : (
-                    <Check className="w-3 h-3 text-emerald-400" />
+                    <Check className="w-3 h-3 text-success-fg" />
                   )}
                 </button>
               );
@@ -939,14 +939,14 @@ export function ScanSubmissionPanel({
                     Teks Terkonfirmasi (Halaman {activePage.pageNumber})
                   </span>
                   {activePage.confirmedText !== activePage.extractedText && (
-                    <span className="text-[10px] px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 font-semibold border border-blue-500/20">
+                    <span className="text-[10px] px-2 py-0.5 rounded-md bg-secondary text-secondary-foreground  font-semibold border border-border">
                       Telah Dikoreksi
                     </span>
                   )}
                 </div>
 
                 {activePage.status === "EMPTY" ? (
-                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 font-semibold">
+                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-warning-bg text-warning-fg font-semibold">
                     Halaman Kosong / Tidak Terdeteksi
                   </span>
                 ) : typeof activePage.confidence === "number" && activePage.confidence > 0 ? (
@@ -957,7 +957,7 @@ export function ScanSubmissionPanel({
               </div>
 
               {activePage.error && (
-                <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-xs">
+                <div className="p-2.5 rounded-lg bg-warning-bg border border-warning-border text-warning-fg  text-xs">
                   {activePage.error}
                 </div>
               )}
@@ -1041,7 +1041,7 @@ export function ScanSubmissionPanel({
               type="button"
               onClick={handleFinalSubmit}
               disabled={submitting}
-              className="font-bold flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="font-bold flex items-center gap-2 bg-success-bg text-success-fg border border-success-border hover:bg-success-bg"
             >
               {submitting ? (
                 <>

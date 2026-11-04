@@ -257,8 +257,7 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
                     </span>
                   </h2>
                   <p className="text-xs text-muted-foreground">
-                    Klik &quot;Koreksi dengan AI&quot; untuk menjalankan analisis evaluasi cerdas
-                    otomatis.
+                    Pilih &quot;Koreksi AI&quot; untuk meminta draf penilaian. Nilai akhir tetap keputusan Anda.
                   </p>
                 </div>
               </div>
@@ -326,7 +325,7 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
                           ) : isAIReviewed ? (
                             <span className="font-mono text-xs font-bold px-2.5 py-1 rounded-xl bg-secondary text-secondary-foreground flex items-center gap-1">
                               <Sparkles className="w-3.5 h-3.5 text-primary" />
-                              Draft AI: {aiEvaluation?.suggestedTotalScore ?? "-"}
+                              Draf AI: {aiEvaluation?.suggestedTotalScore ?? "-"}
                             </span>
                           ) : (
                             <span className="font-mono text-xs px-2.5 py-1 rounded-xl bg-muted text-muted-foreground border border-border">

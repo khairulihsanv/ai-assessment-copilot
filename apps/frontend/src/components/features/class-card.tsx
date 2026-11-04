@@ -10,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { CoverArt, coverFor } from "./class-cover";
 
 interface ClassCardProps {
   id: string;
@@ -21,16 +22,6 @@ interface ClassCardProps {
   dosenName?: string;
   isDosen: boolean;
 }
-
-// Helper to generate a consistent color based on string
-const getBgColor = (str: string) => {
-  const colors = ["bg-sky-700", "bg-sky-800", "bg-blue-800"];
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return colors[Math.abs(hash) % colors.length];
-};
 
 export function ClassCard({
   id,
@@ -58,13 +49,17 @@ export function ClassCard({
     }
   };
 
-  const bgColor = getBgColor(id);
+  const cover = coverFor(id);
   const avatarText = dosenName ? dosenName.charAt(0).toUpperCase() : isDosen ? "M" : "D";
 
   return (
     <article className="group relative flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-all hover:shadow-md h-[280px]">
       {/* Header section */}
-      <div className={`relative h-28 ${bgColor} p-4 text-white overflow-hidden`}>
+      <div
+        className="relative h-28 overflow-hidden p-4 text-[var(--cover-text)]"
+        style={{ background: cover.bg }}
+      >
+        <CoverArt path={cover.art} className="absolute -right-1 -bottom-2 w-28 opacity-40" />
         <div className="relative flex justify-between items-start z-10">
           <div className="min-w-0 flex-1 pr-4">
             <h3 className="text-base font-semibold leading-snug line-clamp-2">
@@ -138,7 +133,7 @@ export function ClassCard({
             >
               <Key size={14} />
               <span className="font-mono">{enrollmentKey}</span>
-              {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+              {copied ? <Check size={14} className="text-success-fg" /> : <Copy size={14} />}
             </button>
           )}
           {copyError && (

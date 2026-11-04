@@ -1,6 +1,5 @@
 "use client";
 
-import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { WorkspaceThemeProvider } from "@/components/workspace-theme";
 import palette from "@/components/workspace-theme.module.css";
@@ -11,22 +10,25 @@ import { DashboardTopbar } from "./dashboard-topbar";
 import { SessionGuard } from "./session-guard";
 
 export function DashboardFrame({ user, children }: { user: WorkspaceUser; children: ReactNode }) {
-  const pathname = usePathname();
-  const isDosenOverview = user.role === "DOSEN" && pathname === "/dashboard";
+  const isDosen = user.role === "DOSEN";
 
   return (
     <WorkspaceThemeProvider>
-      <div className={cn(palette.palette, styles.workspace)} data-workspace>
+      {/* data-role selects the colour palette (globals.css), which also reaches portalled dialogs. */}
+      <div
+        className={cn(palette.palette, styles.workspace)}
+        data-workspace
+        data-role={isDosen ? "dosen" : "mahasiswa"}
+      >
         <SessionGuard />
-        <DashboardSidebar user={user} />
-        <div className="flex-1 flex flex-col min-w-0">
-          <DashboardTopbar user={user} />
-          <main
-            id="main-content"
-            className={isDosenOverview ? styles.content : "flex-1 px-4 py-6 sm:px-8 sm:py-8 pb-10"}
-          >
-            {children}
-          </main>
+        <div className={styles.frame}>
+          {isDosen && <DashboardSidebar user={user} />}
+          <div className={styles.column}>
+            <DashboardTopbar user={user} />
+            <main id="main-content" className={styles.content}>
+              {children}
+            </main>
+          </div>
         </div>
       </div>
     </WorkspaceThemeProvider>

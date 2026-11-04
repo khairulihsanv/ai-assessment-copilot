@@ -1,4 +1,7 @@
+from datetime import datetime, timedelta
+
 from fastapi import APIRouter, Depends
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -7,6 +10,7 @@ from app.models.models import (
     Assignment,
     Class,
     Enrollment,
+    EvaluationRun,
     GradeRevision,
     Submission,
     User,
@@ -14,6 +18,10 @@ from app.models.models import (
 from app.security.dependencies import get_current_user
 
 dashboard_router = APIRouter(prefix="/dashboard", tags=["dashboard"])
+
+RECENT_SUBMISSIONS = 5
+UPCOMING_TASKS = 12
+OVERDUE_TASKS_KEPT_DAYS = 7
 
 
 @dashboard_router.get("")
@@ -66,8 +74,41 @@ async def get_dashboard(
             .all()
         )
 
-        queue_data = [
-            {
+        recent_subs = (
+            db.query(Submission)
+            .join(Assignment, Assignment.id == Submission.assignmentId)
+            .join(Class, Class.id == Assignment.classId)
+            .filter(Class.dosenId == current_user.id, Submission.activeVersionId != None)
+            .order_by(Submission.createdAt.desc())
+            .limit(RECENT_SUBMISSIONS)
+            .all()
+        )
+
+        drafted_ids = {
+            row[0]
+            for row in db.query(EvaluationRun.submissionId)
+            .filter(
+                EvaluationRun.submissionId.in_([s.id for s in queue_subs]),
+                EvaluationRun.status == "COMPLETED",
+            )
+            .distinct()
+        }
+
+        pending_by_class = dict(
+            db.query(Assignment.classId, func.count(Submission.id))
+            .join(Submission, Submission.assignmentId == Assignment.id)
+            .join(Class, Class.id == Assignment.classId)
+            .filter(
+                Class.dosenId == current_user.id,
+                Submission.activeVersionId != None,
+                Submission.releasedGradeId == None,
+            )
+            .group_by(Assignment.classId)
+            .all()
+        )
+
+        def submission_item(s: Submission) -> dict:
+            return {
                 "id": s.id,
                 "createdAt": s.createdAt.isoformat() if s.createdAt else None,
                 "user": {"name": s.user.name if s.user else ""},
@@ -78,7 +119,10 @@ async def get_dashboard(
                     "class": {"name": s.assignment.class_.name},
                 },
             }
-            for s in queue_subs
+
+        queue_data = [{**submission_item(s), "hasDraft": s.id in drafted_ids} for s in queue_subs]
+        recent_data = [
+            {**submission_item(s), "released": s.releasedGradeId is not None} for s in recent_subs
         ]
 
         classes_data = [
@@ -87,6 +131,7 @@ async def get_dashboard(
                 "name": c.name,
                 "subject": c.subject,
                 "createdAt": c.createdAt.isoformat() if c.createdAt else None,
+                "pending": pending_by_class.get(c.id, 0),
                 "_count": {
                     "enrollments": len(c.enrollments),
                     "assignments": len(c.assignments),
@@ -102,6 +147,7 @@ async def get_dashboard(
                 "pending": pending_count,
                 "released": released_count,
                 "queue": queue_data,
+                "recent": recent_data,
             },
         }
 
@@ -112,13 +158,18 @@ async def get_dashboard(
         .all()
     )
 
+    # Old deadlines must not crowd out the ones still ahead.
     tasks = (
         db.query(Assignment)
         .join(Class, Class.id == Assignment.classId)
         .join(Enrollment, Enrollment.classId == Class.id)
-        .filter(Enrollment.mahasiswaId == current_user.id, Assignment.status == AssignmentStatus.PUBLISHED)
+        .filter(
+            Enrollment.mahasiswaId == current_user.id,
+            Assignment.status == AssignmentStatus.PUBLISHED,
+            Assignment.dueDate >= datetime.now() - timedelta(days=OVERDUE_TASKS_KEPT_DAYS),
+        )
         .order_by(Assignment.dueDate.asc())
-        .limit(6)
+        .limit(UPCOMING_TASKS)
         .all()
     )
 

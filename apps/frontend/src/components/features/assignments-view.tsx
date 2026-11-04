@@ -223,7 +223,7 @@ export function AssignmentsView({
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-primary/5 border border-border mb-2 text-primary">
               <BookOpen size={13} />
               <span className="font-mono text-[10px] font-bold uppercase tracking-wider">
-                Portal Pembelajaran Mahasiswa
+                Ruang belajar
               </span>
             </div>
             <h1 className="font-display text-2xl sm:text-3xl font-semibold text-foreground">
@@ -273,7 +273,7 @@ export function AssignmentsView({
             className={`px-4 py-2 rounded-md text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
               activeTab === "NEED_GRADE"
                 ? "bg-primary text-primary-foreground shadow-none"
-                : "bg-card text-muted-foreground hover:bg-rose-50 border border-border"
+                : "bg-card text-muted-foreground hover:bg-danger-bg border border-border"
             }`}
           >
             <span>Belum Kumpul</span>
@@ -287,7 +287,7 @@ export function AssignmentsView({
             className={`px-4 py-2 rounded-md text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
               activeTab === "ACTIVE"
                 ? "bg-primary text-primary-foreground shadow-none"
-                : "bg-card text-muted-foreground hover:bg-blue-50 border border-border"
+                : "bg-card text-muted-foreground hover:bg-secondary border border-border"
             }`}
           >
             <span>Menunggu Penilaian</span>
@@ -307,7 +307,7 @@ export function AssignmentsView({
             className={`px-4 py-2 rounded-md text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
               activeTab === "ARCHIVED"
                 ? "bg-primary text-primary-foreground shadow-none"
-                : "bg-card text-muted-foreground hover:bg-emerald-50 border border-border"
+                : "bg-card text-muted-foreground hover:bg-success-bg border border-border"
             }`}
           >
             <span>Sudah Dinilai</span>
@@ -565,7 +565,7 @@ export function AssignmentsView({
                     </span>
                     <span
                       className={`font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-md flex items-center gap-1 ${
-                        isPastDue ? "bg-rose-100 text-rose-700" : "bg-muted text-muted-foreground"
+                        isPastDue ? "bg-danger-bg text-danger-fg" : "bg-muted text-muted-foreground"
                       }`}
                     >
                       <Clock size={11} />
@@ -616,7 +616,7 @@ export function AssignmentsView({
                     href={`/classes/${asmt.classId}/assignments/${asmt.id}`}
                     className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-md bg-primary text-primary-foreground text-xs font-bold hover:bg-primary/90 shadow-none transition"
                   >
-                    <Sparkles size={13} className="text-emerald-300" />
+                    <Sparkles size={13} className="text-success-fg" />
                     <span>Lihat pengumpulan ({asmt.submittedCount})</span>
                   </Link>
                   <Link

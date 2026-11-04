@@ -28,7 +28,7 @@ export default async function ClassDetailPage({ params }: ClassDetailPageProps) 
   if (res.status === 403) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 max-w-md mx-auto">
-        <div className="w-14 h-14 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
+        <div className="w-14 h-14 rounded-lg bg-danger-bg text-danger-fg flex items-center justify-center">
           <BookOpen size={28} />
         </div>
         <h2 className="text-xl font-semibold font-display text-foreground">Akses Kelas Dibatasi</h2>
@@ -56,7 +56,7 @@ export default async function ClassDetailPage({ params }: ClassDetailPageProps) 
   if (!isDosen && !isEnrolled) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 max-w-md mx-auto">
-        <div className="w-14 h-14 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
+        <div className="w-14 h-14 rounded-lg bg-danger-bg text-danger-fg flex items-center justify-center">
           <BookOpen size={28} />
         </div>
         <h2 className="text-xl font-semibold font-display text-foreground">Akses Kelas Dibatasi</h2>
@@ -95,7 +95,7 @@ export default async function ClassDetailPage({ params }: ClassDetailPageProps) 
                 {cls.subject || "Mata Kuliah"}
               </span>
               {cls.isArchived && (
-                <span className="font-mono text-[10px] font-bold px-3 py-1 rounded-md bg-rose-500/20 text-rose-200">
+                <span className="font-mono text-[10px] font-bold px-3 py-1 rounded-md bg-danger-bg text-danger-fg">
                   Diarsipkan
                 </span>
               )}

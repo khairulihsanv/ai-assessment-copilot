@@ -2,7 +2,6 @@
 
 import {
   BookOpen,
-  Brain,
   ChevronDown,
   ChevronLeft,
   ChevronUp,
@@ -12,7 +11,6 @@ import {
   KeyRound,
   Layers,
   Plus,
-  ShieldCheck,
   Trash2,
 } from "lucide-react";
 import Link from "next/link";
@@ -57,7 +55,6 @@ export function RubricManagementView({
   const [isCreating, setIsCreating] = useState(false);
   const [editingRubric, setEditingRubric] = useState<RubricItem | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [thresholdScore, setThresholdScore] = useState(85);
   const [expandedCriteria, setExpandedCriteria] = useState<Record<string, boolean>>({});
 
   const toggleCriterionExpand = (critId: string) => {
@@ -124,21 +121,12 @@ export function RubricManagementView({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-secondary text-secondary-foreground">
-              Faculty Suite
-            </span>
-            <span className="font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 flex items-center gap-1">
-              <Brain size={10} /> Vector Embedding AI
-            </span>
-          </div>
           <h1 className="font-display text-2xl sm:text-3xl font-semibold text-foreground mt-1.5 flex items-center gap-2.5">
             <Layers className="text-primary" size={26} />
-            <span>Rubrik Penilaian Berbasis AI</span>
+            <span>Rubrik penilaian</span>
           </h1>
           <p className="text-xs text-muted-foreground mt-1">
-            Kunci Jawaban & Materi di-embed ke database vektor. AI menilai dengan{" "}
-            <strong>cosine similarity</strong> — bukan mengarang. Kelas{" "}
+            Kriteria, bobot, kunci jawaban, dan materi untuk kelas{" "}
             <strong className="text-foreground">{className}</strong>.
           </p>
         </div>
@@ -155,7 +143,7 @@ export function RubricManagementView({
         )}
       </div>
 
-      {/* AI Vector Embedding Info Banner */}
+      {/* How the rubric is used */}
       <div className="p-5 rounded-xl bg-secondary/50 border border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-none">
         <div className="flex items-center gap-3.5">
           <div className="w-10 h-10 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shrink-0 shadow-none">
@@ -260,7 +248,7 @@ export function RubricManagementView({
                             {r.criteria.length} Kriteria
                           </span>
                           {r._count.assignments > 0 ? (
-                            <span className="font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                            <span className="font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-success-bg text-success-fg">
                               Dipakai di {r._count.assignments} tugas aktif
                             </span>
                           ) : (
@@ -287,7 +275,7 @@ export function RubricManagementView({
                           type="button"
                           onClick={() => handleDelete(r.id, r._count.assignments)}
                           disabled={deletingId === r.id}
-                          className="p-2 rounded-full text-muted-foreground hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                          className="p-2 rounded-full text-muted-foreground hover:text-danger-fg hover:bg-danger-bg transition cursor-pointer"
                           title="Hapus Rubrik"
                         >
                           <Trash2 size={16} />
@@ -304,10 +292,10 @@ export function RubricManagementView({
                       <span
                         className={`font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 ${
                           criteriaWithAnswerKey === r.criteria.length
-                            ? "bg-emerald-100 text-emerald-800"
+                            ? "bg-success-bg text-success-fg"
                             : criteriaWithAnswerKey > 0
-                              ? "bg-amber-100 text-amber-800"
-                              : "bg-rose-100 text-rose-700"
+                              ? "bg-warning-bg text-warning-fg"
+                              : "bg-danger-bg text-danger-fg"
                         }`}
                       >
                         <KeyRound size={9} />
@@ -316,9 +304,9 @@ export function RubricManagementView({
                       <span
                         className={`font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 ${
                           criteriaWithMaterial === r.criteria.length
-                            ? "bg-blue-100 text-blue-800"
+                            ? "bg-secondary text-secondary-foreground"
                             : criteriaWithMaterial > 0
-                              ? "bg-amber-100 text-amber-800"
+                              ? "bg-warning-bg text-warning-fg"
                               : "bg-muted text-muted-foreground"
                         }`}
                       >
@@ -328,7 +316,7 @@ export function RubricManagementView({
                       <span
                         className={`font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 ${
                           criteriaWithEmbedding > 0
-                            ? "bg-purple-100 text-purple-800"
+                            ? "bg-secondary text-secondary-foreground"
                             : "bg-muted text-muted-foreground"
                         }`}
                       >
@@ -378,18 +366,18 @@ export function RubricManagementView({
                                 </span>
                                 {hasKey && (
                                   <span
-                                    className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center"
+                                    className="w-5 h-5 rounded-full bg-success-bg flex items-center justify-center"
                                     title="Kunci Jawaban ✓"
                                   >
-                                    <KeyRound size={10} className="text-emerald-700" />
+                                    <KeyRound size={10} className="text-success-fg" />
                                   </span>
                                 )}
                                 {hasMat && (
                                   <span
-                                    className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center"
+                                    className="w-5 h-5 rounded-full bg-secondary flex items-center justify-center"
                                     title="Materi ✓"
                                   >
-                                    <BookOpen size={10} className="text-blue-700" />
+                                    <BookOpen size={10} className="text-secondary-foreground" />
                                   </span>
                                 )}
                                 {isExpanded ? (
@@ -404,14 +392,14 @@ export function RubricManagementView({
                             {isExpanded && (
                               <div className="px-4 pb-4 pt-0 space-y-3 border-t border-border">
                                 {hasKey && (
-                                  <div className="p-3.5 rounded-xl bg-emerald-50/50 border border-emerald-200 space-y-1.5 mt-3">
+                                  <div className="p-3.5 rounded-xl bg-success-bg border border-success-border space-y-1.5 mt-3">
                                     <div className="flex items-center gap-1.5">
-                                      <KeyRound size={12} className="text-emerald-700" />
-                                      <span className="text-[10px] font-semibold text-emerald-800 uppercase tracking-wider">
+                                      <KeyRound size={12} className="text-success-fg" />
+                                      <span className="text-[10px] font-semibold text-success-fg uppercase tracking-wider">
                                         Kunci Jawaban
                                       </span>
                                       {hasEmbedding(c) && (
-                                        <span className="font-mono text-[8px] bg-emerald-200 text-emerald-900 px-1.5 py-0.5 rounded-full font-bold">
+                                        <span className="font-mono text-[8px] bg-success-bg text-success-fg px-1.5 py-0.5 rounded-full font-bold">
                                           ✓ Embedded
                                         </span>
                                       )}
@@ -423,14 +411,14 @@ export function RubricManagementView({
                                 )}
 
                                 {hasMat && (
-                                  <div className="p-3.5 rounded-xl bg-blue-50/50 border border-blue-200 space-y-1.5">
+                                  <div className="p-3.5 rounded-xl bg-secondary border border-border space-y-1.5">
                                     <div className="flex items-center gap-1.5">
-                                      <BookOpen size={12} className="text-blue-700" />
-                                      <span className="text-[10px] font-semibold text-blue-800 uppercase tracking-wider">
+                                      <BookOpen size={12} className="text-secondary-foreground" />
+                                      <span className="text-[10px] font-semibold text-secondary-foreground uppercase tracking-wider">
                                         Materi Referensi
                                       </span>
                                       {hasEmbedding(c) && (
-                                        <span className="font-mono text-[8px] bg-blue-200 text-blue-900 px-1.5 py-0.5 rounded-full font-bold">
+                                        <span className="font-mono text-[8px] bg-secondary text-secondary-foreground px-1.5 py-0.5 rounded-full font-bold">
                                           ✓ Embedded
                                         </span>
                                       )}
@@ -442,8 +430,8 @@ export function RubricManagementView({
                                 )}
 
                                 {!hasKey && !hasMat && (
-                                  <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-center mt-3">
-                                    <p className="text-[11px] text-amber-800 font-medium">
+                                  <div className="p-4 rounded-xl bg-warning-bg border border-warning-border text-center mt-3">
+                                    <p className="text-[11px] text-warning-fg font-medium">
                                       ⚠️ Belum ada Kunci Jawaban dan Materi untuk kriteria ini. AI
                                       akan menilai berdasarkan instruksi umum saja.
                                     </p>
@@ -460,43 +448,6 @@ export function RubricManagementView({
               })}
             </div>
           )}
-
-          {/* Human-in-the-Loop Validation Protocol banner */}
-          <div className="p-6 rounded-xl bg-secondary border border-border shadow-none space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <ShieldCheck size={18} className="text-primary" />
-                <span className="text-xs font-semibold text-primary">
-                  Human-in-the-Loop Validation Protocol
-                </span>
-                <span className="font-mono text-[9px] bg-card text-primary px-2.5 py-0.5 rounded-full font-bold shadow-none">
-                  Active Guardrail
-                </span>
-              </div>
-              <span className="font-mono text-xs font-semibold text-primary">
-                Confidence Threshold: ≥ {thresholdScore}.0%
-              </span>
-            </div>
-
-            <p className="text-xs text-foreground leading-relaxed">
-              Setiap penilaian AI dengan tingkat keyakinan di bawah ambang batas ini wajib melalui
-              telaah manual dosen sebelum diterbitkan ke mahasiswa. Dengan Kunci Jawaban & Materi
-              sebagai acuan, AI menghasilkan penilaian yang lebih transparan dan terukur.
-            </p>
-
-            <div className="flex items-center gap-3 pt-1">
-              <span className="font-mono text-[10px] text-primary font-bold">70%</span>
-              <input
-                type="range"
-                min={70}
-                max={95}
-                value={thresholdScore}
-                onChange={(e) => setThresholdScore(Number(e.target.value))}
-                className="w-full accent-primary cursor-pointer"
-              />
-              <span className="font-mono text-[10px] text-primary font-bold">95%</span>
-            </div>
-          </div>
         </div>
       )}
     </div>

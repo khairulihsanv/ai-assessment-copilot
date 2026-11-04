@@ -70,8 +70,8 @@ export function RegenerateKeyButton({ classId, initialKey }: RegenerateKeyButton
       >
         {copied ? (
           <>
-            <Check className="w-3.5 h-3.5 text-emerald-600" />
-            <span className="text-emerald-700">Tersalin</span>
+            <Check className="w-3.5 h-3.5 text-success-fg" />
+            <span className="text-success-fg">Tersalin</span>
           </>
         ) : (
           <>
@@ -86,7 +86,7 @@ export function RegenerateKeyButton({ classId, initialKey }: RegenerateKeyButton
         onClick={handleRegenerate}
         disabled={loading}
         title="Acak Ulang Kode"
-        className="h-9 w-9 rounded-xl border border-border bg-card hover:bg-rose-50 flex items-center justify-center text-muted-foreground hover:text-rose-600 transition shadow-none cursor-pointer disabled:opacity-50"
+        className="h-9 w-9 rounded-xl border border-border bg-card hover:bg-danger-bg flex items-center justify-center text-muted-foreground hover:text-danger-fg transition shadow-none cursor-pointer disabled:opacity-50"
       >
         <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
       </button>

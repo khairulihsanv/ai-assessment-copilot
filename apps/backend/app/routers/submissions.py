@@ -1118,6 +1118,9 @@ async def grade_submission_stream(
             yield _sse("done", {"success": True, "aiEvaluation": None})
             return
         sent = 0
+        if attach:
+            sent = len(job.history)
+            yield _sse("status", job.snapshot())
         while True:
             for frame in job.history[sent:]:
                 sent += 1
