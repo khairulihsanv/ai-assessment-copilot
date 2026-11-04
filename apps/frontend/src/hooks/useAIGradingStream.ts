@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getErrorMessage } from "@/shared/utils/api-error";
 
 export interface GradingStep {
@@ -8,20 +8,24 @@ export interface GradingStep {
   totalSteps: number;
   message: string;
   progress?: number;
+  tokens?: number;
+  elapsedSeconds?: number;
 }
 
 interface UseAIGradingStreamReturn {
   grading: boolean;
   currentStep: GradingStep | null;
   error: string | null;
-  startGrading: (submissionId: string) => Promise<unknown>;
+  startGrading: (submissionId: string, options?: { attach?: boolean }) => Promise<unknown>;
+  /** Asks the server about an earlier run; true when one is still running. */
+  checkRunningJob: (submissionId: string) => Promise<boolean>;
   cancelGrading: () => void;
   reset: () => void;
 }
 
 const CANCELLED = "Dibatalkan oleh dosen. Draf AI tidak disimpan.";
 const DISCONNECTED =
-  "Koneksi ke server terputus saat model sedang bekerja. Muat ulang halaman untuk melihat apakah draf sempat tersimpan, atau jalankan ulang.";
+  "Koneksi ke server terputus. Draf tetap diproses di server, muat ulang halaman untuk melihat hasilnya.";
 
 /**
  * EventSource hides the HTTP status and body when a stream fails to open
@@ -62,6 +66,7 @@ export function useAIGradingStream(): UseAIGradingStreamReturn {
 
   const eventSourceRef = useRef<EventSource | null>(null);
   const rejectCurrentRef = useRef<((reason?: unknown) => void) | null>(null);
+  const submissionRef = useRef<string | null>(null);
 
   const closeStream = useCallback(() => {
     if (eventSourceRef.current) {
@@ -69,6 +74,9 @@ export function useAIGradingStream(): UseAIGradingStreamReturn {
       eventSourceRef.current = null;
     }
   }, []);
+
+  // Leaving the page only stops following the draft: the server keeps working on it.
+  useEffect(() => closeStream, [closeStream]);
 
   const reset = useCallback(() => {
     closeStream();
@@ -83,6 +91,11 @@ export function useAIGradingStream(): UseAIGradingStreamReturn {
 
   const cancelGrading = useCallback(() => {
     closeStream();
+    if (submissionRef.current) {
+      void fetch(`/api/submissions/${submissionRef.current}/grade/cancel`, {
+        method: "POST",
+      }).catch(() => {});
+    }
     setGrading(false);
     setCurrentStep(null);
     setError(CANCELLED);
@@ -92,14 +105,27 @@ export function useAIGradingStream(): UseAIGradingStreamReturn {
     }
   }, [closeStream]);
 
+  const checkRunningJob = useCallback(async (submissionId: string): Promise<boolean> => {
+    try {
+      const res = await fetch(`/api/submissions/${submissionId}/grade/job`, { cache: "no-store" });
+      if (!res.ok) return false;
+      const job = (await res.json()) as { state?: string; error?: string | null };
+      if (job.state === "failed" && job.error) setError(job.error);
+      return job.state === "queued" || job.state === "running";
+    } catch {
+      return false;
+    }
+  }, []);
+
   const startGrading = useCallback(
-    (submissionId: string): Promise<unknown> => {
+    (submissionId: string, options?: { attach?: boolean }): Promise<unknown> => {
       if (eventSourceRef.current) {
         return Promise.reject(new Error("Draf AI sedang disusun. Tunggu hingga selesai."));
       }
 
       return new Promise((resolve, reject) => {
-        const url = `/api/submissions/${submissionId}/grade/stream`;
+        const url = `/api/submissions/${submissionId}/grade/stream${options?.attach ? "?attach=1" : ""}`;
+        submissionRef.current = submissionId;
         setGrading(true);
         setError(null);
         setCurrentStep({
@@ -178,5 +204,5 @@ export function useAIGradingStream(): UseAIGradingStreamReturn {
     [closeStream],
   );
 
-  return { grading, currentStep, error, startGrading, cancelGrading, reset };
+  return { grading, currentStep, error, startGrading, checkRunningJob, cancelGrading, reset };
 }

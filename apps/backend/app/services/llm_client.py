@@ -12,6 +12,8 @@ import asyncio
 import json
 import logging
 import re
+from collections.abc import Callable
+from contextvars import ContextVar
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -20,6 +22,9 @@ import httpx
 from app.config import settings
 
 logger = logging.getLogger(__name__)
+
+# Set by a caller that wants to follow a long generation; receives the tokens written so far.
+llm_progress: ContextVar[Callable[[int], None] | None] = ContextVar("llm_progress", default=None)
 
 
 class LLMUnavailableError(Exception):
@@ -93,18 +98,49 @@ def _ollama_model_missing(res: httpx.Response, model: str) -> bool:
     return "not found" in text or "pull" in text or model.lower() in text
 
 
+async def _ollama_stream(
+    client: httpx.AsyncClient, url: str, payload: dict[str, Any]
+) -> tuple[httpx.Response, str, dict[str, Any]]:
+    """Run one streaming chat. Returns (response, answer text, final stats chunk)."""
+    report = llm_progress.get()
+    parts: list[str] = []
+    tokens = 0
+    final: dict[str, Any] = {}
+    async with client.stream("POST", url, json=payload) as res:
+        if res.status_code != 200:
+            await res.aread()
+            return res, "", final
+        async for line in res.aiter_lines():
+            if not line.strip():
+                continue
+            try:
+                chunk = json.loads(line)
+            except json.JSONDecodeError as exc:
+                raise LLMUnavailableError("Ollama: aliran jawaban rusak.", retriable=True) from exc
+            if chunk.get("error"):
+                raise LLMUnavailableError(f"Ollama: {chunk['error']}", retriable=True)
+            parts.append((chunk.get("message") or {}).get("content") or "")
+            tokens += 1  # Ollama sends one token per chunk
+            if report:
+                report(tokens)
+            if chunk.get("done"):
+                final = chunk
+    return res, "".join(parts), final
+
+
 async def _chat_ollama(
     client: httpx.AsyncClient, system: str, user: str, schema: dict[str, Any] | None
 ) -> LLMResult:
     model = settings.OLLAMA_MODEL
     base = settings.OLLAMA_BASE_URL.rstrip("/")
+    url = f"{base}/api/chat"
     payload: dict[str, Any] = {
         "model": model,
         "messages": [
             {"role": "system", "content": system},
             {"role": "user", "content": user},
         ],
-        "stream": False,
+        "stream": True,
         "format": schema if schema else "json",
         "keep_alive": settings.OLLAMA_KEEP_ALIVE,
         # Reasoning models (qwen3, deepseek-r1, …) otherwise spend minutes "thinking" on CPU.
@@ -115,18 +151,25 @@ async def _chat_ollama(
         },
     }
 
+    # Timeouts are not retried: on CPU a retry would only repeat a wait of many minutes.
     try:
-        res = await client.post(f"{base}/api/chat", json=payload)
-        if res.status_code == 400 and "think" in (res.text or "").lower():
-            payload.pop("think", None)
-            res = await client.post(f"{base}/api/chat", json=payload)
-        # Older Ollama builds reject JSON-schema formats: retry with plain JSON mode.
-        if res.status_code == 400 and schema:
-            payload["format"] = "json"
-            res = await client.post(f"{base}/api/chat", json=payload)
+        async with asyncio.timeout(settings.LLM_TOTAL_TIMEOUT_SECONDS):
+            res, content_text, final = await _ollama_stream(client, url, payload)
+            if res.status_code == 400 and "think" in (res.text or "").lower():
+                payload.pop("think", None)
+                res, content_text, final = await _ollama_stream(client, url, payload)
+            # Older Ollama builds reject JSON-schema formats: retry with plain JSON mode.
+            if res.status_code == 400 and schema:
+                payload["format"] = "json"
+                res, content_text, final = await _ollama_stream(client, url, payload)
+    except TimeoutError as exc:
+        raise LLMUnavailableError(
+            f"Ollama belum selesai setelah {int(settings.LLM_TOTAL_TIMEOUT_SECONDS / 60)} menit. "
+            "Coba model yang lebih ringan atau nilai secara manual."
+        ) from exc
     except httpx.TimeoutException as exc:
         raise LLMUnavailableError(
-            f"Ollama tidak merespons dalam {int(settings.LLM_TIMEOUT_SECONDS)} detik.", retriable=True
+            f"Ollama tidak mengirim jawaban selama {int(settings.LLM_TIMEOUT_SECONDS)} detik."
         ) from exc
     except httpx.HTTPError as exc:
         raise LLMUnavailableError(
@@ -139,15 +182,13 @@ async def _chat_ollama(
     if res.status_code != 200:
         raise _status_error("Ollama", res)
 
-    data = res.json()
-    content_text = (data.get("message") or {}).get("content", "")
     try:
         content = parse_json_object(content_text)
     except ValueError as exc:
         raise LLMUnavailableError(f"Ollama: {exc}", retriable=True) from exc
 
-    prompt_tokens = int(data.get("prompt_eval_count") or 0)
-    completion_tokens = int(data.get("eval_count") or 0)
+    prompt_tokens = int(final.get("prompt_eval_count") or 0)
+    completion_tokens = int(final.get("eval_count") or 0)
     return LLMResult(
         content=content,
         provider="ollama",
@@ -157,7 +198,7 @@ async def _chat_ollama(
             "completionTokens": completion_tokens,
             "totalTokens": prompt_tokens + completion_tokens,
         },
-        raw={k: data.get(k) for k in ("model", "created_at", "total_duration", "eval_count", "done_reason")},
+        raw={k: final.get(k) for k in ("model", "created_at", "total_duration", "eval_count", "done_reason")},
     )
 
 

@@ -32,6 +32,7 @@ from app.models.models import (
 )
 from app.schemas.submission_schemas import FinalizeSchema, RevertFinalizeSchema
 from app.security.dependencies import get_current_user
+from app.services import grading_jobs
 from app.services.embedding_service import generate_embedding_result
 from app.services.evaluator_service import (
     EvaluationFailedError,
@@ -940,8 +941,7 @@ class _GradingContext:
         }
 
 
-def _load_gradable_submission(submission_id: str, current_user: User, db: Session) -> _GradingContext:
-    """Shared validation for POST /grade and GET /grade/stream."""
+def _load_owned_submission(submission_id: str, current_user: User, db: Session) -> Submission:
     if current_user.role != Role.DOSEN:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Hanya dosen yang dapat menjalankan penilaian AI")
 
@@ -950,6 +950,12 @@ def _load_gradable_submission(submission_id: str, current_user: User, db: Sessio
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Pengumpulan tugas tidak ditemukan")
     if sub.assignment.class_.dosenId != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Anda bukan pengajar kelas ini")
+    return sub
+
+
+def _load_gradable_submission(submission_id: str, current_user: User, db: Session) -> _GradingContext:
+    """Shared validation for POST /grade and GET /grade/stream."""
+    sub = _load_owned_submission(submission_id, current_user, db)
 
     active_ver = db.query(SubmissionVersion).filter(SubmissionVersion.id == sub.activeVersionId).first()
     if not active_ver:
@@ -1066,61 +1072,72 @@ async def grade_submission_endpoint(
     return {"success": True, "aiEvaluation": _save_evaluation(ctx, result, reference_blocks, db)}
 
 
-SSE_KEEPALIVE_SECONDS = 8.0
+SSE_TICK_SECONDS = 2.0
+TOKENS_PER_CRITERION_ESTIMATE = 400
 
 
 def _sse(event: str, payload: dict[str, Any]) -> str:
     return f"event: {event}\ndata: {json.dumps(payload)}\n\n"
 
 
+async def _draft_job(ctx: _GradingContext, job: grading_jobs.GradingJob) -> dict[str, Any]:
+    job.set_step(2, "Mencari bagian jawaban yang relevan per kriteria…", 25)
+    reference_blocks = await _reference_evidence(ctx)
+    job.set_step(3, "Model membaca jawaban dan rubrik…", 40)
+    result = await _run_evaluation(ctx, reference_blocks)
+    job.set_step(4, "Menyimpan draf untuk ditinjau dosen…", 90)
+    return _save_evaluation(ctx, result, reference_blocks)
+
+
 @submissions_router.get("/submissions/{submission_id}/grade/stream")
 async def grade_submission_stream(
     submission_id: str,
     request: Request,
+    attach: bool = False,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    ctx = _load_gradable_submission(submission_id, current_user, db)
+    """Follow the draft of a submission, starting it unless ``attach`` is set.
 
-    def step(n: int, message: str, progress: int) -> str:
-        return _sse("status", {"step": n, "totalSteps": 4, "message": message, "progress": progress})
+    The draft runs as a background job: closing this stream leaves it running, and it is
+    saved when it finishes. ``attach`` is for a page that reopens and must not start a run.
+    """
+    if attach:
+        _load_owned_submission(submission_id, current_user, db)
+        job = grading_jobs.get(submission_id)
+    else:
+        ctx = _load_gradable_submission(submission_id, current_user, db)
+        job = grading_jobs.start(
+            submission_id,
+            lambda j: _draft_job(ctx, j),
+            expected_tokens=TOKENS_PER_CRITERION_ESTIMATE * len(ctx.criteria),
+        )
 
     async def event_generator():
-        task: asyncio.Task | None = None
-        try:
-            yield step(1, "Menyiapkan rubrik dan jawaban mahasiswa…", 10)
-
-            yield step(2, "Mencari bagian jawaban yang relevan per kriteria…", 25)
-            reference_blocks = await _reference_evidence(ctx)
+        if job is None:
+            yield _sse("done", {"success": True, "aiEvaluation": None})
+            return
+        sent = 0
+        while True:
+            for frame in job.history[sent:]:
+                sent += 1
+                yield _sse("status", frame)
+            if job.task.done():
+                break
+            done, _ = await asyncio.wait({job.task}, timeout=SSE_TICK_SECONDS)
+            if done:
+                continue
             if await request.is_disconnected():
                 return
+            # Also keeps proxies and EventSource from timing out during long local inference.
+            yield _sse("status", job.snapshot())
 
-            yield step(3, "Model menyusun draf penilaian per kriteria…", 40)
-            task = asyncio.create_task(_run_evaluation(ctx, reference_blocks))
-            while True:
-                done, _ = await asyncio.wait({task}, timeout=SSE_KEEPALIVE_SECONDS)
-                if done:
-                    break
-                if await request.is_disconnected():
-                    task.cancel()
-                    return
-                # Comment line keeps proxies/EventSource from timing out during long local inference.
-                yield ": keep-alive\n\n"
-
-            result = task.result()
-
-            yield step(4, "Menyimpan draf untuk ditinjau dosen…", 90)
-            payload = _save_evaluation(ctx, result, reference_blocks)
-            yield _sse("done", {"success": True, "aiEvaluation": payload})
-        except EvaluationFailedError as e:
-            yield _sse("error", {"success": False, "message": f"Draf AI tidak dapat dibuat: {e}"})
-        except asyncio.CancelledError:
-            if task is not None:
-                task.cancel()
-            raise
-        except Exception as e:
-            logger.error(f"Error during AI grading stream: {e}", exc_info=e)
-            yield _sse("error", {"success": False, "message": "Terjadi kesalahan saat menyusun draf AI."})
+        if job.state == "done":
+            yield _sse("done", {"success": True, "aiEvaluation": job.result})
+        elif job.state == "cancelled":
+            yield _sse("error", {"success": False, "message": grading_jobs.CANCELLED_MESSAGE})
+        else:
+            yield _sse("error", {"success": False, "message": f"Draf AI tidak dapat dibuat: {job.error}"})
 
     return StreamingResponse(
         event_generator(),
@@ -1131,6 +1148,36 @@ async def grade_submission_stream(
             "X-Accel-Buffering": "no",
         },
     )
+
+
+@submissions_router.get("/submissions/{submission_id}/grade/job")
+async def grade_job_status(
+    submission_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """What a reopened review page should show. A finished job is reported once."""
+    _load_owned_submission(submission_id, current_user, db)
+    job = grading_jobs.get(submission_id)
+    if job is None:
+        return {"state": "idle"}
+    if job.is_running:
+        return job.snapshot()
+    grading_jobs.forget(submission_id)
+    return {
+        "state": job.state,
+        "error": f"Draf AI tidak dapat dibuat: {job.error}" if job.state == "failed" else None,
+    }
+
+
+@submissions_router.post("/submissions/{submission_id}/grade/cancel")
+async def grade_job_cancel(
+    submission_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    _load_owned_submission(submission_id, current_user, db)
+    return {"cancelled": grading_jobs.cancel(submission_id)}
 
 
 @submissions_router.post("/submissions/{submission_id}/finalize")

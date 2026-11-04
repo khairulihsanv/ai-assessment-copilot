@@ -54,7 +54,9 @@ class Settings(BaseSettings):
     # Provider untuk menyusun DRAF penilaian. Default: Ollama lokal (data tidak keluar dari server).
     # "mock" is only for automated tests (TEST_MOCK_LLM=true); it never produces real drafts.
     LLM_PROVIDER: Literal["ollama", "groq", "gemini", "mock"] = "ollama"
+    # Ollama answers as a stream: this is the longest allowed silence, not the length of the whole answer.
     LLM_TIMEOUT_SECONDS: float = 300.0
+    LLM_TOTAL_TIMEOUT_SECONDS: float = 1800.0
     LLM_TEMPERATURE: float = 0.1
     LLM_MAX_RETRIES: int = 1
 

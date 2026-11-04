@@ -1,9 +1,11 @@
 """Unit + API tests for the rubric-grounded AI draft pipeline."""
 
+import asyncio
 import json
 import uuid
 from datetime import datetime, timedelta
 
+import httpx
 import pytest
 
 from app.config import settings
@@ -21,7 +23,7 @@ from app.models.models import (
 )
 from app.security.passwords import hash_password
 from app.security.tokens import create_access_token
-from app.services import llm_client
+from app.services import grading_jobs, llm_client
 from app.services.anonymizer import anonymize_text, masked_quote_to_regex
 from app.services.evaluator_service import EvaluationFailedError, evaluate_submission
 from app.services.evidence_service import PASSAGE_MAX_CHARS, split_passages
@@ -338,7 +340,8 @@ def test_mock_draft_has_verified_evidence_and_snapshot(client, graded_env, db_se
     res = client.post(f"/submissions/{sub_id}/grade", headers={"Authorization": f"Bearer {graded_env['token']}"})
     assert res.status_code == 200
     ev = res.json()["aiEvaluation"]
-    assert ev["rubricVersionSnapshot"]["criteria"][0]["label"] == "Pemahaman konsep"
+    labels = {c["label"] for c in ev["rubricVersionSnapshot"]["criteria"]}
+    assert labels == {"Pemahaman konsep", "Bentuk normal"}
     for pc in ev["perCriterionScore"]:
         for quote in pc["evidence"]:
             assert ANSWER[quote["start"] : quote["end"]] == quote["quote"]
@@ -404,3 +407,159 @@ def test_finalize_with_per_criterion_recomputes_weighted_total(client, graded_en
     assert analytics["decisionCounts"]["accepted"] == 1
     assert analytics["decisionCounts"]["edited"] == 1
     assert analytics["meanAbsoluteDeviation"] == pytest.approx(abs(85.0 - 60.5))
+
+
+# ---------------------------------------------------------------------------
+# Ollama streaming: a long answer is not a timeout, and a real timeout is not retried
+# ---------------------------------------------------------------------------
+
+
+def _fake_ollama(monkeypatch, handler):
+    real_client = llm_client.httpx.AsyncClient
+    monkeypatch.setattr(
+        llm_client.httpx,
+        "AsyncClient",
+        lambda **kw: real_client(transport=httpx.MockTransport(handler), **kw),
+    )
+    monkeypatch.setattr(settings, "LLM_PROVIDER", "ollama")
+    monkeypatch.setattr(settings, "OLLAMA_MODEL", "uji-model")
+
+
+@pytest.mark.asyncio
+async def test_ollama_stream_joins_tokens_and_reports_progress(monkeypatch):
+    def handler(request):
+        assert json.loads(request.content)["stream"] is True
+        lines = [{"message": {"content": t}, "done": False} for t in ('{"a"', ": 1", "}")]
+        lines.append({"message": {"content": ""}, "done": True, "prompt_eval_count": 5, "eval_count": 3})
+        return httpx.Response(200, text="\n".join(json.dumps(x) for x in lines))
+
+    _fake_ollama(monkeypatch, handler)
+    seen: list[int] = []
+    llm_client.llm_progress.set(seen.append)
+
+    result = await llm_client.chat_json("s", "u")
+
+    assert result.content == {"a": 1}
+    assert result.usage == {"promptTokens": 5, "completionTokens": 3, "totalTokens": 8}
+    assert seen == [1, 2, 3, 4]
+
+
+@pytest.mark.asyncio
+async def test_ollama_timeout_is_not_retried(monkeypatch):
+    calls = 0
+
+    def handler(request):
+        nonlocal calls
+        calls += 1
+        raise httpx.ReadTimeout("diam", request=request)
+
+    _fake_ollama(monkeypatch, handler)
+    monkeypatch.setattr(settings, "LLM_MAX_RETRIES", 1)
+
+    with pytest.raises(llm_client.LLMUnavailableError):
+        await llm_client.chat_json("s", "u")
+    assert calls == 1
+
+
+# ---------------------------------------------------------------------------
+# Background jobs: the draft outlives the page that started it
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_job_runs_once_per_submission_and_keeps_its_result():
+    release = asyncio.Event()
+    runs = 0
+
+    async def work(job):
+        nonlocal runs
+        runs += 1
+        await release.wait()
+        return {"id": "draf"}
+
+    first = grading_jobs.start("sub-a", work)
+    second = grading_jobs.start("sub-a", work)
+    assert second is first
+
+    await asyncio.sleep(0)
+    assert first.is_running
+    release.set()
+    await first.task
+
+    assert runs == 1
+    assert first.state == "done"
+    assert grading_jobs.get("sub-a").result == {"id": "draf"}
+    grading_jobs.forget("sub-a")
+
+
+@pytest.mark.asyncio
+async def test_job_can_be_cancelled_and_reports_failures():
+    async def forever(job):
+        await asyncio.Event().wait()
+
+    async def broken(job):
+        raise EvaluationFailedError("model mati")
+
+    job = grading_jobs.start("sub-b", forever)
+    await asyncio.sleep(0)
+    assert grading_jobs.cancel("sub-b") is True
+    await job.task
+    assert job.state == "cancelled"
+    assert grading_jobs.cancel("sub-b") is False
+
+    failed = grading_jobs.start("sub-b", broken)
+    await failed.task
+    assert failed.state == "failed"
+    assert failed.error == "model mati"
+    grading_jobs.forget("sub-b")
+
+
+@pytest.mark.asyncio
+async def test_model_works_on_one_job_at_a_time():
+    release = asyncio.Event()
+
+    async def work(job):
+        await release.wait()
+        return {}
+
+    first = grading_jobs.start("sub-c", work)
+    second = grading_jobs.start("sub-d", work)
+    await asyncio.sleep(0)
+    await asyncio.sleep(0)
+    assert first.state == "running"
+    assert second.state == "queued"
+    release.set()
+    await asyncio.gather(first.task, second.task)
+    grading_jobs.forget("sub-c")
+    grading_jobs.forget("sub-d")
+
+
+def test_attach_never_starts_a_draft(client, graded_env, db_session):
+    sub_id = graded_env["sub"].id
+    headers = {"Authorization": f"Bearer {graded_env['token']}"}
+
+    res = client.get(f"/submissions/{sub_id}/grade/stream?attach=1", headers=headers)
+
+    assert res.status_code == 200
+    assert '"aiEvaluation": null' in res.text
+    assert db_session.query(EvaluationRun).filter(EvaluationRun.submissionId == sub_id).count() == 0
+    assert client.get(f"/submissions/{sub_id}/grade/job", headers=headers).json() == {"state": "idle"}
+
+
+def test_job_endpoints_are_for_the_class_lecturer_only(client, graded_env):
+    sub_id = graded_env["sub"].id
+    headers = {"Authorization": f"Bearer {graded_env['mhs_token']}"}
+    assert client.get(f"/submissions/{sub_id}/grade/job", headers=headers).status_code == 403
+    assert client.post(f"/submissions/{sub_id}/grade/cancel", headers=headers).status_code == 403
+
+
+def test_failed_job_is_reported_once_after_the_stream(client, graded_env, monkeypatch):
+    _offline(monkeypatch)
+    sub_id = graded_env["sub"].id
+    headers = {"Authorization": f"Bearer {graded_env['token']}"}
+    assert "event: error" in client.get(f"/submissions/{sub_id}/grade/stream", headers=headers).text
+
+    first = client.get(f"/submissions/{sub_id}/grade/job", headers=headers).json()
+    assert first["state"] == "failed"
+    assert "Draf AI tidak dapat dibuat" in first["error"]
+    assert client.get(f"/submissions/{sub_id}/grade/job", headers=headers).json() == {"state": "idle"}

@@ -2,7 +2,7 @@
 
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAIGradingStream } from "@/hooks/useAIGradingStream";
 import { cn } from "@/shared/utils";
 import { getErrorMessage } from "@/shared/utils/api-error";
@@ -192,6 +192,13 @@ function scrollBehavior(): ScrollBehavior {
 
 // ─── Component ────────────────────────────────────────────────────────────
 
+function formatElapsed(seconds?: number): string {
+  if (!seconds) return "";
+  const minutes = Math.floor(seconds / 60);
+  const rest = seconds % 60;
+  return minutes ? `${minutes} mnt ${rest} dtk berjalan. ` : `${rest} dtk berjalan. `;
+}
+
 export function AIReviewPanel({
   submissionId,
   submissionVersionId,
@@ -216,6 +223,7 @@ export function AIReviewPanel({
     currentStep,
     error: streamError,
     startGrading,
+    checkRunningJob,
     cancelGrading,
   } = useAIGradingStream();
 
@@ -372,10 +380,12 @@ export function AIReviewPanel({
   };
 
   // ─── AI run ─────────────────────────────────────────────────────────────
-  const runAI = async () => {
+  const runAI = async (options?: { attach?: boolean }) => {
     setSaveSuccess(false);
     try {
-      const result = (await startGrading(submissionId)) as { aiEvaluation?: AIEvaluation } | null;
+      const result = (await startGrading(submissionId, options)) as {
+        aiEvaluation?: AIEvaluation;
+      } | null;
       if (!result?.aiEvaluation) return;
       setEvaluation(result.aiEvaluation);
       // Scores the lecturer typed themselves (edited/rejected/manual) are kept. "Accepted" meant
@@ -401,6 +411,17 @@ export function AIReviewPanel({
       // the hook exposes the error message
     }
   };
+
+  // A draft started earlier keeps running on the server: pick it up when the page reopens.
+  const resumeDraft = useRef(() => {});
+  resumeDraft.current = () => {
+    void checkRunningJob(submissionId).then((running) => {
+      if (running) void runAI({ attach: true });
+    });
+  };
+  useEffect(() => {
+    resumeDraft.current();
+  }, []);
 
   // ─── Release ────────────────────────────────────────────────────────────
   const validate = (): string | null => {
@@ -562,7 +583,7 @@ export function AIReviewPanel({
               ) : (
                 <button
                   type="button"
-                  onClick={runAI}
+                  onClick={() => runAI()}
                   className={cn(
                     "min-h-10 rounded-lg px-4 text-sm font-semibold",
                     evaluation
@@ -592,7 +613,9 @@ export function AIReviewPanel({
                 />
               </div>
               <p className="mt-1.5 text-xs text-muted-foreground">
-                Model lokal bisa membutuhkan beberapa menit. Anda boleh mulai membaca jawaban.
+                {formatElapsed(currentStep.elapsedSeconds)}
+                Model lokal bisa butuh beberapa menit. Halaman ini boleh ditutup, draf tetap
+                diproses dan tersimpan.
               </p>
             </div>
           )}

@@ -16,13 +16,17 @@ export async function GET(
   const { submissionId } = await params;
   const token = signInternalToken({ id: session.user.id, role: session.user.role });
 
-  const res = await forwardToBackend(`${BACKEND_URL}/submissions/${submissionId}/grade/stream`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "text/event-stream",
+  const { search } = new URL(request.url);
+  const res = await forwardToBackend(
+    `${BACKEND_URL}/submissions/${submissionId}/grade/stream${search}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "text/event-stream",
+      },
+      signal: request.signal,
     },
-    signal: request.signal,
-  });
+  );
 
   return new Response(res.body, {
     status: res.status,
