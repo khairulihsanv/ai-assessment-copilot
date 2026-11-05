@@ -111,7 +111,7 @@ class Rubric(Base):
 
     class_ = relationship("Class", back_populates="rubrics")
     created_by = relationship("User", back_populates="created_rubrics")
-    criteria = relationship("RubricCriterion", back_populates="rubric", cascade="all, delete-orphan", order_by="RubricCriterion.id")
+    criteria = relationship("RubricCriterion", back_populates="rubric", cascade="all, delete-orphan", order_by="RubricCriterion.position, RubricCriterion.id")
     assignments = relationship("Assignment", back_populates="rubric")
 
 
@@ -123,6 +123,7 @@ class RubricCriterion(Base):
     description = Column(String, nullable=True)
     maxScore = Column(Float, nullable=False)
     weight = Column(Float, nullable=False)
+    position = Column(Integer, nullable=False, default=0, server_default="0")
     expectedAnswer = Column(String, nullable=True)
 
     answerKey = Column(Text, nullable=True)

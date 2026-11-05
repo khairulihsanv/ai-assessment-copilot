@@ -114,8 +114,8 @@ def seed_demo() -> None:
             rubric = Rubric(title=RUBRIC_TITLE, classId=cls.id, createdById=dosen.id)
             db.add(rubric)
             db.flush()
-            for c in CRITERIA:
-                db.add(RubricCriterion(rubricId=rubric.id, answerKey=c["expectedAnswer"], **c))
+            for position, c in enumerate(CRITERIA):
+                db.add(RubricCriterion(rubricId=rubric.id, position=position, answerKey=c["expectedAnswer"], **c))
             db.flush()
 
         assignment = (

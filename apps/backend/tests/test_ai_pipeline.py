@@ -579,3 +579,25 @@ def test_dashboard_reports_pending_per_class_drafts_and_recent(client, graded_en
 
     after = client.get("/dashboard", headers=headers).json()["dosenData"]
     assert after["queue"][0]["hasDraft"] is True
+
+
+def test_rubric_criteria_keep_the_order_they_were_written_in(client, graded_env):
+    headers = {"Authorization": f"Bearer {graded_env['token']}"}
+    class_id = graded_env["cls"].id
+    labels = ["Zeta", "Alfa", "Mu", "Beta", "Omega", "Gamma"]
+    criteria = [{"label": label, "maxScore": 10, "weight": 100 / len(labels)} for label in labels]
+
+    created = client.post(f"/classes/{class_id}/rubrics", json={"title": "Urutan", "criteria": criteria}, headers=headers)
+    assert created.status_code in (200, 201), created.text
+    rubric_id = created.json()["id"]
+
+    def saved_labels():
+        data = client.get(f"/classes/{class_id}/rubrics/{rubric_id}", headers=headers).json()
+        return [c["label"] for c in data["criteria"]]
+
+    assert saved_labels() == labels
+
+    reordered = list(reversed(criteria))
+    updated = client.patch(f"/classes/{class_id}/rubrics/{rubric_id}", json={"criteria": reordered}, headers=headers)
+    assert updated.status_code == 200, updated.text
+    assert saved_labels() == list(reversed(labels))

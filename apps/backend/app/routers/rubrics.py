@@ -94,7 +94,7 @@ async def create_rubric(
     db.commit()
     db.refresh(rubric)
 
-    for cr in req.criteria:
+    for position, cr in enumerate(req.criteria):
         ak_emb = None
         mat_emb = None
         if cr.answerKey and cr.answerKey.strip():
@@ -104,6 +104,7 @@ async def create_rubric(
 
         crit = RubricCriterion(
             rubricId=rubric.id,
+            position=position,
             label=cr.label,
             description=cr.description,
             maxScore=cr.maxScore,
@@ -203,7 +204,7 @@ async def update_rubric(
     if req.criteria is not None:
         # Replace criteria
         db.query(RubricCriterion).filter(RubricCriterion.rubricId == rubric_id).delete()
-        for cr in req.criteria:
+        for position, cr in enumerate(req.criteria):
             ak_emb = None
             mat_emb = None
             if cr.answerKey and cr.answerKey.strip():
@@ -213,6 +214,7 @@ async def update_rubric(
 
             crit = RubricCriterion(
                 rubricId=rubric.id,
+                position=position,
                 label=cr.label,
                 description=cr.description,
                 maxScore=cr.maxScore,
