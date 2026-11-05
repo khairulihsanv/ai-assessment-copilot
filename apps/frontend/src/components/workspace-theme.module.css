@@ -1,5 +1,5 @@
 /*
- * The workspace uses the single forest-green palette defined in app/globals.css
+ * The workspace uses the single Dexa palette defined in app/globals.css
  * (light and dark). This class is still applied to the workspace root and to
  * portalled UI (dialogs, menus) so they inherit the same tokens.
  */

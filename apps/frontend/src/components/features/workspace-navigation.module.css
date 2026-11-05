@@ -1,10 +1,9 @@
-/* Workspace navigation: lecturer rail, student pills and the shared mobile drawer. */
+/* Workspace navigation: the rail on desktop and the drawer on small screens. */
 .palette {
   color: var(--sidebar-foreground);
 }
 .palette :is(a, button):focus-visible,
-.rail :is(a, button):focus-visible,
-.pills a:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.rail :is(a, button):focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 
 /* Brand */
 .brand { display: flex; min-width: 0; flex: 1; align-items: center; gap: 10px; border-radius: 12px; }
@@ -12,7 +11,7 @@
 .brandName { font-size: 18px; font-weight: 800; letter-spacing: -0.02em; color: var(--foreground); }
 .brandRole { overflow: hidden; color: var(--muted-foreground); font-size: 12px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
 
-/* Lecturer rail */
+/* Rail */
 .rail { display: none; }
 .railBrand { display: flex; justify-content: center; padding: 4px 0 8px; border-radius: 14px; }
 .railNav { display: flex; flex: 1; flex-direction: column; gap: 6px; min-height: 0; overflow-y: auto; scrollbar-width: none; }
@@ -35,23 +34,6 @@
 .railLink:hover { color: var(--foreground); }
 .railLink[aria-current="page"],
 .railLink:has([data-pending]) { background: var(--primary); color: var(--primary-foreground); }
-
-/* Student pills */
-.pills { display: flex; align-items: center; gap: 4px; padding: 5px; border-radius: 999px; background: var(--card); }
-.pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  min-height: 42px;
-  padding: 0 18px;
-  border-radius: 999px;
-  color: var(--muted-foreground);
-  font-size: 14px;
-  font-weight: 700;
-}
-.pill:hover { color: var(--foreground); background: var(--muted); }
-.pill[aria-current="page"],
-.pill:has([data-pending]) { background: var(--secondary); color: var(--secondary-foreground); }
 
 /* Drawer list */
 .scrollArea { flex: 1; min-height: 0; overflow-y: auto; padding-block: 16px; scrollbar-width: thin; }

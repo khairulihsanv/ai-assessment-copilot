@@ -1250,8 +1250,8 @@ export default function LandingPage() {
               <span className="lp-runner">Keunggulan</span>
               <h2 className="lp-h2">Fitur Utama Platform</h2>
               <p className="lp-subtext">
-                Dirancang untuk memberikan kemudahan manajemen tugas dengan akurasi penilaian
-                tinggi.
+                Tumpukan tugas jadi lebih ringan: AI menyiapkan draf dan kutipan buktinya, Anda tinggal
+                memutuskan.
               </p>
             </div>
 

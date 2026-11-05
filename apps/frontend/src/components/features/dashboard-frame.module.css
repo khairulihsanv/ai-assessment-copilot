@@ -1,6 +1,6 @@
 .workspace {
   min-height: 100dvh;
-  background: var(--workspace-outer);
+  background: var(--background);
   color: var(--foreground);
 }
 .frame { display: flex; min-height: 100dvh; }
@@ -13,9 +13,9 @@
 }
 
 @media (min-width: 1024px) {
-  /* Lecturer: the whole workspace sits inside one rounded frame on a warm ground. */
-  .workspace[data-role="dosen"] { padding: 14px; }
-  .workspace[data-role="dosen"] .frame {
+  /* The whole workspace sits inside one rounded frame; the rail colour runs its full height. */
+  .workspace { padding: 14px; background: var(--workspace-outer); }
+  .frame {
     min-height: calc(100dvh - 28px);
     overflow: clip;
     border-radius: 28px;

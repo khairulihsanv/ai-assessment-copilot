@@ -4,12 +4,9 @@ import { ChevronRight, Menu, Moon, Sun, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { OwlMark } from "@/components/owl-mark";
 import { cn, getInitials } from "@/shared/utils";
 import { useThemeStore } from "@/stores/theme-store";
 import {
-  LogoutButton,
-  StudentPills,
   WorkspaceAccount,
   WorkspaceBrand,
   WorkspaceNavigation,
@@ -55,31 +52,10 @@ export function DashboardTopbar({ user }: { user: WorkspaceUser }) {
   }, [navigationOpen]);
 
   const closeNavigation = () => dialog.current?.close();
-  const isDosen = user.role === "DOSEN";
-
-  const crumbs = (
-    <nav aria-label="Breadcrumb" className={styles.breadcrumb}>
-      <span className={styles.workspaceLabel}>{isDosen ? "Ruang kerja" : "Ruang belajar"}</span>
-      <ChevronRight size={14} className={styles.workspaceChevron} aria-hidden="true" />
-      <Link href={`/${path[0] || "dashboard"}`}>
-        {labels[path[0] || "dashboard"] || "Ruang kerja"}
-      </Link>
-      {path.length > 1 && (
-        <span className={styles.detail}>
-          <ChevronRight size={14} aria-hidden="true" />
-          {path.includes("submissions")
-            ? "Tinjau jawaban"
-            : path.includes("assignments")
-              ? "Detail tugas"
-              : "Detail"}
-        </span>
-      )}
-    </nav>
-  );
 
   return (
     <>
-      <header className={cn(styles.topbar, !isDosen && styles.student)}>
+      <header className={styles.topbar}>
         <div className={styles.leading}>
           <button
             type="button"
@@ -94,23 +70,23 @@ export function DashboardTopbar({ user }: { user: WorkspaceUser }) {
           >
             <Menu size={20} aria-hidden="true" />
           </button>
-          {isDosen ? (
-            crumbs
-          ) : (
-            <>
-              <Link href="/dashboard" className={styles.mobileBrand} aria-label="Dexa — Beranda">
-                <OwlMark size={30} />
-                dexa
-              </Link>
-              <Link href="/dashboard" className={styles.brandPill} aria-label="Dexa — Beranda">
-                <OwlMark size={34} />
-                dexa
-              </Link>
-              <div className={styles.pills}>
-                <StudentPills user={user} />
-              </div>
-            </>
-          )}
+          <nav aria-label="Breadcrumb" className={styles.breadcrumb}>
+            <span className={styles.workspaceLabel}>Ruang kerja</span>
+            <ChevronRight size={14} className={styles.workspaceChevron} aria-hidden="true" />
+            <Link href={`/${path[0] || "dashboard"}`}>
+              {labels[path[0] || "dashboard"] || "Ruang kerja"}
+            </Link>
+            {path.length > 1 && (
+              <span className={styles.detail}>
+                <ChevronRight size={14} aria-hidden="true" />
+                {path.includes("submissions")
+                  ? "Tinjau jawaban"
+                  : path.includes("assignments")
+                    ? "Detail tugas"
+                    : "Detail"}
+              </span>
+            )}
+          </nav>
         </div>
         <div className={styles.accountActions}>
           <button
@@ -133,15 +109,10 @@ export function DashboardTopbar({ user }: { user: WorkspaceUser }) {
             title={user.name}
             className={styles.accountLink}
           >
-            <span className={styles.accountInitials}>{getInitials(user.name)}</span>
-            <span className={styles.accountName}>{user.name}</span>
+            {getInitials(user.name)}
           </Link>
-          <span className={styles.logout}>
-            <LogoutButton className={styles.iconButton} />
-          </span>
         </div>
       </header>
-      {!isDosen && path.length > 1 && <div className={styles.studentCrumb}>{crumbs}</div>}
       <dialog
         ref={dialog}
         id="mobile-workspace-navigation"

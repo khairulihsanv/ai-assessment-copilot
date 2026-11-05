@@ -140,7 +140,7 @@ export function StudentDashboard({
   return (
     <div className="flex flex-wrap items-stretch gap-4">
       <div className="flex min-w-0 flex-[999_1_540px] flex-col gap-4">
-        <section className="relative min-h-72 overflow-hidden rounded-3xl bg-[#fbd3b0]">
+        <section className="relative min-h-72 overflow-hidden rounded-3xl bg-secondary">
           <DeadlineScene className="absolute inset-0 size-full" />
           <div className="relative p-4 sm:p-5">
             <div className="w-full max-w-sm rounded-[22px] bg-card/95 p-5">

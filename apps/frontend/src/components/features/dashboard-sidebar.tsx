@@ -190,7 +190,7 @@ export function WorkspaceAccount({ user }: { user: WorkspaceUser }) {
   );
 }
 
-/** Lecturer: icon rail on the left of the frame. */
+/** Icon rail on the left of the frame, the same for every role. */
 export function DashboardSidebar({ user }: { user: WorkspaceUser }) {
   const pathname = usePathname();
   return (
@@ -217,22 +217,5 @@ export function DashboardSidebar({ user }: { user: WorkspaceUser }) {
         <LogoutButton />
       </div>
     </aside>
-  );
-}
-
-/** Student: pills in the top bar. */
-export function StudentPills({ user }: { user: WorkspaceUser }) {
-  const pathname = usePathname();
-  return (
-    <nav aria-label="Navigasi utama" className={styles.pills}>
-      {navItems(user.role).map((item) => (
-        <NavEntry
-          key={item.href}
-          item={item}
-          active={isActive(pathname, item.href)}
-          className={styles.pill}
-        />
-      ))}
-    </nav>
   );
 }

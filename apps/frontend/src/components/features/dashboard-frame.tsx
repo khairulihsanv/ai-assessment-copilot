@@ -9,20 +9,14 @@ import { DashboardSidebar, type WorkspaceUser } from "./dashboard-sidebar";
 import { DashboardTopbar } from "./dashboard-topbar";
 import { SessionGuard } from "./session-guard";
 
+/** Same frame for every role: only the menu items differ. */
 export function DashboardFrame({ user, children }: { user: WorkspaceUser; children: ReactNode }) {
-  const isDosen = user.role === "DOSEN";
-
   return (
     <WorkspaceThemeProvider>
-      {/* data-role selects the colour palette (globals.css), which also reaches portalled dialogs. */}
-      <div
-        className={cn(palette.palette, styles.workspace)}
-        data-workspace
-        data-role={isDosen ? "dosen" : "mahasiswa"}
-      >
+      <div className={cn(palette.palette, styles.workspace)} data-workspace>
         <SessionGuard />
         <div className={styles.frame}>
-          {isDosen && <DashboardSidebar user={user} />}
+          <DashboardSidebar user={user} />
           <div className={styles.column}>
             <DashboardTopbar user={user} />
             <main id="main-content" className={styles.content}>

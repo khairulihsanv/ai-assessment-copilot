@@ -13,9 +13,6 @@
   color: var(--foreground);
 }
 .leading { display: flex; flex: 1; align-items: center; gap: 10px; min-width: 0; }
-.brandPill { display: none; align-items: center; gap: 8px; height: 52px; padding: 0 18px 0 10px; border-radius: 999px; background: var(--card); font-size: 18px; font-weight: 800; letter-spacing: -0.02em; }
-.mobileBrand { display: flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 800; letter-spacing: -0.02em; }
-.pills { display: none; }
 
 .breadcrumb { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 13px; font-weight: 500; }
 .breadcrumb a { overflow: hidden; min-width: 0; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
@@ -23,33 +20,16 @@
 .workspaceLabel { color: var(--muted-foreground); white-space: nowrap; }
 .workspaceChevron { flex-shrink: 0; color: var(--muted-foreground); }
 .detail { display: flex; flex-shrink: 0; align-items: center; gap: 8px; color: var(--muted-foreground); font-size: 12px; }
-.studentCrumb { padding: 0 16px; }
 
 .accountActions { display: flex; flex-shrink: 0; align-items: center; gap: 6px; }
 .iconButton { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; color: var(--muted-foreground); cursor: pointer; }
 .iconButton:hover { background: var(--muted); color: var(--foreground); }
-.surface { background: var(--card); }
-.accountLink { display: inline-flex; align-items: center; gap: 9px; min-height: 44px; border-radius: 999px; font-size: 14px; font-weight: 700; }
-.accountInitials { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; background: var(--primary); color: var(--primary-foreground); font-size: 12px; font-weight: 800; }
-.accountName { display: none; max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.accountLink { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; background: var(--primary); color: var(--primary-foreground); font-size: 12px; font-weight: 800; }
 .mobileTrigger { display: flex; }
-.logout { display: none; }
 
 @media (min-width: 1024px) {
   .topbar { padding: 12px 32px; }
-  .mobileTrigger, .mobileBrand { display: none; }
-  .studentCrumb { max-width: 1400px; width: 100%; margin: 0 auto; padding: 0 32px; }
-
-  /* Student desktop: brand pill, menu pills, account pill */
-  .student { padding: 16px 32px 12px; }
-  .student .brandPill { display: inline-flex; }
-  .student .pills { display: block; flex: 1; min-width: 0; }
-  .student .accountLink { height: 52px; padding: 0 16px 0 8px; background: var(--card); }
-  .student .accountName { display: block; }
-  .student .logout { display: flex; }
-  .student .logout button { background: var(--card); }
-  .student .logout button:hover { background: var(--danger-bg); }
-  .student .iconButton { width: 52px; height: 52px; }
+  .mobileTrigger { display: none; }
 }
 @media (max-width: 479px) {
   .detail, .workspaceLabel, .workspaceChevron { display: none; }
