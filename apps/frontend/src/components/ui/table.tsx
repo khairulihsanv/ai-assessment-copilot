@@ -1,7 +1,7 @@
 "use client";
 
-import { cn } from "@/shared/utils";
 import type * as React from "react";
+import { cn } from "@/shared/utils";
 
 function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (

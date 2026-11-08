@@ -15,7 +15,7 @@ import {
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { OwlMark } from "@/components/owl-mark";
+import { BrandMark } from "@/components/brand";
 import { cn, getInitials } from "@/shared/utils";
 import styles from "./workspace-navigation.module.css";
 
@@ -93,7 +93,7 @@ export function WorkspaceBrand({
       className={styles.brand}
       aria-label="Dexa Assessment — Beranda"
     >
-      <OwlMark size={34} />
+      <BrandMark size={34} />
       <span className={styles.brandText}>
         <span className={styles.brandName}>dexa</span>
         <span className={styles.brandRole}>
@@ -196,7 +196,7 @@ export function DashboardSidebar({ user }: { user: WorkspaceUser }) {
   return (
     <aside className={styles.rail} data-workspace-sidebar aria-label="Menu ruang kerja">
       <Link href="/dashboard" className={styles.railBrand} aria-label="Dexa Assessment — Beranda">
-        <OwlMark size={38} />
+        <BrandMark size={42} />
       </Link>
       <nav aria-label="Navigasi utama" className={styles.railNav}>
         {navItems(user.role).map((item) => (

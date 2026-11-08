@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Dexa">
+  <title>Dexa</title>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0.55" y2="1">
+      <stop offset="0.1" stop-color="#070a09"/>
+      <stop offset="0.72" stop-color="#03633e"/>
+      <stop offset="1" stop-color="#0a8f62"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="15" fill="url(#g)"/>
+  <g transform="translate(8 8) scale(0.24)" fill="#ffffff">
+    <path fill-rule="evenodd" d="M46 24C60 38 74 44 100 44C126 44 140 38 154 24C168 54 180 84 180 114C180 158 142 184 100 184C58 184 20 158 20 114C20 84 32 54 46 24ZM40 106a28 28 0 1 0 56 0a28 28 0 1 0 -56 0ZM103.6 111.6L118.6 128.6A8.5 8.5 0 0 0 131.7 128.2L160.7 91.2A8.5 8.5 0 0 0 147.3 80.8L124.6 109.7L116.4 100.4A8.5 8.5 0 0 0 103.6 111.6ZM100 134L112 148L100 164L88 148Z"/>
+    <circle cx="73" cy="108" r="12"/>
+  </g>
+</svg>

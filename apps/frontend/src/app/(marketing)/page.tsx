@@ -19,23 +19,15 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { BrandMark } from "@/components/brand";
 import "./landing.css";
 
 const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
-/* ─── DeXa Brand Logo Component (Exact Authentic Image from User) ─── */
+/* ─── Dexa logo: the "Mata Centang" owl, shared with login and the workspace ─── */
 
-export function DexaLogo({ size = 36, className = "" }: { size?: number; className?: string }) {
-  return (
-    <img
-      src="/dexa-logo.png"
-      alt="Dexa Assessment Logo"
-      width={size}
-      height={size}
-      className={`rounded-xl object-contain flex-shrink-0 ${className}`}
-      style={{ width: size, height: size }}
-    />
-  );
+function DexaLogo({ size = 36, className = "" }: { size?: number; className?: string }) {
+  return <BrandMark size={size} className={className} />;
 }
 
 /* ─── Rubric Mock Data ─── */

@@ -1,10 +1,10 @@
 "use client";
 
 import { Select as SelectPrimitive } from "@base-ui/react/select";
-import { cn } from "@/shared/utils";
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import type * as React from "react";
 import { useWorkspaceThemeClassName } from "@/components/workspace-theme";
+import { cn } from "@/shared/utils";
 
 const Select = SelectPrimitive.Root;
 
