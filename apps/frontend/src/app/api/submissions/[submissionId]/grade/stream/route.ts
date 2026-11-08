@@ -1,6 +1,10 @@
 import { auth } from "@/server/auth/auth";
 import { forwardToBackend, signInternalToken } from "@/server/auth/internal";
 
+// On Vercel a function stops after this many seconds. The draft keeps running on the backend
+// and the review page reattaches, so a cut stream only costs a reload.
+export const maxDuration = 300;
+
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3001";
 
 // GET /api/submissions/[submissionId]/grade/stream — Server-Sent Events for AI Grading (Proxied to backend)

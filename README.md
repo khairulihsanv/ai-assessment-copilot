@@ -1,201 +1,140 @@
-# 🎓 Dexa Assessment
-### Modern LMS Collaboration Hub & Intelligent Evaluation Platform
+# Dexa Assessment
 
-> Platform penugasan dan penilaian akademik berbasis **Next.js 16 (App Router BFF)** dan **Python FastAPI (Backend Utama)** dengan SQLAlchemy & Alembic, serta prinsip **Human-in-the-Loop (HITL)** — AI bertindak sebagai asisten pemeriksa objektif (memberikan draft rekomendasi skor & umpan balik), sedangkan penentuan dan publikasi nilai final tetap 100% berada di tangan dosen.
+Platform tugas dan penilaian untuk dosen dan mahasiswa. AI menyusun **draf** nilai per kriteria rubrik beserta kutipan bukti dari jawaban mahasiswa. Dosen meninjau, mengubah, lalu merilis nilai. Nilai akhir selalu keputusan dosen (Human-in-the-Loop).
 
----
-
-## 🏛️ Arsitektur Sistem
+## Arsitektur
 
 ```
-┌─────────────────────────────────┐
-│     Next.js 16 (Port 3000)      │
-│  - UI Rendering & Navigasi      │
-│  - BFF & Session Cookie Proxy   │
-└──────────────┬──────────────────┘
-               │ HTTP / JSON (Internal Signed Token)
-               ▼
-┌─────────────────────────────────┐
-│     Python FastAPI (Port 3001)  │
-│  - Sumber Aturan Bisnis & Validasi
-│  - Role-based Access Control    │
-│  - Ekstraksi Dokumen & Engine AI│
-│  - SQLAlchemy ORM & Alembic     │
-└──────────────┬──────────────────┘
-               │
-               ▼
-┌─────────────────────────────────┐
-│  Database (PostgreSQL / SQLite) │
-│  - Schema Alembic Migrations    │
-└─────────────────────────────────┘
+Browser
+   │
+   ▼
+Frontend: Next.js 16 (apps/frontend)        → Vercel
+   - Tampilan dan BFF (proxy) ke backend
+   - Sesi lewat cookie HttpOnly, token internal bertanda tangan
+   │  HTTPS, INTERNAL_API_SECRET
+   ▼
+Backend: FastAPI + SQLAlchemy + Alembic (apps/backend)   → Render / server sendiri
+   - Aturan bisnis, akses per peran, ekstraksi dokumen, OCR, pipeline AI
+   │
+   ├── PostgreSQL 16 + pgvector
+   └── Model AI: Ollama (lokal) atau Groq / Gemini
 ```
 
----
+Frontend dan backend di-deploy terpisah. `apps/backend/src` adalah backend TypeScript lama dan tidak dipakai lagi.
 
-## 🌟 Fitur Utama & Filosofi Human-in-the-Loop (HITL)
+## Cara kerja draf AI
 
-1. **Peran AI vs Kontrol Dosen (HITL)**:
-   - **AI Copilot**: Mengekstrak dokumen jawaban (PDF/DOCX/Teks), menganalisis kecocokan dengan instruksi penugasan dan rubrik penilaian berbobot, lalu menghasilkan **Draft Rekomendasi Nilai & Feedback**.
-   - **Dosen Pengajar**: Memeriksa rekomendasi draft AI, dapat menyesuaikan nilai skor dan merevisi narasi umpan balik, lalu melakukan **Finalisasi & Publikasi Nilai**.
-   - **Mahasiswa**: Hanya melihat nilai dan catatan umpan balik resmi setelah dipublikasikan oleh dosen. Draft AI dan prompt internal terisolasi aman di sisi backend.
+1. Jawaban dipecah menjadi beberapa bagian, lalu dicari bagian yang paling relevan untuk tiap kriteria (gabungan embedding `nomic-embed-text` dan pencarian kata).
+2. Nama, NIM, email, dan nomor telepon disamarkan sebelum dikirim ke model.
+3. Model menilai tiap kriteria dan mengutip bukti. Kutipan yang tidak ada di jawaban asli dibuang, dan kriteria tanpa bukti atau dengan keyakinan rendah ditandai "perlu dicek".
+4. Total nilai dihitung sistem dari bobot rubrik, bukan oleh model.
+5. Draf berjalan di latar belakang. Halaman boleh ditutup, dan draf bisa dibatalkan.
+6. Kalau model tidak tersedia, tidak ada skor pengganti. Dosen tetap bisa menilai manual.
 
-2. **Manajemen Kelas & Enrollment Key**:
-   - Dosen membuat kelas dan memperoleh **Kode Kelas 6 Karakter Unik**.
-   - Fitur 1-click salin kode dan regenerasi kode acak untuk mencegah pendaftaran yang tidak sah.
-   - Mahasiswa bergabung ke kelas secara instan menggunakan kode pendaftaran.
+## Cara cepat: Docker
 
-3. **Rubrik Penilaian Dinamis & Berbobot**:
-   - Form builder kriteria rubrik interaktif dengan verifikasi total bobot otomatis (**tepat 100%**).
-   - Template preset cepat: *Tugas Esai & Analisis*, *Tugas Pemrograman / Coding*, dan *Laporan Praktikum*.
-
-4. **Multi-Format Submission**:
-   - Menerima file dokumen **PDF** (`.pdf`), **Microsoft Word** (`.docx`), dan esai teks langsung.
-   - Ekstraksi teks dokumen otomatis di backend Python (`pypdf` dan `python-docx`).
-
-5. **Streaming AI Evaluation & Real-Time Grading**:
-   - Dukungan Server-Sent Events (SSE) untuk visualisasi langkah AI secara real-time.
-
----
-
-## 🛠️ Tech Stack
-
-| Layer | Teknologi |
-|---|---|
-| **Frontend** | Next.js 16 (App Router, Server & Client Components, Web Crypto JWT) |
-| **Styling** | Tailwind CSS v4, Lucide React Icons |
-| **Backend** | Python 3.13, FastAPI, Uvicorn, Pydantic v2 |
-| **Database & ORM** | PostgreSQL 16 (pgvector), SQLAlchemy 2.0, Alembic |
-| **Document Processing** | `pypdf` (PDF) & `python-docx` (DOCX) |
-| **AI LLM Engine** | Groq / Google Gemini / Ollama adapter |
-| **Testing** | Playwright (E2E browser testing), Pytest (Isolated PostgreSQL DB) |
-
----
-
-## 🚀 Panduan Setup & Menjalankan Proyek
-
-### 1. Jalankan Container PostgreSQL & Install Dependensi
+Butuh Docker Desktop.
 
 ```bash
-# Jalankan container Docker PostgreSQL dengan pgvector
-docker compose up -d
+cp .env.example .env          # isi INTERNAL_API_SECRET (minimal 32 karakter)
+docker compose up -d --build
+```
 
-# Install dependensi frontend & monorepo
-npm install
+Buka http://localhost:3000. Data demo dibuat otomatis (`SEED_DEMO=true`):
 
-# Install dependensi backend Python
+| Peran | Email | Kata sandi |
+|---|---|---|
+| Dosen | `dosen.demo@example.com` | `Dosen@12345` |
+| Mahasiswa | `mahasiswa.demo@example.com` | `Mhs@12345` |
+
+**Model AI.** Bawaannya memakai Ollama yang sudah terpasang di komputer ini (`host.docker.internal:11434`):
+
+```bash
+ollama pull qwen2.5:7b
+ollama pull nomic-embed-text
+```
+
+Ingin Ollama di dalam kontainer? Isi `OLLAMA_BASE_URL=http://ollama:11434` di `.env`, lalu:
+
+```bash
+docker compose --profile ollama up -d --build
+```
+
+Port bentrok dengan aplikasi lain? Ubah `FRONTEND_PORT`, `BACKEND_PORT`, dan `POSTGRES_PORT` di `.env`.
+
+Tanpa GPU, satu draf di CPU bisa butuh beberapa menit. Untuk produksi tanpa GPU, pakai `LLM_PROVIDER=groq` atau `gemini`, dengan catatan jawaban yang sudah disamarkan dikirim ke layanan luar.
+
+## Tanpa Docker
+
+```bash
+# Database: PostgreSQL 16 dengan pgvector, misalnya
+docker compose up -d postgres
+
+# Backend
 cd apps/backend
+cp .env.example .env            # isi INTERNAL_API_SECRET
 pip install -r requirements.txt
-cd ../..
-```
+alembic upgrade head
+python -m app.seed_demo         # opsional: data demo
+uvicorn app.main:app --port 3001
 
-### 2. Konfigurasi Environment Variables
-
-File `.env` di root proyek:
-```env
-# Database PostgreSQL Utama
-DATABASE_URL=postgresql://postgres:password@127.0.0.1:5432/ai_assessment_copilot
-
-# Auth & Internal API Security
-AUTH_SECRET=super-secret-dexa-assessment-key-change-in-production-2026
-AUTH_URL=http://localhost:3000
-BACKEND_URL=http://127.0.0.1:3001
-```
-
-File `apps/backend/.env`:
-```env
-DATABASE_URL=postgresql://postgres:password@127.0.0.1:5432/ai_assessment_copilot
-TEST_DATABASE_URL=postgresql://postgres:password@127.0.0.1:5432/ai_assessment_test
-SECRET_KEY=super-secret-dexa-assessment-key-change-in-production-2026
-JWT_SECRET_KEY=super-secret-dexa-assessment-jwt-key-change-in-production-2026
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=720
-STORAGE_DIR=./storage
-```
-
-### 3. Migrasi Database & Seeding Fixtures
-
-```bash
-cd apps/backend
-
-# Jalankan migrasi Alembic (Mendukung database kosong maupun existing)
-python -m alembic upgrade head
-
-# Jalankan Seeding Akun & Data Pengujian
-python seed_e2e_fixtures.py
-
-cd ../..
-```
-
-### 4. Prosedur Backup & Restore Database
-
-```bash
-# 1. Buat Backup Binary PostgreSQL (disimpan di folder backups/)
-docker exec ai_assessment_db pg_dump -U postgres -d ai_assessment_copilot -F c -f /tmp/backup_ai_assessment_copilot.dump
-docker cp ai_assessment_db:/tmp/backup_ai_assessment_copilot.dump ./backups/backup_ai_assessment_copilot.dump
-
-# 2. Salin file dump lokal ke container untuk dipulihkan
-docker cp ./backups/backup_ai_assessment_copilot.dump ai_assessment_db:/tmp/restore_input.dump
-
-# 3. Siapkan Database Terisolasi (Jalankan sebagai DUA perintah terpisah)
-docker exec ai_assessment_db psql -U postgres -c "DROP DATABASE IF EXISTS ai_assessment_restore_test;"
-docker exec ai_assessment_db psql -U postgres -c "CREATE DATABASE ai_assessment_restore_test;"
-
-# 4. Pemulihan (Restore) ke Database Terisolasi
-docker exec ai_assessment_db pg_restore -U postgres -d ai_assessment_restore_test --no-owner --no-privileges /tmp/restore_input.dump
-
-# 5. Uji Verifikasi Paritas Mendalam (Data, Index HNSW, Constraint, pgvector)
-python scripts/verify_restore.py
-```
-
-### 5. Menjalankan Server (Frontend + Backend)
-
-Jalankan kedua service secara bersamaan:
-
-```bash
-# Terminal 1 — Jalankan Backend FastAPI (Port 3001)
-cd apps/backend
-python -m uvicorn app.main:app --host 127.0.0.1 --port 3001
-
-# Terminal 2 — Jalankan Frontend Next.js (Port 3000)
+# Frontend (terminal lain, dari root repo)
+npm ci
+cp apps/frontend/.env.example apps/frontend/.env.local   # INTERNAL_API_SECRET sama dengan backend
+npm run build -w packages/contracts
 npm run dev -w apps/frontend
 ```
 
-Buka browser di [http://localhost:3000](http://localhost:3000).
+## Deploy
 
----
+### Backend di Render
 
-## 🔑 Akun Uji Coba
+1. Render → **New → Blueprint** → pilih repositori ini. `render.yaml` membuat layanan `dexa-backend` (Docker, `apps/backend`) dan database `dexa-db`.
+2. Isi variabel yang diminta:
+   - `INTERNAL_API_SECRET`: nilai acak minimal 32 karakter, sama dengan di Vercel.
+   - `CORS_ORIGINS`: `["https://<domain-vercel-anda>"]`.
+   - `GROQ_API_KEY`: kalau memakai Groq. Untuk Ollama di server sendiri, ganti `LLM_PROVIDER` menjadi `ollama` dan isi `OLLAMA_BASE_URL`.
+3. Migrasi database berjalan otomatis setiap kali layanan dinyalakan.
 
-| Peran | Email | Kata Sandi | Keterangan |
-|---|---|---|---|
-| **Dosen** | `dosen_a@test.local` | `Password123!` | Kelas *Rekayasa Perangkat Lunak A* (`KEY-RPLA`) |
-| **Dosen B** | `dosen_b@test.local` | `Password123!` | Kelas *Basis Data B* (`KEY-BDB`) |
-| **Mahasiswa** | `mhs_a@test.local` | `Password123!` | Mahasiswa terdaftar di RPL A |
-| **Mahasiswa B**| `mhs_b@test.local` | `Password123!` | Mahasiswa untuk uji gabung kelas |
+Catatan:
+- Berkas jawaban disimpan di disk `/var/data`. Disk persisten butuh paket berbayar; tanpa itu, berkas hilang saat layanan restart.
+- Backend harus berjalan dengan satu worker, karena draf AI berjalan sebagai job di dalam proses.
 
----
+### Frontend di Vercel
 
-## 🧪 Rangkaian Pengujian & Verifikasi
+1. Vercel → **Add New → Project** → impor repositori ini.
+2. **Root Directory**: `apps/frontend`. Perintah install dan build sudah diatur di `apps/frontend/vercel.json`.
+3. Environment variables:
+   - `BACKEND_URL`: URL backend, misalnya `https://dexa-backend.onrender.com`
+   - `INTERNAL_API_SECRET`: sama persis dengan backend
+   - `COOKIE_SECURE`: `true`
+4. Deploy.
 
-Semua pengujian telah diverifikasi dan lulus 100%:
+Fungsi Vercel berhenti setelah 300 detik. Kalau draf AI lebih lama, draf tetap selesai di backend dan halaman review menyambung lagi setelah dimuat ulang.
+
+## Pengujian
 
 ```bash
-# 1. Menjalankan Seluruh E2E Test Playwright (15/15 Passed)
-npx playwright test --project="Desktop Chrome"
+npm run typecheck                      # TypeScript
+npx vitest run                         # unit test frontend
+npm run build -w apps/frontend         # build produksi (webpack)
 
-# 2. Menjalankan Unit & Regression Test FastAPI Pytest (15/15 Passed)
+# Backend: butuh database dengan nama berakhiran _test
 cd apps/backend
-python -m pytest tests/ -v
-cd ../..
-
-# 3. Menjalankan Typecheck Monorepo (Mypy + TSC 0 Issues)
-npm run typecheck
-
-# 4. Menjalankan Linting Monorepo (Biome 0 Errors)
-npm run lint
+TEST_DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/ai_assessment_test python -m pytest -q
+python -m mypy app --config-file mypy.ini
 ```
 
----
+Build frontend memakai webpack (`next build --webpack`). Turbopack di Next 16.3.5 gagal memproses `next/font/google` di mesin pengembangan.
 
-## 🏛️ Lisensi & Hak Cipta
-Dexa Assessment © 2026. Dikembangkan dengan standar arsitektur clean code, isolasi kontrol akses multi-role, dan prinsip Human-in-the-Loop.
+Tes E2E di `tests/e2e` masih memakai harness lama berbasis Prisma dan belum diperbarui ke backend FastAPI.
+
+## Struktur
+
+```
+apps/frontend     Next.js 16, Tailwind v4, BFF ke backend
+apps/backend      FastAPI, SQLAlchemy, Alembic, pipeline AI (app/services)
+packages/contracts  skema validasi bersama (zod)
+docs/             dokumen produk
+DESIGN.md         aturan desain antarmuka
+```

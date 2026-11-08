@@ -1,4 +1,11 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "cd ../.. && npm run build:frontend"
+  "framework": "nextjs",
+  "installCommand": "cd ../.. && npm ci --no-audit --no-fund",
+  "buildCommand": "cd ../.. && npm run build:frontend",
+  "git": {
+    "deploymentEnabled": {
+      "feat/paket-a-auth": false
+    }
+  }
 }

@@ -1,23 +1,101 @@
-version: "3.8"
+# Dexa Assessment: the whole stack on one machine.
+#   cp .env.example .env    (fill INTERNAL_API_SECRET)
+#   docker compose up -d --build
+# Ollama on this machine already? Leave OLLAMA_BASE_URL at host.docker.internal (default).
+# Want Ollama in a container instead? Add `--profile ollama` and set OLLAMA_BASE_URL=http://ollama:11434.
+name: dexa-assessment
 
 services:
   postgres:
     image: pgvector/pgvector:pg16
-    container_name: ai_assessment_db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: ai_assessment_copilot
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-ai_assessment_copilot}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d ai_assessment_copilot"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-ai_assessment_copilot}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["ollama"]
+    restart: unless-stopped
+    volumes:
+      - ollama_models:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 30
+    # NVIDIA GPU: install the NVIDIA Container Toolkit, then uncomment.
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+  ollama-pull:
+    image: ollama/ollama:latest
+    profiles: ["ollama"]
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: ["/bin/sh", "-c", "ollama pull ${OLLAMA_MODEL:-qwen2.5:7b} && ollama pull ${OLLAMA_EMBED_MODEL:-nomic-embed-text}"]
+    restart: "no"
+
+  backend:
+    build: ./apps/backend
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-ai_assessment_copilot}
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?Isi INTERNAL_API_SECRET (minimal 32 karakter) di file .env}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:7b}
+      OLLAMA_EMBED_MODEL: ${OLLAMA_EMBED_MODEL:-nomic-embed-text}
+      LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
+      CORS_ORIGINS: ${CORS_ORIGINS:-["http://localhost:3000"]}
+      SEED_DEMO: ${SEED_DEMO:-true}
+      STORAGE_DIR: /app/storage
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "${BACKEND_PORT:-3001}:3001"
+    volumes:
+      - backend_storage:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+    restart: unless-stopped
+    environment:
+      BACKEND_URL: http://backend:3001
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?Isi INTERNAL_API_SECRET (minimal 32 karakter) di file .env}
+      COOKIE_SECURE: "false"
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
 
 volumes:
   postgres_data:
+  ollama_models:
+  backend_storage:

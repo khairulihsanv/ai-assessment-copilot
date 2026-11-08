@@ -1,0 +1,20 @@
+# Build context for apps/frontend/Dockerfile (repository root).
+**/node_modules
+**/.next
+**/.turbo
+**/dist
+.git
+.env
+.env.*
+!.env.example
+data-uji/
+test-results/
+playwright-report/
+coverage/
+tests/
+scripts/
+docs/
+backups/
+# The old TypeScript backend only needs its manifest for the npm workspace install.
+apps/backend/**
+!apps/backend/package.json

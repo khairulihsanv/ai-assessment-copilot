@@ -1,0 +1,41 @@
+# Render Blueprint for the backend (FastAPI) and its database.
+# Render → New → Blueprint → pick this repository. The frontend is deployed separately on Vercel.
+services:
+  - type: web
+    name: dexa-backend
+    runtime: docker
+    rootDir: apps/backend
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    region: singapore
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: dexa-db
+          property: connectionString
+      - key: INTERNAL_API_SECRET
+        sync: false # same value as INTERNAL_API_SECRET on Vercel
+      - key: CORS_ORIGINS
+        sync: false # e.g. ["https://dexa-assessment.vercel.app"]
+      - key: LLM_PROVIDER
+        value: groq
+      - key: GROQ_API_KEY
+        sync: false
+      - key: OLLAMA_BASE_URL
+        sync: false # only with LLM_PROVIDER=ollama on your own server
+      - key: SEED_DEMO
+        value: "false"
+      - key: STORAGE_DIR
+        value: /var/data/storage
+    disk:
+      name: dexa-storage
+      mountPath: /var/data
+      sizeGB: 1
+
+databases:
+  - name: dexa-db
+    plan: basic-256mb
+    region: singapore
+    databaseName: ai_assessment_copilot
+    postgresMajorVersion: "16"
