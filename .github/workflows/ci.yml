@@ -1,34 +1,83 @@
-name: CI Pipeline
+name: CI
 
 on:
   push:
     branches: [main, master]
   pull_request:
     branches: [main, master]
+  workflow_dispatch:
 
 jobs:
-  validate:
-    name: Lint, Test & Typecheck
+  frontend:
+    name: Frontend (typecheck, unit test, build)
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
-      - name: Install Dependencies
-        run: npm ci
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
 
-      - name: Generate Prisma Client
+      # Some unit tests still import types from the generated Prisma client.
+      - name: Generate Prisma client
         run: npx prisma generate
 
-      - name: Run Unit Tests
-        run: npm run test
+      - name: Build shared contracts
+        run: npm run build -w packages/contracts
 
-      - name: Typecheck TypeScript
-        run: npm run typecheck
+      - name: Typecheck
+        run: npm run typecheck -w packages/contracts -w apps/frontend
+
+      - name: Unit tests
+        run: npx vitest run
+
+      - name: Production build
+        run: npm run build -w apps/frontend
+
+  backend:
+    name: Backend (pytest, mypy)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ai_assessment_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    defaults:
+      run:
+        working-directory: apps/backend
+    env:
+      # The test suite refuses any database whose name does not end in _test.
+      TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ai_assessment_test
+      INTERNAL_API_SECRET: ci-only-secret-0123456789-abcdefghijklmnop
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: apps/backend/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends libgl1 libglib2.0-0
+          pip install -r requirements.txt mypy
+
+      - name: Tests
+        run: python -m pytest -q
+
+      - name: Typecheck
+        run: python -m mypy app --config-file mypy.ini
