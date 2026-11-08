@@ -100,10 +100,35 @@ Catatan:
 - Berkas jawaban disimpan di disk `/var/data`. Disk persisten butuh paket berbayar; tanpa itu, berkas hilang saat layanan restart.
 - Backend harus berjalan dengan satu worker, karena draf AI berjalan sebagai job di dalam proses.
 
+### Backend gratis dari komputer sendiri (Docker + Tailscale Funnel)
+
+Tanpa kartu kredit dan tanpa domain. Backend dan database berjalan di Docker di komputer ini, dan Tailscale Funnel memberinya alamat HTTPS publik yang tetap, misalnya `https://dexa-backend.<tailnet>.ts.net`. Frontend tetap di Vercel. Backend hanya bisa diakses selama komputer dan Docker Desktop menyala.
+
+Sekali saja:
+
+1. Daftar di https://tailscale.com (gratis, bisa login dengan GitHub).
+2. Admin console → **DNS** → aktifkan **HTTPS Certificates**.
+3. Admin console → **Access controls**: pastikan ada `"nodeAttrs": [{"target": ["autogroup:member"], "attr": ["funnel"]}]` (tailnet baru biasanya sudah punya).
+4. Admin console → **Settings → Keys** → **Generate auth key** (tidak reusable, tidak ephemeral). Salin ke `TS_AUTHKEY` di `.env`.
+5. Isi juga di `.env`: `INTERNAL_API_SECRET`, `LLM_PROVIDER=groq`, dan `GROQ_API_KEY` (dari https://console.groq.com, gratis).
+6. Jalankan:
+
+   ```bash
+   docker compose --profile tunnel up -d --build backend tunnel
+   docker compose exec tunnel tailscale funnel status   # menampilkan URL publik
+   ```
+
+7. Di Tailscale admin console → **Machines** → `dexa-backend` → **Disable key expiry**, supaya tidak perlu login ulang.
+8. Di Vercel → Settings → Environment Variables: `BACKEND_URL` = URL dari langkah 6, `INTERNAL_API_SECRET` sama dengan `.env`, `COOKIE_SECURE=true`. Lalu redeploy.
+
+Setelah itu, cukup buka Docker Desktop dan tekan **Start** pada proyek `dexa-assessment`. URL-nya tetap sama.
+
+Cloudflare Quick Tunnel tidak dipakai karena alamatnya berganti setiap kali dinyalakan dan tidak mendukung Server-Sent Events, yang dipakai untuk progres draf AI.
+
 ### Frontend di Vercel
 
 1. Vercel → **Add New → Project** → impor repositori ini.
-2. **Root Directory**: `apps/frontend`. Perintah install dan build sudah diatur di `apps/frontend/vercel.json`.
+2. **Root Directory**: `apps/frontend`. Perintah install, build, dan region fungsi (`sin1`, Singapura, dekat dengan backend) sudah diatur di `apps/frontend/vercel.json`.
 3. Environment variables:
    - `BACKEND_URL`: URL backend, misalnya `https://dexa-backend.onrender.com`
    - `INTERNAL_API_SECRET`: sama persis dengan backend

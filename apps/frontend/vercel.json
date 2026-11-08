@@ -1,6 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
+  "regions": [
+    "sin1"
+  ],
   "installCommand": "cd ../.. && npm ci --no-audit --no-fund",
   "buildCommand": "cd ../.. && npm run build:frontend",
   "git": {
