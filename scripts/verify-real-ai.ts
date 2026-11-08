@@ -222,7 +222,7 @@ async function auditRealAiProviders(): Promise<ProviderAudit> {
       if (res.ok) {
         audit.groqKeyValid = true;
         audit.llmProvider = "groq";
-        audit.llmModelName = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
+        audit.llmModelName = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
       } else {
         audit.unmetPrerequisites.push(
           `Kredensial Groq API ditolak oleh server (HTTP ${res.status}).`,
@@ -755,7 +755,7 @@ export async function main() {
           GROQ_MODEL:
             audit.llmProvider === "groq"
               ? audit.llmModelName
-              : process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+              : process.env.GROQ_MODEL || "openai/gpt-oss-120b",
           GROQ_BASE_URL: process.env.GROQ_BASE_URL || "https://api.groq.com/openai/v1",
           GROQ_API_KEY: groqApiKey,
           LLM_PROVIDER: audit.llmProvider || "groq",
