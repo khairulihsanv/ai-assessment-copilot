@@ -48,6 +48,9 @@ interface EvaluatorConfig {
   retrievalMode?: string;
   unverifiedQuotesDropped?: number;
   missingCriteria?: string[];
+  passagesSent?: number;
+  passagesTotal?: number;
+  suspectedManipulation?: string[];
 }
 
 export interface AIEvaluation {
@@ -614,8 +617,8 @@ export function AIReviewPanel({
               </div>
               <p className="mt-1.5 text-xs text-muted-foreground">
                 {formatElapsed(currentStep.elapsedSeconds)}
-                Model lokal bisa butuh beberapa menit. Halaman ini boleh ditutup, draf tetap
-                diproses dan tersimpan.
+                Biasanya selesai dalam hitungan detik; model lokal bisa butuh beberapa menit.
+                Halaman ini boleh ditutup, draf tetap diproses dan tersimpan.
               </p>
             </div>
           )}
@@ -645,6 +648,32 @@ export function AIReviewPanel({
               {config?.retrievalMode === "lexical" ? " · pencarian bukti mode leksikal" : ""}
             </p>
           )}
+
+          {evaluation && !grading && (config?.suspectedManipulation?.length ?? 0) > 0 && (
+            <div
+              role="alert"
+              className="mt-3 rounded-lg border border-warning-border bg-warning-bg px-3 py-2.5 text-sm text-warning-fg"
+            >
+              <p className="font-medium">Jawaban berisi kalimat yang mencoba mengarahkan penilai AI.</p>
+              <p className="mt-1 text-xs">
+                Contoh: “{config?.suspectedManipulation?.[0]}”. Semua kriteria ditandai perlu dicek.
+              </p>
+            </div>
+          )}
+
+          {evaluation &&
+            !grading &&
+            config?.passagesSent !== undefined &&
+            config.passagesTotal !== undefined &&
+            config.passagesSent < config.passagesTotal && (
+              <div className="mt-3 rounded-lg border border-warning-border bg-warning-bg px-3 py-2.5 text-sm text-warning-fg">
+                <p className="font-medium">Jawaban panjang, AI hanya membaca bagian yang paling relevan.</p>
+                <p className="mt-1 text-xs">
+                  {config.passagesSent} dari {config.passagesTotal} bagian dibaca. Periksa sisanya
+                  secara manual.
+                </p>
+              </div>
+            )}
         </section>
 
         {/* Criteria */}

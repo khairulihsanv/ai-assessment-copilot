@@ -1,4 +1,9 @@
 import { NextResponse } from "next/server";
+import {
+  AUTH_REQUEST_TIMEOUT_MS,
+  backendOfflineBody,
+  isGatewayFailure,
+} from "@/server/api/backend-offline";
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://127.0.0.1:3001";
 
@@ -17,10 +22,15 @@ export async function POST(request: Request) {
     const backendRes = await fetch(`${BACKEND_URL}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      signal: AbortSignal.timeout(AUTH_REQUEST_TIMEOUT_MS),
       body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
     });
 
     const data = await backendRes.json().catch(() => ({}));
+
+    if (isGatewayFailure(backendRes.status, data)) {
+      return NextResponse.json(backendOfflineBody(), { status: 503 });
+    }
 
     if (!backendRes.ok) {
       let errorMsg = "Email atau kata sandi tidak cocok. Silakan coba lagi.";
@@ -68,12 +78,6 @@ export async function POST(request: Request) {
     return response;
   } catch (error) {
     console.error("[Login BFF Error]:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Gagal menghubungi server autentikasi. Silakan periksa koneksi Anda.",
-      },
-      { status: 503 },
-    );
+    return NextResponse.json(backendOfflineBody(), { status: 503 });
   }
 }

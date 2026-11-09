@@ -23,7 +23,12 @@ _LABELED_ID_RE = re.compile(
 )
 # Indonesian mobile numbers: +62 / 62 / 0 followed by 8xx, optional separators.
 _PHONE_RE = re.compile(r"(?<![\w+])(?:\+62|62|0)\s?8\d{1,2}(?:[\s.-]?\d{2,4}){2,3}(?!\w)")
-_NIM_RE = re.compile(r"(?<![A-Za-z0-9])[A-Za-z]{0,2}\d{7,18}(?![A-Za-z0-9])")
+# Letter-prefixed ids (K3519001, M0521045) are masked anywhere, except currency ("Rp15000000").
+_PREFIXED_ID_RE = re.compile(r"(?<![A-Za-z0-9])(?![Rr][Pp]\d)[A-Za-z]{1,2}\d{7,18}(?![A-Za-z0-9])")
+# A bare digit run is only treated as a NIM in the identity header at the top of an answer.
+# In the body it is content (amounts, row counts, results) and the model must see it.
+_BARE_NUMBER_RE = re.compile(r"(?<![A-Za-z0-9])\d{7,18}(?![A-Za-z0-9])")
+HEADER_CHARS = 400
 _TOKEN_SPLIT_RE = re.compile(r"\[(?:MAHASISWA|EMAIL|NIM|TELEPON)\]")
 _NEVER_MATCH = re.compile(r"(?!x)x")
 
@@ -43,15 +48,23 @@ def _name_variants(names: Iterable[str | None]) -> list[str]:
     return sorted(variants, key=len, reverse=True)
 
 
-def anonymize_text(text: str, student_names: Iterable[str | None] = ()) -> str:
-    """Replace names, emails, NIM/NIP and phone numbers with neutral tokens."""
+def anonymize_text(text: str, student_names: Iterable[str | None] = (), offset: int = 0) -> str:
+    """Replace names, emails, NIM/NIP and phone numbers with neutral tokens.
+
+    ``offset`` is where ``text`` starts in the full answer: a passage from the middle of an
+    answer keeps its numbers, while the identity header at the top is masked.
+    """
     if not text:
         return text
 
     masked = _EMAIL_RE.sub(TOKEN_EMAIL, text)
     masked = _LABELED_ID_RE.sub(lambda m: f"{m.group(1)}{m.group(2)}{TOKEN_NIM}", masked)
     masked = _PHONE_RE.sub(TOKEN_PHONE, masked)
-    masked = _NIM_RE.sub(TOKEN_NIM, masked)
+    masked = _PREFIXED_ID_RE.sub(TOKEN_NIM, masked)
+    # Earlier substitutions shift offsets a little; that is fine for a 400-character window.
+    masked = _BARE_NUMBER_RE.sub(
+        lambda m: TOKEN_NIM if offset + m.start() < HEADER_CHARS else m.group(0), masked
+    )
 
     for variant in _name_variants(student_names):
         pattern = re.compile(rf"(?<![\w\[]){re.escape(variant)}(?![\w\]])", re.IGNORECASE)

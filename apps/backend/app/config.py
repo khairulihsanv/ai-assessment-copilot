@@ -57,8 +57,14 @@ class Settings(BaseSettings):
     # Ollama answers as a stream: this is the longest allowed silence, not the length of the whole answer.
     LLM_TIMEOUT_SECONDS: float = 300.0
     LLM_TOTAL_TIMEOUT_SECONDS: float = 1800.0
-    LLM_TEMPERATURE: float = 0.1
+    # Grading should be repeatable: the same answer should get the same draft.
+    LLM_TEMPERATURE: float = 0.0
+    LLM_SEED: int = 42
     LLM_MAX_RETRIES: int = 1
+    # Upper bound for one grading prompt, in estimated tokens. 0 = no limit.
+    # Free Groq allows 8000 tokens per minute *including* the answer, so the default keeps
+    # the prompt near 5000 and leaves room for the reply. Unset = 5000 on Groq, unlimited elsewhere.
+    LLM_MAX_PROMPT_TOKENS: int | None = None
 
     OLLAMA_BASE_URL: str = "http://localhost:11434"
     OLLAMA_MODEL: str = "qwen2.5:7b"

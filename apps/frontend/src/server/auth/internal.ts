@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
+import { BACKEND_OFFLINE_MESSAGE } from "@/server/api/backend-offline";
 import { resolveAuthSecret } from "@/shared/utils/auth-secret";
 
 export async function getSessionToken(): Promise<string | undefined> {
@@ -61,18 +62,25 @@ export async function forwardToBackend(url: string, init?: RequestInit): Promise
         headers.set("Authorization", `Bearer ${token}`);
       }
     }
-    return await fetch(url, {
+    const res = await fetch(url, {
       ...init,
       headers,
     });
+    // A gateway error (tunnel up, backend down) has no JSON body from FastAPI.
+    const isJson = res.headers.get("content-type")?.includes("application/json") ?? false;
+    if ((res.status === 502 || res.status === 503 || res.status === 504) && !isJson) {
+      return backendOffline();
+    }
+    return res;
   } catch (error) {
     console.error("[Backend Proxy Error]:", error);
-    return new Response(
-      JSON.stringify({ error: "Layanan backend tidak tersedia atau gagal dihubungi" }),
-      {
-        status: 503,
-        headers: { "Content-Type": "application/json" },
-      },
-    );
+    return backendOffline();
   }
+}
+
+function backendOffline(): Response {
+  return new Response(JSON.stringify({ error: BACKEND_OFFLINE_MESSAGE, code: "BACKEND_OFFLINE" }), {
+    status: 503,
+    headers: { "Content-Type": "application/json" },
+  });
 }

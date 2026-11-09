@@ -2,6 +2,11 @@
 
 import { registerSchema } from "@dexa/contracts";
 import { cookies } from "next/headers";
+import {
+  AUTH_REQUEST_TIMEOUT_MS,
+  BACKEND_OFFLINE_MESSAGE,
+  isGatewayFailure,
+} from "@/server/api/backend-offline";
 import { getErrorMessage } from "@/shared/utils/api-error";
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://127.0.0.1:3001";
@@ -34,6 +39,7 @@ export async function registerAction(formData: FormData): Promise<ActionResult> 
     const res = await fetch(`${BACKEND_URL}/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      signal: AbortSignal.timeout(AUTH_REQUEST_TIMEOUT_MS),
       body: JSON.stringify({
         name,
         email: email.trim().toLowerCase(),
@@ -43,6 +49,10 @@ export async function registerAction(formData: FormData): Promise<ActionResult> 
     });
 
     const data = await res.json().catch(() => ({}));
+
+    if (isGatewayFailure(res.status, data)) {
+      return { success: false, error: BACKEND_OFFLINE_MESSAGE };
+    }
 
     if (!res.ok) {
       return {
@@ -56,7 +66,7 @@ export async function registerAction(formData: FormData): Promise<ActionResult> 
     console.error("Register action error:", error);
     return {
       success: false,
-      error: "Gagal memproses pendaftaran. Periksa koneksi backend Anda.",
+      error: BACKEND_OFFLINE_MESSAGE,
     };
   }
 }
@@ -73,10 +83,15 @@ export async function loginAction(formData: FormData): Promise<ActionResult> {
     const res = await fetch(`${BACKEND_URL}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      signal: AbortSignal.timeout(AUTH_REQUEST_TIMEOUT_MS),
       body: JSON.stringify({ email, password }),
     });
 
     const data = await res.json().catch(() => ({}));
+
+    if (isGatewayFailure(res.status, data)) {
+      return { success: false, error: BACKEND_OFFLINE_MESSAGE };
+    }
 
     if (!res.ok) {
       return {
@@ -100,7 +115,7 @@ export async function loginAction(formData: FormData): Promise<ActionResult> {
     console.error("Login action error:", error);
     return {
       success: false,
-      error: "Gagal menghubungi server autentikasi backend.",
+      error: BACKEND_OFFLINE_MESSAGE,
     };
   }
 }

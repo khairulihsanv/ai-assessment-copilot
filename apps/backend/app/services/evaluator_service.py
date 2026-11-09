@@ -28,7 +28,30 @@ from app.services.anonymizer import anonymize_text, masked_quote_to_regex
 from app.services.evidence_service import retrieve_evidence
 from app.services.llm_client import LLMResult, LLMUnavailableError
 
-PROMPT_VERSION = "rubric-grounded-v2"
+PROMPT_VERSION = "rubric-grounded-v3"
+# Rough chars-per-token for Indonesian with current tokenizers; deliberately on the safe side.
+CHARS_PER_TOKEN = 3.2
+GROQ_DEFAULT_PROMPT_TOKENS = 5000
+
+# Phrases that try to steer the grader. The model is told to ignore them; these flag the
+# draft so the lecturer knows to look, because a model can still be nudged.
+_MANIPULATION_RE = re.compile(
+    r"(?im)("
+    r"abaikan\s+(?:semua\s+|seluruh\s+)?(?:instruksi|perintah|aturan)"
+    r"|ignore\s+(?:all\s+|the\s+)?(?:previous|above|prior)\s+(?:instructions|prompts?)"
+    r"|(?:beri|berikan|kasih)(?:kan)?\s+(?:saya\s+)?(?:nilai|skor)\s+(?:maksimal|penuh|sempurna|tertinggi|100)"
+    r"|(?:give|award)\s+(?:me\s+)?(?:full|maximum|max|perfect)\s+(?:score|marks|points)"
+    r"|catatan\s+untuk\s+(?:sistem|penilai|ai|model)"
+    r"|^\s*(?:system|assistant)\s*:"
+    r"|</?\s*jawaban\s*>|jawaban>>>"
+    r"|percriterion"
+    r")"
+)
+MANIPULATION_NOTE = (
+    "Perhatian: jawaban berisi kalimat yang tampak seperti upaya mengarahkan penilai AI. "
+    "Periksa skor ini secara manual."
+)
+CONDENSED_NOTE = "Jawaban panjang: AI hanya membaca bagian yang paling relevan. Periksa bagian lainnya secara manual."
 MAX_REFERENCE_BLOCKS = 5
 MAX_EVIDENCE_PER_CRITERION = 3
 MIN_QUOTE_CHARS = 8
@@ -43,7 +66,14 @@ SYSTEM_PROMPT = """Anda adalah asisten penilai untuk dosen. Anda hanya menyusun 
 
 ATURAN PENILAIAN (wajib):
 1. Nilai SETIAP kriteria rubrik secara terpisah, hanya berdasarkan deskripsi kriteria, kunci jawaban, materi, dan dokumen acuan dosen yang diberikan.
-2. Skor setiap kriteria berada di rentang 0 sampai skor maksimal kriteria tersebut. Jangan memberi skor penuh kecuali jawaban benar-benar memenuhi seluruh aspek kriteria.
+2. Skor setiap kriteria berada di rentang 0 sampai skor maksimal kriteria tersebut. Pakai patokan berikut (persentase dari skor maksimal kriteria), pilih yang paling dekat lalu sesuaikan sedikit bila perlu:
+   - 0%: tidak dibahas, salah, atau tidak relevan.
+   - 25%: disinggung, tetapi dangkal atau banyak keliru.
+   - 50%: sebagian aspek kriteria benar, ada kekurangan penting.
+   - 75%: sebagian besar aspek benar dan jelas, hanya kekurangan kecil.
+   - 100%: semua aspek kriteria terpenuhi dengan tepat dan didukung penjelasan atau contoh.
+   Jawaban yang relevan tetapi umum, singkat, atau baru menyebut sebagian unsur kunci tetap mendapat skor parsial (25–50%). Skor 0 hanya untuk jawaban yang salah, tidak relevan, atau kosong.
+   Jawaban yang sama harus selalu mendapat skor yang sama.
 3. Untuk setiap kriteria, kutip 1–3 bukti dari jawaban mahasiswa. Kutipan harus VERBATIM (disalin persis, kata demi kata) dari salah satu passage, sertakan passageId-nya (mis. "P2"). Kutipan sebaiknya satu kalimat atau frasa pendek yang relevan.
 4. Jika tidak ada bagian jawaban yang mendukung kriteria, kosongkan daftar bukti (evidence: []) dan beri skor rendah. JANGAN mengarang kutipan.
 5. Isi confidence dengan "high", "medium", atau "low" sesuai keyakinan Anda atas skor tersebut.
@@ -118,6 +148,7 @@ def build_user_prompt(
     passages: list[dict[str, Any]],
     by_criterion: dict[str, list[dict[str, Any]]],
     reference_blocks: list[dict[str, Any]] | None = None,
+    total_passages: int | None = None,
 ) -> str:
     crit_lines = []
     for idx, c in enumerate(criteria, start=1):
@@ -147,6 +178,11 @@ def build_user_prompt(
         ref_text = "\nDOKUMEN ACUAN DOSEN:\n" + "\n\n".join(refs) + "\n"
 
     passage_text = "\n".join(f"[{p['id']}] {p['text']}" for p in passages) or "(jawaban kosong)"
+    if total_passages and total_passages > len(passages):
+        passage_text = (
+            f"(Jawaban panjang: hanya {len(passages)} dari {total_passages} passage paling relevan yang ditampilkan. "
+            "Jangan menurunkan skor hanya karena bagian lain tidak terlihat.)\n" + passage_text
+        )
 
     return f"""TUGAS: {assignment_title}
 INSTRUKSI TUGAS:
@@ -386,6 +422,74 @@ def _mock_llm_result(criteria: list[dict[str, Any]], passages: list[dict[str, An
 
 
 # ---------------------------------------------------------------------------
+# Prompt budget and manipulation check
+# ---------------------------------------------------------------------------
+
+
+def estimate_tokens(text: str) -> int:
+    return math.ceil(len(text or "") / CHARS_PER_TOKEN)
+
+
+def prompt_token_budget() -> int | None:
+    """Token budget for one grading prompt, or None for no limit."""
+    configured = settings.LLM_MAX_PROMPT_TOKENS
+    if configured is None:
+        return GROQ_DEFAULT_PROMPT_TOKENS if settings.LLM_PROVIDER == "groq" else None
+    return configured if configured > 0 else None
+
+
+def find_manipulation(text: str) -> list[str]:
+    """Return up to three phrases in the answer that try to instruct the grader."""
+    found: list[str] = []
+    for m in _MANIPULATION_RE.finditer(text or ""):
+        snippet = m.group(0).strip()
+        if snippet and snippet.lower() not in (f.lower() for f in found):
+            found.append(snippet)
+        if len(found) >= 3:
+            break
+    return found
+
+
+def select_passages_for_budget(
+    passages: list[dict[str, Any]],
+    by_criterion: dict[str, list[dict[str, Any]]],
+    criteria: list[dict[str, Any]],
+    render: Any,
+    budget: int | None,
+) -> list[dict[str, Any]]:
+    """Keep the passages that fit the token budget, most relevant first, in document order.
+
+    ``render(selected)`` returns the full prompt for a candidate selection. Every criterion's
+    best passage is taken first, then each one's second best, and so on; passages no
+    criterion ranked come last, in document order.
+    """
+    if budget is None or estimate_tokens(render(passages)) <= budget:
+        return passages
+
+    priority: list[str] = []
+    depth = max((len(v) for v in by_criterion.values()), default=0)
+    for rank in range(depth):
+        for c in criteria:
+            ranked = by_criterion.get(c["id"]) or []
+            if rank < len(ranked):
+                pid = ranked[rank]["passageId"]
+                if pid not in priority:
+                    priority.append(pid)
+    priority.extend(p["id"] for p in passages if p["id"] not in priority)
+
+    order = {p["id"]: i for i, p in enumerate(passages)}
+    by_id = {p["id"]: p for p in passages}
+    chosen: list[str] = []
+    for pid in priority:
+        trial = sorted([*chosen, pid], key=order.__getitem__)
+        if estimate_tokens(render([by_id[i] for i in trial])) <= budget:
+            chosen = trial
+    if not chosen and priority:
+        chosen = [priority[0]]  # the rubric alone is near the budget; send the best passage anyway
+    return [by_id[i] for i in chosen]
+
+
+# ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
 
@@ -413,18 +517,29 @@ async def evaluate_submission(
 
     anonymize = settings.ANONYMIZE_STUDENT_DATA
     names = list(student_names)
-    prompt_passages = [
-        {"id": p["id"], "text": anonymize_text(p["text"], names) if anonymize else p["text"]} for p in passages
+    all_prompt_passages = [
+        {"id": p["id"], "text": anonymize_text(p["text"], names, offset=p["start"]) if anonymize else p["text"]}
+        for p in passages
     ]
-    user_prompt = build_user_prompt(
-        assignment_title=assignment_title,
-        assignment_instructions=assignment_instructions,
-        max_score=assignment_max_score,
-        criteria=criteria,
-        passages=prompt_passages,
-        by_criterion=by_criterion,
-        reference_blocks=evidence_blocks,
+
+    def render(selected: list[dict[str, Any]]) -> str:
+        return SYSTEM_PROMPT + build_user_prompt(
+            assignment_title=assignment_title,
+            assignment_instructions=assignment_instructions,
+            max_score=assignment_max_score,
+            criteria=criteria,
+            passages=selected,
+            by_criterion=by_criterion,
+            reference_blocks=evidence_blocks,
+            total_passages=len(all_prompt_passages),
+        )
+
+    prompt_passages = select_passages_for_budget(
+        all_prompt_passages, by_criterion, criteria, render, prompt_token_budget()
     )
+    condensed = len(prompt_passages) < len(all_prompt_passages)
+    user_prompt = render(prompt_passages)[len(SYSTEM_PROMPT) :]
+    manipulation = find_manipulation(text)
 
     if os.getenv("TEST_MOCK_LLM") == "true":
         llm_result = _mock_llm_result(criteria, passages, by_criterion)
@@ -441,6 +556,12 @@ async def evaluate_submission(
             "Model tidak mengembalikan penilaian untuk kriteria mana pun. Coba jalankan ulang atau nilai secara manual."
         )
 
+    notes = [n for n, on in ((MANIPULATION_NOTE, bool(manipulation)), (CONDENSED_NOTE, condensed)) if on]
+    if notes:
+        for pc in response["perCriterion"]:
+            pc["needsReview"] = True
+            pc["reasoning"] = " ".join([*notes, pc["reasoning"]]).strip()
+
     evaluator_config = {
         "provider": llm_result.provider,
         "model": llm_result.model,
@@ -452,6 +573,10 @@ async def evaluate_submission(
         "temperature": settings.LLM_TEMPERATURE,
         "unverifiedQuotesDropped": stats["unverifiedQuotesDropped"],
         "missingCriteria": stats["missingCriteria"],
+        "seed": settings.LLM_SEED,
+        "passagesSent": len(prompt_passages),
+        "passagesTotal": len(all_prompt_passages),
+        "suspectedManipulation": manipulation,
     }
     evaluator_config["criteriaNeedingReview"] = sum(1 for pc in response["perCriterion"] if pc["needsReview"])
 

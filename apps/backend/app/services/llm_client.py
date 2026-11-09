@@ -30,9 +30,11 @@ llm_progress: ContextVar[Callable[[int], None] | None] = ContextVar("llm_progres
 class LLMUnavailableError(Exception):
     """The language model could not produce a usable JSON answer."""
 
-    def __init__(self, message: str, *, retriable: bool = False):
+    def __init__(self, message: str, *, retriable: bool = False, retry_after: float | None = None):
         super().__init__(message)
         self.retriable = retriable
+        # Seconds the provider asked us to wait (HTTP 429 Retry-After), if any.
+        self.retry_after = retry_after
 
 
 @dataclass
@@ -82,13 +84,36 @@ def _status_error(provider: str, res: httpx.Response) -> LLMUnavailableError:
     code = res.status_code
     body = (res.text or "")[:300]
     retriable = code == 429 or code >= 500
+    retry_after = _retry_after_seconds(res) if code == 429 else None
     if code == 429:
-        msg = f"{provider}: batas permintaan tercapai (HTTP 429). Coba lagi beberapa saat."
+        if retry_after is not None and retry_after > RATE_LIMIT_MAX_WAIT_SECONDS:
+            retriable = False
+            msg = f"{provider}: kuota model untuk hari ini habis (HTTP 429). Coba lagi nanti atau nilai secara manual."
+        else:
+            msg = f"{provider}: batas permintaan per menit tercapai (HTTP 429). Coba lagi sebentar lagi."
+    elif code == 413:
+        msg = (
+            f"{provider}: jawaban dan rubrik terlalu panjang untuk kuota model (HTTP 413). "
+            "Kecilkan LLM_MAX_PROMPT_TOKENS atau pakai model dengan kuota lebih besar."
+        )
     elif code in (401, 403):
         msg = f"{provider}: API key ditolak (HTTP {code}). Periksa konfigurasi."
     else:
         msg = f"{provider}: HTTP {code} — {body}"
-    return LLMUnavailableError(msg, retriable=retriable)
+    return LLMUnavailableError(msg, retriable=retriable, retry_after=retry_after)
+
+
+RATE_LIMIT_MAX_WAIT_SECONDS = 60.0
+
+
+def _retry_after_seconds(res: httpx.Response) -> float | None:
+    value = res.headers.get("retry-after")
+    if not value:
+        return None
+    try:
+        return max(0.0, float(value))
+    except ValueError:
+        return None
 
 
 def _ollama_model_missing(res: httpx.Response, model: str) -> bool:
@@ -148,6 +173,7 @@ async def _chat_ollama(
         "options": {
             "num_ctx": settings.OLLAMA_NUM_CTX,
             "temperature": settings.LLM_TEMPERATURE,
+            "seed": settings.LLM_SEED,
         },
     }
 
@@ -217,6 +243,7 @@ async def _chat_groq(client: httpx.AsyncClient, system: str, user: str) -> LLMRe
                     {"role": "user", "content": user},
                 ],
                 "temperature": settings.LLM_TEMPERATURE,
+                "seed": settings.LLM_SEED,
                 "response_format": {"type": "json_object"},
             },
         )
@@ -302,16 +329,20 @@ def active_model_name() -> str:
 async def chat_json(system: str, user: str, schema: dict[str, Any] | None = None) -> LLMResult:
     """Send one system+user exchange and return the parsed JSON object.
 
-    Retries only retriable failures (timeouts, connection errors, 429/5xx, malformed JSON)
-    up to ``LLM_MAX_RETRIES`` additional times.
+    Retries retriable failures (timeouts, connection errors, 5xx, malformed JSON) up to
+    ``LLM_MAX_RETRIES`` additional times. A per-minute rate limit (429 with Retry-After) is
+    waited out separately, up to ``RATE_LIMIT_MAX_WAIT_SECONDS`` in total, because on a
+    free tier the next draft often only needs a few seconds for the token window to refill.
     """
     provider = settings.LLM_PROVIDER
     attempts = max(0, settings.LLM_MAX_RETRIES) + 1
     timeout = httpx.Timeout(settings.LLM_TIMEOUT_SECONDS, connect=10.0)
     last_error: LLMUnavailableError | None = None
+    failures = 0
+    waited = 0.0
 
     async with httpx.AsyncClient(timeout=timeout) as client:
-        for attempt in range(1, attempts + 1):
+        while True:
             try:
                 if provider == "groq":
                     return await _chat_groq(client, system, user)
@@ -320,10 +351,18 @@ async def chat_json(system: str, user: str, schema: dict[str, Any] | None = None
                 return await _chat_ollama(client, system, user, schema)
             except LLMUnavailableError as exc:
                 last_error = exc
-                logger.warning("LLM attempt %s/%s failed (%s): %s", attempt, attempts, provider, exc)
-                if not exc.retriable or attempt >= attempts:
+                if exc.retriable and exc.retry_after is not None:
+                    delay = max(exc.retry_after, 1.0) + 0.5
+                    if waited + delay <= RATE_LIMIT_MAX_WAIT_SECONDS:
+                        logger.warning("LLM rate limited (%s), waiting %.1fs: %s", provider, delay, exc)
+                        waited += delay
+                        await asyncio.sleep(delay)
+                        continue
+                failures += 1
+                logger.warning("LLM attempt %s/%s failed (%s): %s", failures, attempts, provider, exc)
+                if not exc.retriable or failures >= attempts:
                     break
-                await asyncio.sleep(min(2.0 * attempt, 5.0))
+                await asyncio.sleep(min(2.0 * failures, 5.0))
 
     assert last_error is not None
     raise last_error
