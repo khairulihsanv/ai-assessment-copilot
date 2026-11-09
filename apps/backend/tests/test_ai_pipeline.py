@@ -779,3 +779,32 @@ async def test_rate_limit_is_waited_out_several_times_but_not_forever(monkeypatc
     with pytest.raises(llm_client.LLMUnavailableError):
         await llm_client.chat_json("s", "u")
     assert sum(s for s in slept if s > 5) <= llm_client.RATE_LIMIT_MAX_WAIT_SECONDS
+
+
+def test_released_grade_locks_resubmission_until_withdrawn(client, graded_env):
+    env = graded_env
+    dosen = {"Authorization": f"Bearer {env['token']}"}
+    mhs = {"Authorization": f"Bearer {env['mhs_token']}"}
+    url = f"/classes/{env['cls'].id}/assignments/{env['assignment'].id}/submissions"
+
+    released = client.post(
+        f"/submissions/{env['sub'].id}/finalize",
+        headers=dosen,
+        json={"expectedSubmissionVersionId": env["ver"].id, "finalScore": 80, "finalFeedback": "Sudah baik."},
+    )
+    assert released.status_code == 200, released.text
+    grade_id = released.json()["grade"]["id"]
+
+    locked = client.post(url, headers=mhs, json={"content": "Versi baru setelah dinilai, seharusnya ditolak."})
+    assert locked.status_code == 409
+    assert "sudah dirilis" in locked.json()["detail"]
+
+    revert = client.post(
+        f"/submissions/{env['sub'].id}/revert-finalize",
+        headers=dosen,
+        json={"expectedReleasedGradeId": grade_id, "reason": "Dibuka lagi"},
+    )
+    assert revert.status_code == 200, revert.text
+
+    reopened = client.post(url, headers=mhs, json={"content": "Versi baru setelah dibuka kembali oleh dosen."})
+    assert reopened.status_code == 201, reopened.text

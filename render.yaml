@@ -24,6 +24,8 @@ services:
         sync: false
       - key: OLLAMA_BASE_URL
         sync: false # only with LLM_PROVIDER=ollama on your own server
+      - key: NODE_ENV
+        value: production
       - key: SEED_DEMO
         value: "false"
       - key: STORAGE_DIR

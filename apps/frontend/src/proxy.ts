@@ -41,7 +41,7 @@ async function isTokenValid(token: string | undefined): Promise<boolean> {
   }
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { nextUrl } = request;
   const token = request.cookies.get("dexa_session")?.value;
   const loggedIn = await isTokenValid(token);

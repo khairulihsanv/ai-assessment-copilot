@@ -19,7 +19,8 @@ auth_router = APIRouter(prefix="/auth", tags=["auth"])
 @auth_router.post("/login", response_model=TokenResponse)
 async def login(req: LoginRequest, request: Request, response: Response, db: Session = Depends(get_db)):
     client_ip = request.client.host if request.client else "unknown"
-    rate_key = f"{client_ip}:{req.email}"
+    # Same normalisation as the lookup below, so "Budi@x.com" and "budi@x.com" share one limit.
+    rate_key = f"{client_ip}:{req.email.lower().strip()}"
 
     if not login_rate_limiter.is_allowed(rate_key):
         logger.warning(f"Rate limit exceeded for login attempt from {client_ip}")

@@ -65,6 +65,8 @@ services:
       - path: .env
         required: false
     environment:
+      # production hides error details and the /docs API map from the internet.
+      NODE_ENV: ${BACKEND_ENV:-production}
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-ai_assessment_copilot}
       INTERNAL_API_SECRET: ${INTERNAL_API_SECRET:?Isi INTERNAL_API_SECRET (minimal 32 karakter) di file .env}
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}

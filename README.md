@@ -155,6 +155,14 @@ python -m mypy app --config-file mypy.ini
 
 Build frontend memakai webpack (`next build --webpack`). Turbopack di Next 16.3.5 gagal memproses `next/font/google` di mesin pengembangan.
 
+Uji alur lengkap (daftar, kelas, rubrik, tugas, gabung, kirim jawaban, draf AI, rilis nilai, ditambah pemeriksaan hak akses) lewat route API frontend:
+
+```bash
+BASE=http://localhost:3000 node scripts/smoke-flow.mjs
+```
+
+Skrip ini **membuat data** (akun, kelas, nilai), jadi jalankan hanya pada stack uji, bukan database produksi.
+
 Tes E2E di `tests/e2e` masih memakai harness lama berbasis Prisma dan belum diperbarui ke backend FastAPI.
 
 ## Struktur

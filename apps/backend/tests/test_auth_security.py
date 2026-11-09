@@ -175,3 +175,37 @@ def test_valid_login_and_role_access_control(client, db_session):
         json={"name": "Kelas Ilegal Mahasiswa"},
     )
     assert forbidden_res.status_code == status.HTTP_403_FORBIDDEN
+
+
+# ---------------------------------------------------------------------------
+# Audit 2026-11-09: login rate limiter
+# ---------------------------------------------------------------------------
+
+
+def test_login_limit_ignores_email_case(client):
+    from app.security.dependencies import login_rate_limiter
+
+    login_rate_limiter.attempts.clear()
+    variants = ["Budi@Example.com", "budi@example.com", "BUDI@EXAMPLE.COM", " budi@example.com "]
+    codes = [
+        client.post("/auth/login", json={"email": variants[i % len(variants)], "password": "salah-sekali"}).status_code
+        for i in range(11)
+    ]
+    login_rate_limiter.attempts.clear()
+    assert codes[:10] == [401] * 10 or all(c != 429 for c in codes[:10])
+    assert codes[10] == 429
+
+
+def test_rate_limiter_forgets_idle_keys(monkeypatch):
+    from app.security import dependencies
+
+    clock = [1000.0]
+    monkeypatch.setattr(dependencies.time, "time", lambda: clock[0])
+    limiter = dependencies.RateLimiter(max_requests=2, window_seconds=60)
+    for i in range(50):
+        limiter.is_allowed(f"ip:acak{i}@x.com")
+    assert len(limiter.attempts) == 50
+
+    clock[0] += 61
+    limiter.is_allowed("ip:baru@x.com")
+    assert list(limiter.attempts) == ["ip:baru@x.com"]

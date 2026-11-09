@@ -5,7 +5,7 @@
  *   INTERNAL_API_SECRET → SECRET_KEY → AUTH_SECRET → NEXTAUTH_SECRET
  *
  * There is deliberately no hardcoded fallback: a missing secret must fail loudly.
- * Pure function with no Node-only imports so it can run in middleware.
+ * Pure function with no Node-only imports so it can run in the proxy (src/proxy.ts).
  */
 export function resolveAuthSecret(): string | undefined {
   return (

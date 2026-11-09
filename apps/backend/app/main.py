@@ -34,11 +34,18 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down Dexa Assessment Backend...")
 
 
+# In production the backend is reachable from the internet (tunnel / VPS): do not publish
+# the interactive docs or the full API map there.
+_is_production = settings.ENVIRONMENT == "production"
+
 app = FastAPI(
     title="Dexa Assessment API",
     description="Backend API for Dexa Assessment Copilot — built with FastAPI & Python",
     version="1.0.0",
     lifespan=lifespan,
+    docs_url=None if _is_production else "/docs",
+    redoc_url=None if _is_production else "/redoc",
+    openapi_url=None if _is_production else "/openapi.json",
 )
 
 # CORS Middleware

@@ -318,6 +318,23 @@ async def submit_assignment(
     if now > assignment.dueDate and not assignment.allowLateSubmission:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tenggat waktu pengumpulan tugas ini telah berakhir")
 
+    # A released grade belongs to the version the lecturer read. A new version would silently
+    # sit under that grade, so it is refused until the lecturer withdraws the release.
+    graded = (
+        db.query(Submission.id)
+        .filter(
+            Submission.assignmentId == assignment_id,
+            Submission.mahasiswaId == current_user.id,
+            Submission.releasedGradeId.isnot(None),
+        )
+        .first()
+    )
+    if graded:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Nilai tugas ini sudah dirilis, jadi jawaban tidak bisa diganti. Hubungi dosen bila perlu dibuka kembali.",
+        )
+
     content_type = request.headers.get("content-type", "")
     file_bytes: bytes | None = None
     orig_filename: str | None = None

@@ -19,10 +19,20 @@ class RateLimiter:
     def __init__(self, max_requests: int = 10, window_seconds: int = 60):
         self.max_requests = max_requests
         self.window_seconds = window_seconds
-        self.attempts = defaultdict(list)
+        self.attempts: defaultdict[str, list[float]] = defaultdict(list)
+        self._last_sweep = time.time()
+
+    def _sweep(self, now: float) -> None:
+        """Forget keys with no recent attempts, so random emails cannot grow memory forever."""
+        if now - self._last_sweep < self.window_seconds:
+            return
+        self._last_sweep = now
+        for key in [k for k, times in self.attempts.items() if not times or now - times[-1] >= self.window_seconds]:
+            del self.attempts[key]
 
     def is_allowed(self, key: str) -> bool:
         now = time.time()
+        self._sweep(now)
         # Clean older entries
         self.attempts[key] = [t for t in self.attempts[key] if now - t < self.window_seconds]
         if len(self.attempts[key]) >= self.max_requests:
