@@ -14,7 +14,7 @@ import { notFound, redirect } from "next/navigation";
 import { SubmissionUploader } from "@/components/features/submission-uploader";
 import { fetchFromBackend } from "@/server/api/backend-client";
 import { auth } from "@/server/auth/auth";
-import { formatDateTime, formatRelativeTime, getInitials } from "@/shared/utils";
+import { formatDateTime, formatDeadline, formatRelativeTime, getInitials } from "@/shared/utils";
 
 interface AssignmentDetailPageProps {
   params: Promise<{ classId: string; assignmentId: string }>;
@@ -93,8 +93,8 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
             </span>
             {assignment.rubric && (
               <span className="font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-md bg-secondary text-secondary-foreground flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-primary" />
-                Rubrik AI: {assignment.rubric.title}
+                <Layers className="w-3 h-3 text-primary" />
+                Rubrik: {assignment.rubric.title}
               </span>
             )}
             {isPastDue && (
@@ -114,10 +114,12 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
             >
               <Clock className="w-3.5 h-3.5" />
               <span>
-                Tenggat: {formatDateTime(due)} ({formatRelativeTime(due)})
+                Tenggat: {formatDeadline(due)}
               </span>
             </div>
-            <span>•</span>
+            <span aria-hidden="true" className="hidden sm:inline">
+              •
+            </span>
             <span>
               Pengajar: <strong>{assignment.class.dosen.name}</strong>
             </span>
@@ -141,33 +143,31 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
       {isDosen && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="p-4 rounded-lg bg-card border border-border shadow-none">
-            <span className="text-[11px] font-medium text-muted-foreground block">
-              Total Mahasiswa
-            </span>
-            <span className="font-display text-xl font-bold text-foreground">
-              {totalEnrollments} Mahasiswa
+            <span className="text-[11px] font-medium text-muted-foreground block">Mahasiswa</span>
+            <span className="font-display text-xl font-bold text-foreground tabular">
+              {totalEnrollments}
             </span>
           </div>
           <div className="p-4 rounded-lg bg-card border border-border shadow-none">
-            <span className="text-[11px] font-medium text-muted-foreground block">Terkumpul</span>
-            <span className="font-display text-xl font-bold text-primary">
-              {submittedCount} Submisi
-            </span>
-          </div>
-          <div className="p-4 rounded-lg bg-card border border-border shadow-none">
-            <span className="text-[11px] font-medium text-muted-foreground block">
-              Perlu Evaluasi AI
-            </span>
-            <span className="font-display text-xl font-bold text-primary">
-              {pendingCount} Berkas
+            <span className="text-[11px] font-medium text-muted-foreground block">Jawaban masuk</span>
+            <span className="font-display text-xl font-bold text-primary tabular">
+              {submittedCount}
             </span>
           </div>
           <div className="p-4 rounded-lg bg-card border border-border shadow-none">
             <span className="text-[11px] font-medium text-muted-foreground block">
-              Selesai Dinilai
+              Menunggu nilai
             </span>
-            <span className="font-display text-xl font-bold text-primary">
-              {gradedCount} Berkas
+            <span className="font-display text-xl font-bold text-primary tabular">
+              {pendingCount}
+            </span>
+          </div>
+          <div className="p-4 rounded-lg bg-card border border-border shadow-none">
+            <span className="text-[11px] font-medium text-muted-foreground block">
+              Nilai dirilis
+            </span>
+            <span className="font-display text-xl font-bold text-primary tabular">
+              {gradedCount}
             </span>
           </div>
         </div>
@@ -257,7 +257,7 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
                     </span>
                   </h2>
                   <p className="text-xs text-muted-foreground">
-                    Pilih &quot;Koreksi AI&quot; untuk meminta draf penilaian. Nilai akhir tetap keputusan Anda.
+                    Pilih &quot;Tinjau&quot; untuk membuka jawaban beserta draf AI. Nilai akhir tetap keputusan Anda.
                   </p>
                 </div>
               </div>
@@ -329,7 +329,7 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
                             </span>
                           ) : (
                             <span className="font-mono text-xs px-2.5 py-1 rounded-xl bg-muted text-muted-foreground border border-border">
-                              Menunggu Koreksi
+                              Belum ada draf
                             </span>
                           )}
 
@@ -342,7 +342,7 @@ export default async function AssignmentDetailPage({ params }: AssignmentDetailP
                                 : "bg-primary text-primary-foreground hover:bg-primary/90"
                             }`}
                           >
-                            <span>{isGraded ? "Lihat Nilai" : "Koreksi AI"}</span>
+                            <span>{isGraded ? "Lihat nilai" : "Tinjau"}</span>
                             <ArrowRight className="w-3.5 h-3.5" />
                           </Link>
                         </div>

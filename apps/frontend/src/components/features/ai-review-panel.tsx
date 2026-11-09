@@ -315,6 +315,8 @@ export function AIReviewPanel({
     const s = states[c.id];
     return !s || s.decision === null || toNumber(s.score) === null;
   });
+  // Until the lecturer decides at least one criterion there is no total to compare yet.
+  const nothingDecided = hasRubric && undecided.length === rubricCriteria.length;
   const outOfRange = rubricCriteria.filter((c) => {
     const n = finalScores.get(c.id);
     return n !== undefined && (n < 0 || n > c.maxScore);
@@ -904,17 +906,23 @@ export function AIReviewPanel({
             <div className="mt-2 flex flex-wrap items-baseline justify-between gap-2">
               <p className="text-sm text-muted-foreground">Total berbobot</p>
               <p className="tabular text-2xl font-semibold" aria-live="polite">
-                {fmt(total)}
+                {nothingDecided ? "—" : fmt(total)}
                 <span className="text-base font-normal text-muted-foreground"> / {maxScore}</span>
               </p>
-              {delta !== null && (
+              {nothingDecided && (
+                <p className="w-full text-xs text-muted-foreground">
+                  Belum ada skor final. Terima, ubah, atau tolak saran di tiap kriteria
+                  {aiTotal !== null ? ` (saran AI: ${fmt(aiTotal)})` : ""}.
+                </p>
+              )}
+              {!nothingDecided && delta !== null && (
                 <p className="tabular w-full text-right text-xs text-muted-foreground">
                   {delta === 0
                     ? "Sama dengan saran AI"
                     : `${delta > 0 ? "+" : "−"}${fmt(Math.abs(delta))} dari saran AI (${fmt(aiTotal ?? 0)})`}
                 </p>
               )}
-              {undecided.length > 0 && (
+              {!nothingDecided && undecided.length > 0 && (
                 <p className="w-full text-xs text-muted-foreground">
                   {undecided.length} kriteria belum punya skor final.
                 </p>

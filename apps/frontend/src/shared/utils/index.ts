@@ -4,6 +4,7 @@ export {
   fileSizeToString,
   formatDate,
   formatDateTime,
+  formatDeadline,
   formatRelativeTime,
   generateEnrollmentKey,
   getInitials,

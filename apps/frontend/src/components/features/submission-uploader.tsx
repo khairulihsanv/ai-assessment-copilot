@@ -154,7 +154,7 @@ export function SubmissionUploader({
 
   return (
     <div className="space-y-5 bg-card border border-border p-6 rounded-2xl shadow-sm">
-      <div className="flex items-center justify-between border-b border-border/50 pb-4">
+      <div className="flex flex-col gap-3 border-b border-border/50 pb-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h3 className="text-lg font-bold font-display text-foreground">
             {existingSubmission ? "Perbarui Pengumpulan Tugas" : "Kumpulkan Jawaban Tugas"}
@@ -166,48 +166,52 @@ export function SubmissionUploader({
 
         {/* Format Selector Tabs */}
         {(allowedType === "ANY" || canScan) && (
-          <div className="flex items-center p-1 bg-muted rounded-xl text-xs gap-1 flex-wrap">
+          <fieldset className="grid auto-cols-fr grid-flow-col p-1 bg-muted rounded-xl text-xs gap-1 border-0 m-0 min-w-0 md:flex md:shrink-0">
+            <legend className="sr-only">Cara mengumpulkan</legend>
             {allowedType !== "SCAN" && (
               <button
                 type="button"
                 onClick={() => setActiveTab("file")}
-                className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
+                aria-pressed={activeTab === "file"}
+                className={`px-3 py-2 rounded-lg font-semibold transition-all ${
                   activeTab === "file"
                     ? "bg-background text-foreground shadow-xs"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                Upload Dokumen
+                Unggah dokumen
               </button>
             )}
             {allowedType !== "SCAN" && allowedType !== "PDF" && (
               <button
                 type="button"
                 onClick={() => setActiveTab("text")}
-                className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
+                aria-pressed={activeTab === "text"}
+                className={`px-3 py-2 rounded-lg font-semibold transition-all ${
                   activeTab === "text"
                     ? "bg-background text-foreground shadow-xs"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                Tulis Esai / Teks
+                Tulis jawaban
               </button>
             )}
             {canScan && (
               <button
                 type="button"
                 onClick={() => setActiveTab("scan")}
-                className={`px-3 py-1.5 rounded-lg font-semibold transition-all flex items-center gap-1.5 ${
+                aria-pressed={activeTab === "scan"}
+                className={`px-3 py-2 rounded-lg font-semibold transition-all flex items-center justify-center gap-1.5 ${
                   activeTab === "scan"
                     ? "bg-background text-primary shadow-xs font-bold"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <Camera className="w-3.5 h-3.5" />
-                Scan / Foto Jawaban
+                Foto jawaban
               </button>
             )}
-          </div>
+          </fieldset>
         )}
       </div>
 

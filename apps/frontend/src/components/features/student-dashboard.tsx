@@ -56,7 +56,15 @@ function currentWeek(now: Date) {
 const taskPath = (task: StudentDashboardData["tasks"][number]) =>
   `/classes/${task.classId}/assignments/${task.id}`;
 
-function WeekCalendar({ tasks, now }: { tasks: StudentDashboardData["tasks"]; now: Date }) {
+function WeekCalendar({
+  tasks,
+  now,
+  className,
+}: {
+  tasks: StudentDashboardData["tasks"];
+  now: Date;
+  className?: string;
+}) {
   const week = currentWeek(now);
   const today = dateKey(now);
   const dayFormat = new Intl.DateTimeFormat("id-ID", {
@@ -71,7 +79,7 @@ function WeekCalendar({ tasks, now }: { tasks: StudentDashboardData["tasks"]; no
   });
 
   return (
-    <section aria-labelledby="week-heading" className="rounded-3xl bg-card p-4 sm:p-5">
+    <section aria-labelledby="week-heading" className={cn("min-w-0 rounded-3xl bg-card p-4 sm:p-5", className)}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 id="week-heading" className="text-xl">
           Tenggat minggu ini
@@ -138,16 +146,17 @@ export function StudentDashboard({
   const next = waiting[0];
 
   return (
-    <div className="flex flex-wrap items-stretch gap-4">
-      <div className="flex min-w-0 flex-[999_1_540px] flex-col gap-4">
-        <section className="relative min-h-72 overflow-hidden rounded-3xl bg-secondary">
+    // On a narrow workspace the two columns dissolve so the greeting and "join class" come first.
+    <div className="@container flex flex-wrap items-stretch gap-4">
+      <div className="flex min-w-0 flex-[999_1_540px] flex-col gap-4 @max-[875px]:contents">
+        <section className="relative min-h-72 min-w-0 overflow-hidden rounded-3xl bg-secondary @max-[875px]:order-2 @max-[875px]:basis-full">
           <DeadlineScene className="absolute inset-0 size-full" />
           <div className="relative p-4 sm:p-5">
             <div className="w-full max-w-sm rounded-[22px] bg-card/95 p-5">
               {next ? (
                 <>
                   <p className="text-xs font-extrabold text-primary">Tenggat terdekat</p>
-                  <h1 className="mt-1 text-2xl leading-tight break-words">{next.title}</h1>
+                  <h2 className="mt-1 text-2xl leading-tight break-words">{next.title}</h2>
                   <p className="mt-1.5 text-[13px] font-semibold text-muted-foreground">
                     {next.class.name} · {formatDue(new Date(next.dueDate))}
                   </p>
@@ -169,7 +178,7 @@ export function StudentDashboard({
               ) : (
                 <>
                   <p className="text-xs font-extrabold text-primary">Tenggat terdekat</p>
-                  <h1 className="mt-1 text-2xl leading-tight">Tidak ada tugas yang menunggu</h1>
+                  <h2 className="mt-1 text-2xl leading-tight">Tidak ada tugas yang menunggu</h2>
                   <p className="mt-1.5 text-[13px] font-semibold text-muted-foreground">
                     {enrollments.length
                       ? "Tugas baru dari dosen akan muncul di sini."
@@ -181,16 +190,20 @@ export function StudentDashboard({
           </div>
         </section>
 
-        <WeekCalendar tasks={tasks} now={now} />
+        <WeekCalendar
+          tasks={tasks}
+          now={now}
+          className="@max-[875px]:order-3 @max-[875px]:basis-full"
+        />
       </div>
 
-      <div className="flex min-w-0 flex-[1_1_320px] flex-col gap-4">
-        <section className="rounded-3xl bg-card p-6 text-center">
-          <h2 className="text-2xl leading-tight lg:text-[28px]">
+      <div className="flex min-w-0 flex-[1_1_320px] flex-col gap-4 @max-[875px]:contents">
+        <section className="min-w-0 rounded-3xl bg-card p-6 text-center @max-[875px]:order-1 @max-[875px]:basis-full">
+          <h1 className="text-2xl leading-tight lg:text-[28px]">
             {greeting},
             <br />
             {name}
-          </h2>
+          </h1>
           <p className="mx-auto mt-2.5 max-w-72 text-sm leading-relaxed font-medium text-muted-foreground">
             {waiting.length} tugas menunggu, {grades.length} nilai sudah dirilis, dari{" "}
             {enrollments.length} kelas yang Anda ikuti.
@@ -198,7 +211,10 @@ export function StudentDashboard({
           <JoinClassInline />
         </section>
 
-        <section aria-labelledby="grades-heading" className="flex-1 rounded-3xl bg-card p-5">
+        <section
+          aria-labelledby="grades-heading"
+          className="min-w-0 flex-1 rounded-3xl bg-card p-5 @max-[875px]:order-4 @max-[875px]:basis-full"
+        >
           <div className="mb-3 flex items-center justify-between gap-2">
             <h2 id="grades-heading" className="text-xl">
               Nilai terbaru

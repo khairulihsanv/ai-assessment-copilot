@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatDateTime, formatRelativeTime } from "@/shared/utils";
+import { formatDeadline } from "@/shared/utils";
 
 interface AssignmentCardProps {
   id: string;
@@ -149,7 +149,7 @@ export function AssignmentCard({
           >
             <Calendar className="w-3.5 h-3.5" />
             <span>
-              Tenggat: {formatDateTime(due)} ({formatRelativeTime(due)})
+              Tenggat: {formatDeadline(due)}
             </span>
           </div>
         </div>

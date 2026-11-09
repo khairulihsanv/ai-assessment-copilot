@@ -33,6 +33,13 @@ export function formatRelativeTime(date: Date | string): string {
   return formatDate(d);
 }
 
+/** "8 Desember 2026 pukul 17.54", plus "(3 hari lagi)" only when the date is within a week. */
+export function formatDeadline(date: Date | string): string {
+  const d = typeof date === "string" ? new Date(date) : date;
+  const relative = formatRelativeTime(d);
+  return relative === formatDate(d) ? formatDateTime(d) : `${formatDateTime(d)} (${relative})`;
+}
+
 export function truncateText(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text;
   return `${text.slice(0, maxLength).trimEnd()}…`;

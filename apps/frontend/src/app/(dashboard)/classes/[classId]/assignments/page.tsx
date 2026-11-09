@@ -92,7 +92,7 @@ export default async function ClassAssignmentsPage({ params }: ClassAssignmentsP
                     {asmt.maxScore} Poin
                   </span>
                   <span className="font-mono text-[10px] text-muted-foreground">
-                    {asmt._count.submissions} Submisi
+                    {asmt._count.submissions} jawaban
                   </span>
                 </div>
                 <h3 className="font-display text-base font-bold text-foreground">{asmt.title}</h3>
