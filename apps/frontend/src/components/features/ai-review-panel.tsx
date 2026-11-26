@@ -311,6 +311,10 @@ export function AIReviewPanel({
     ? weightedTotal(rubricCriteria, finalScores, maxScore)
     : (toNumber(manualTotal) ?? 0);
   const aiTotal = evaluation?.suggestedTotalScore ?? null;
+  // Every criterion at 0 with nothing quoted: the answer is most likely not about this task.
+  const offTopic =
+    ai.size > 0 &&
+    [...ai.values()].every((s) => Number(s.score) === 0 && (s.evidence?.length ?? 0) === 0);
   const delta = aiTotal !== null && hasRubric ? Math.round((total - aiTotal) * 100) / 100 : null;
 
   const undecided = rubricCriteria.filter((c) => {
@@ -387,37 +391,53 @@ export function AIReviewPanel({
   };
 
   // ─── AI run ─────────────────────────────────────────────────────────────
+  const shownDraftId = useRef(initialAIEvaluation?.id ?? null);
+  const applyDraft = (draft: AIEvaluation) => {
+    shownDraftId.current = draft.id ?? null;
+    setEvaluation(draft);
+    // Scores the lecturer typed themselves (edited/rejected/manual) are kept. "Accepted" meant
+    // "take the old draft's value", so those criteria wait for a new decision on the new draft.
+    const fresh = parseAI(draft);
+    setStates((prev) => {
+      const next = { ...prev };
+      for (const c of rubricCriteria) {
+        const s = next[c.id];
+        if (
+          !s ||
+          s.decision === null ||
+          s.decision === "accepted" ||
+          (s.decision === "manual" && s.score === "")
+        ) {
+          next[c.id] = { decision: fresh.has(c.id) ? null : "manual", score: "", feedback: "" };
+        }
+      }
+      return next;
+    });
+  };
+
   const runAI = async (options?: { attach?: boolean }) => {
     setSaveSuccess(false);
     try {
       const result = (await startGrading(submissionId, options)) as {
         aiEvaluation?: AIEvaluation;
       } | null;
-      if (!result?.aiEvaluation) return;
-      setEvaluation(result.aiEvaluation);
-      // Scores the lecturer typed themselves (edited/rejected/manual) are kept. "Accepted" meant
-      // "take the old draft's value", so those criteria wait for a new decision on the new draft.
-      const fresh = parseAI(result.aiEvaluation);
-      setStates((prev) => {
-        const next = { ...prev };
-        for (const c of rubricCriteria) {
-          const s = next[c.id];
-          if (
-            !s ||
-            s.decision === null ||
-            s.decision === "accepted" ||
-            (s.decision === "manual" && s.score === "")
-          ) {
-            next[c.id] = { decision: fresh.has(c.id) ? null : "manual", score: "", feedback: "" };
-          }
-        }
-        return next;
-      });
+      // Without a draft in the answer we followed a run that had already finished: the
+      // refresh below brings its saved draft, and the effect underneath shows it.
+      if (result?.aiEvaluation) applyDraft(result.aiEvaluation);
       router.refresh();
     } catch {
       // the hook exposes the error message
     }
   };
+
+  // A newer draft from the server (after a refresh) replaces the one on screen.
+  const applyDraftRef = useRef(applyDraft);
+  applyDraftRef.current = applyDraft;
+  useEffect(() => {
+    if (initialAIEvaluation?.id && initialAIEvaluation.id !== shownDraftId.current) {
+      applyDraftRef.current(initialAIEvaluation);
+    }
+  }, [initialAIEvaluation]);
 
   // A draft started earlier keeps running on the server: pick it up when the page reopens.
   const resumeDraft = useRef(() => {});
@@ -656,12 +676,34 @@ export function AIReviewPanel({
             </p>
           )}
 
+          {evaluation && !grading && offTopic && (
+            <div
+              role="status"
+              className="mt-3 rounded-lg border border-warning-border bg-warning-bg px-3 py-2.5 text-sm text-warning-fg"
+            >
+              <p className="font-medium">AI tidak menemukan bagian jawaban yang membahas rubrik.</p>
+              <p className="mt-1 text-xs">
+                Semua kriteria mendapat saran 0 tanpa kutipan bukti. Periksa apakah berkas yang
+                dikumpulkan memang jawaban untuk tugas ini.
+              </p>
+            </div>
+          )}
+
+          {evaluation && !grading && evaluation.suggestedFeedback?.trim() && (
+            <div className="mt-3 rounded-lg bg-muted px-3 py-2.5 text-sm">
+              <p className="text-xs font-medium text-muted-foreground">Ringkasan AI</p>
+              <p className="mt-1 whitespace-pre-line">{evaluation.suggestedFeedback.trim()}</p>
+            </div>
+          )}
+
           {evaluation && !grading && (config?.suspectedManipulation?.length ?? 0) > 0 && (
             <div
               role="alert"
               className="mt-3 rounded-lg border border-warning-border bg-warning-bg px-3 py-2.5 text-sm text-warning-fg"
             >
-              <p className="font-medium">Jawaban berisi kalimat yang mencoba mengarahkan penilai AI.</p>
+              <p className="font-medium">
+                Jawaban berisi kalimat yang mencoba mengarahkan penilai AI.
+              </p>
               <p className="mt-1 text-xs">
                 Contoh: “{config?.suspectedManipulation?.[0]}”. Semua kriteria ditandai perlu dicek.
               </p>
@@ -790,6 +832,13 @@ export function AIReviewPanel({
                           </li>
                         ))}
                       </ul>
+                    )}
+
+                    {suggestion && evidence.length === 0 && suggestion.reasoning && (
+                      // Nothing quoted: the reason is the only thing to go on, so show it right away.
+                      <p className="rounded-md bg-muted px-3 py-2 text-sm">
+                        {suggestion.reasoning}
+                      </p>
                     )}
 
                     {suggestion && (suggestion.reasoning || suggestion.feedback) && (
