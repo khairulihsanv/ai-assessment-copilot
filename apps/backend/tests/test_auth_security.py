@@ -209,3 +209,21 @@ def test_rate_limiter_forgets_idle_keys(monkeypatch):
     clock[0] += 61
     limiter.is_allowed("ip:baru@x.com")
     assert list(limiter.attempts) == ["ip:baru@x.com"]
+
+
+def test_token_from_a_clock_slightly_ahead_is_accepted():
+    """The frontend signs tokens on another machine; a few seconds of clock skew must not log users out."""
+    now = datetime.now(UTC)
+    payload = {
+        "sub": "user_123",
+        "iss": settings.JWT_ISSUER,
+        "aud": settings.JWT_AUDIENCE,
+        "iat": now + timedelta(seconds=5),
+        "exp": now + timedelta(hours=1),
+    }
+    token = jwt.encode(payload, settings.SECRET_KEY, algorithm="HS256")
+    assert decode_access_token(token) is not None
+
+    # The leeway is small: a token issued far in the future is still refused.
+    payload["iat"] = now + timedelta(minutes=10)
+    assert decode_access_token(jwt.encode(payload, settings.SECRET_KEY, algorithm="HS256")) is None
