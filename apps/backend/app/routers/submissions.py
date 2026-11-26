@@ -4,6 +4,7 @@ import hmac
 import inspect
 import json
 import logging
+from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Any
 
@@ -1143,7 +1144,11 @@ async def _reference_evidence(ctx: _GradingContext) -> list[dict[str, Any]]:
         return []
 
 
-async def _run_evaluation(ctx: _GradingContext, reference_blocks: list[dict[str, Any]]) -> dict[str, Any]:
+async def _run_evaluation(
+    ctx: _GradingContext,
+    reference_blocks: list[dict[str, Any]],
+    on_progress: Callable[[str], None] | None = None,
+) -> dict[str, Any]:
     return await evaluate_submission(
         assignment_title=ctx.title,
         assignment_instructions=ctx.instructions,
@@ -1152,6 +1157,7 @@ async def _run_evaluation(ctx: _GradingContext, reference_blocks: list[dict[str,
         student_answer=ctx.content,
         evidence_blocks=reference_blocks,
         student_names=ctx.student_names,
+        on_progress=on_progress,
     )
 
 
@@ -1238,7 +1244,8 @@ async def _draft_job(ctx: _GradingContext, job: grading_jobs.GradingJob) -> dict
     job.set_step(2, "Mencari bagian jawaban yang relevan per kriteria…", 25)
     reference_blocks = await _reference_evidence(ctx)
     job.set_step(3, "Model membaca jawaban dan rubrik…", 40)
-    result = await _run_evaluation(ctx, reference_blocks)
+    # A long answer is read in several passes; the job shows which one is running.
+    result = await _run_evaluation(ctx, reference_blocks, on_progress=job.note)
     job.set_step(4, "Menyimpan draf untuk ditinjau dosen…", 90)
     return await run_in_threadpool(_save_evaluation, ctx, result, reference_blocks)
 

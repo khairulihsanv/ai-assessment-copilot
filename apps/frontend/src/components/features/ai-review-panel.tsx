@@ -50,6 +50,8 @@ interface EvaluatorConfig {
   missingCriteria?: string[];
   passagesSent?: number;
   passagesTotal?: number;
+  readPasses?: number;
+  readError?: string | null;
   suspectedManipulation?: string[];
 }
 
@@ -648,6 +650,9 @@ export function AIReviewPanel({
                 ? ` · ${config.unverifiedQuotesDropped} kutipan tidak ditemukan di jawaban dan dibuang`
                 : ""}
               {config?.retrievalMode === "lexical" ? " · pencarian bukti mode leksikal" : ""}
+              {(config?.readPasses ?? 1) > 1
+                ? ` · jawaban panjang dibaca dalam ${config?.readPasses} putaran`
+                : ""}
             </p>
           )}
 
@@ -669,10 +674,13 @@ export function AIReviewPanel({
             config.passagesTotal !== undefined &&
             config.passagesSent < config.passagesTotal && (
               <div className="mt-3 rounded-lg border border-warning-border bg-warning-bg px-3 py-2.5 text-sm text-warning-fg">
-                <p className="font-medium">Jawaban panjang, AI hanya membaca bagian yang paling relevan.</p>
+                <p className="font-medium">Jawaban panjang, AI belum membaca seluruh bagian.</p>
                 <p className="mt-1 text-xs">
-                  {config.passagesSent} dari {config.passagesTotal} bagian dibaca. Periksa sisanya
-                  secara manual.
+                  {config.passagesSent} dari {config.passagesTotal} bagian dibaca
+                  {config.readError
+                    ? " karena layanan AI berhenti di tengah pembacaan (jalankan ulang untuk mencoba lagi)"
+                    : ""}
+                  . Periksa sisanya secara manual.
                 </p>
               </div>
             )}

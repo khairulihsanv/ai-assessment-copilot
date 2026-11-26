@@ -677,6 +677,7 @@ async def test_long_answer_is_cut_to_the_prompt_budget(monkeypatch):
 
     monkeypatch.setenv("TEST_MOCK_LLM", "false")
     monkeypatch.setattr(settings, "LLM_MAX_PROMPT_TOKENS", 1500)
+    monkeypatch.setattr(settings, "LLM_MAX_READ_PASSES", 1)  # one pass only: what does not fit is flagged
     captured: dict = {}
     monkeypatch.setattr(llm_client, "chat_json", _fake_llm(captured))
     filler = "\n\n".join(f"Paragraf {i} membahas sejarah basis data relasional dan tokoh-tokohnya. " * 4 for i in range(40))
@@ -872,6 +873,7 @@ async def test_long_report_is_graded_and_boilerplate_is_not_sent(monkeypatch):
 async def test_text_past_the_old_24000_char_cut_still_reaches_retrieval(monkeypatch):
     monkeypatch.setenv("TEST_MOCK_LLM", "false")
     monkeypatch.setattr(settings, "LLM_MAX_PROMPT_TOKENS", 3000)
+    monkeypatch.setattr(settings, "LLM_MAX_READ_PASSES", 1)
     captured: dict = {}
     monkeypatch.setattr(llm_client, "chat_json", _fake_llm(captured))
     filler = "\n\n".join(f"Paragraf {i} tentang sejarah komputer pribadi dan perangkat kerasnya." * 3 for i in range(200))
@@ -890,6 +892,8 @@ async def test_prompt_too_large_for_provider_is_retried_shorter(monkeypatch):
     monkeypatch.setenv("TEST_MOCK_LLM", "false")
     monkeypatch.setattr(settings, "LLM_PROVIDER", "groq")
     monkeypatch.setattr(settings, "LLM_MAX_PROMPT_TOKENS", None)
+    # The first pass only: what the shorter prompt left out is read later (tests/test_read_passes.py).
+    monkeypatch.setattr(settings, "LLM_MAX_READ_PASSES", 1)
     prompts: list[str] = []
     ok = _fake_llm({})
 

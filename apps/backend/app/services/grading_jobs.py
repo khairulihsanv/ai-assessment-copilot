@@ -48,6 +48,7 @@ class GradingJob:
     task: asyncio.Task | None = None
     # Every step reached, so a stream that connects late can still show them in order.
     history: list[dict[str, Any]] = field(default_factory=list)
+    writing_message: str = WRITING_MESSAGE
 
     @property
     def is_running(self) -> bool:
@@ -57,10 +58,16 @@ class GradingJob:
         self.step, self.message, self.progress = step, message, progress
         self.history.append(self.snapshot())
 
+    def note(self, message: str) -> None:
+        """A status line from inside the writing step (e.g. which reading pass of a long answer)."""
+        self.writing_message = message
+        self.message = message
+        self.history.append(self.snapshot())
+
     def report_tokens(self, tokens: int) -> None:
         self.tokens = tokens
         if self.step == WRITING_STEP:
-            self.message = WRITING_MESSAGE
+            self.message = self.writing_message
             share = min(1.0, tokens / self.expected_tokens) if self.expected_tokens else 0.0
             self.progress = WRITING_PROGRESS_START + int(WRITING_PROGRESS_SPAN * share)
 

@@ -69,6 +69,12 @@ class Settings(BaseSettings):
     # Free Groq allows 8000 tokens per minute *including* the answer, so the default keeps
     # the prompt near 5000 and leaves room for the reply. Unset = 5000 on Groq, unlimited elsewhere.
     LLM_MAX_PROMPT_TOKENS: int | None = None
+    # Long answers that do not fit one prompt are read in further passes, each one within the
+    # prompt budget, so every part of a report reaches the model. 1 = a single pass (old behaviour).
+    LLM_MAX_READ_PASSES: int = 8
+    # Tokens (prompt + answer) the provider allows per minute; passes wait for the window to refill.
+    # Unset = 8000 on Groq's free tier, no pacing elsewhere. 0 = no pacing.
+    LLM_TOKENS_PER_MINUTE: int | None = None
 
     OLLAMA_BASE_URL: str = "http://localhost:11434"
     OLLAMA_MODEL: str = "qwen2.5:7b"
