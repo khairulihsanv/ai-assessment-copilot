@@ -1,12 +1,13 @@
-import { Plus_Jakarta_Sans } from "next/font/google";
+import localFont from "next/font/local";
 import { redirect } from "next/navigation";
 import { DashboardFrame } from "@/components/features/dashboard-frame";
 import { auth } from "@/server/auth/auth";
 
-const workspaceFont = Plus_Jakarta_Sans({
-  subsets: ["latin"],
+// Self-hosted like the root fonts (see app/layout.tsx): no Google request at build time.
+const workspaceFont = localFont({
+  src: "../fonts/plus-jakarta-sans-latin-wght-normal.woff2",
   display: "swap",
-  weight: ["400", "500", "600", "700", "800"],
+  weight: "200 800",
 });
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
