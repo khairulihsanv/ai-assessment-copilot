@@ -5,6 +5,8 @@ from typing import Any
 import numpy as np
 from PIL import Image, ImageOps
 
+from app.config import settings
+
 logger = logging.getLogger("dexa-ocr")
 
 # Magic bytes for content validation
@@ -16,8 +18,17 @@ PDF_MAGIC = b"%PDF-"
 
 MAX_IMAGE_DIMENSION = 4096
 MIN_IMAGE_DIMENSION = 10
-MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024  # 10MB per image
-MAX_PAGES_ALLOWED = 15
+# Defaults only; the limits in force come from settings (SCAN_MAX_IMAGE_MB, SCAN_MAX_PAGES).
+MAX_IMAGE_SIZE_BYTES = settings.SCAN_MAX_IMAGE_MB * 1024 * 1024
+MAX_PAGES_ALLOWED = settings.SCAN_MAX_PAGES
+
+
+def max_image_bytes() -> int:
+    return settings.SCAN_MAX_IMAGE_MB * 1024 * 1024
+
+
+def max_pages() -> int:
+    return settings.SCAN_MAX_PAGES
 
 
 class OCRError(Exception):
@@ -63,8 +74,10 @@ class OCRService:
 
     def validate_and_load_image(self, image_bytes: bytes) -> Image.Image:
         """Validates format magic bytes, dimensions, and converts to RGB PIL Image."""
-        if len(image_bytes) > MAX_IMAGE_SIZE_BYTES:
-            raise ImageDimensionError("Ukuran gambar melebihi batas maksimum 10MB per halaman.")
+        if len(image_bytes) > max_image_bytes():
+            raise ImageDimensionError(
+                f"Ukuran gambar melebihi batas maksimum {settings.SCAN_MAX_IMAGE_MB}MB per halaman."
+            )
 
         fmt = detect_image_format(image_bytes)
         if fmt not in ("JPEG", "PNG", "WEBP"):
@@ -193,8 +206,10 @@ class OCRService:
 
         if total_pages == 0:
             raise InvalidImageFormatError("Dokumen PDF tidak memuat halaman.")
-        if total_pages > MAX_PAGES_ALLOWED:
-            raise ImageDimensionError(f"Jumlah halaman PDF ({total_pages}) melebihi batas maksimum {MAX_PAGES_ALLOWED} halaman.")
+        if total_pages > max_pages():
+            raise ImageDimensionError(
+                f"Jumlah halaman PDF ({total_pages}) melebihi batas maksimum {max_pages()} halaman untuk dibaca OCR."
+            )
 
         pdfium_doc = pdfium.PdfDocument(pdf_bytes)
         pages_result: list[dict[str, Any]] = []

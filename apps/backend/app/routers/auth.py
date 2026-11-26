@@ -17,7 +17,7 @@ auth_router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @auth_router.post("/login", response_model=TokenResponse)
-async def login(req: LoginRequest, request: Request, response: Response, db: Session = Depends(get_db)):
+def login(req: LoginRequest, request: Request, response: Response, db: Session = Depends(get_db)):
     client_ip = request.client.host if request.client else "unknown"
     # Same normalisation as the lookup below, so "Budi@x.com" and "budi@x.com" share one limit.
     rate_key = f"{client_ip}:{req.email.lower().strip()}"
@@ -85,7 +85,7 @@ async def login(req: LoginRequest, request: Request, response: Response, db: Ses
 
 
 @auth_router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
-async def register(req: RegisterRequest, response: Response, db: Session = Depends(get_db)):
+def register(req: RegisterRequest, response: Response, db: Session = Depends(get_db)):
     clean_email = req.email.lower().strip()
 
     # Disallow unauthorized arbitrary roles (only DOSEN or MAHASISWA)
@@ -155,7 +155,7 @@ async def register(req: RegisterRequest, response: Response, db: Session = Depen
 
 
 @auth_router.get("/me", response_model=UserResponse)
-async def get_me(current_user: User = Depends(get_current_user)):
+def get_me(current_user: User = Depends(get_current_user)):
     return UserResponse(
         id=current_user.id,
         name=current_user.name,
@@ -167,6 +167,6 @@ async def get_me(current_user: User = Depends(get_current_user)):
 
 
 @auth_router.post("/logout")
-async def logout(response: Response):
+def logout(response: Response):
     response.delete_cookie(key="dexa_session", path="/")
     return {"success": True, "message": "Berhasil logout"}

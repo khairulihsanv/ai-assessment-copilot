@@ -9,5 +9,6 @@ export {
   generateEnrollmentKey,
   getInitials,
   MAX_FILE_SIZE,
+  MAX_FILE_SIZE_MB,
   truncateText,
 } from "./format";

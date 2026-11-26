@@ -12,7 +12,7 @@ reference_sets_router = APIRouter(prefix="/reference-sets", tags=["reference-set
 
 
 @reference_sets_router.post("/{ref_set_id}/approve")
-async def approve_reference_set(
+def approve_reference_set(
     ref_set_id: str,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),

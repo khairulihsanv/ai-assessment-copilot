@@ -72,7 +72,9 @@ export function generateEnrollmentKey(length = 8): string {
   return key;
 }
 
-export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+// Must match MAX_FILE_SIZE_MB on the backend. Lab reports with figures are often well over 10MB.
+export const MAX_FILE_SIZE_MB = 25;
+export const MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024;
 export const ALLOWED_FILE_TYPES = {
   PDF: ["application/pdf"],
   DOCX: ["application/vnd.openxmlformats-officedocument.wordprocessingml.document"],

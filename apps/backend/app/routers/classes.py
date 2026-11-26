@@ -31,7 +31,7 @@ def generate_enrollment_key() -> str:
 
 
 @classes_router.get("")
-async def get_classes(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def get_classes(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     is_dosen = current_user.role == Role.DOSEN
 
     if is_dosen:
@@ -78,7 +78,7 @@ async def get_classes(current_user: User = Depends(get_current_user), db: Sessio
 
 
 @classes_router.post("", status_code=status.HTTP_201_CREATED)
-async def create_class(
+def create_class(
     req: CreateClassSchema,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -119,7 +119,7 @@ async def create_class(
 
 
 @classes_router.post("/join", status_code=status.HTTP_201_CREATED)
-async def join_class(
+def join_class(
     req: JoinClassSchema,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -168,7 +168,7 @@ async def join_class(
 
 
 @classes_router.get("/{class_id}")
-async def get_class_detail(
+def get_class_detail(
     class_id: str,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -345,7 +345,7 @@ async def get_class_detail(
 
 
 @classes_router.patch("/{class_id}")
-async def update_class(
+def update_class(
     class_id: str,
     req: UpdateClassSchema,
     current_user: User = Depends(get_current_user),
@@ -383,7 +383,7 @@ async def update_class(
 
 
 @classes_router.delete("/{class_id}")
-async def delete_class(
+def delete_class(
     class_id: str,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -402,7 +402,7 @@ async def delete_class(
 
 
 @classes_router.post("/{class_id}/regenerate-key")
-async def regenerate_key(
+def regenerate_key(
     class_id: str,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),

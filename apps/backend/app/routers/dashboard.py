@@ -25,7 +25,7 @@ OVERDUE_TASKS_KEPT_DAYS = 7
 
 
 @dashboard_router.get("")
-async def get_dashboard(
+def get_dashboard(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):

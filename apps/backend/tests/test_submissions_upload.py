@@ -284,7 +284,10 @@ def test_blank_document_without_text_rejected(client, setup_upload_env):
     assert "tidak memuat teks" in response.text.lower()
 
 
-def test_file_too_large_rejected(client, setup_upload_env):
+def test_file_too_large_rejected(client, setup_upload_env, monkeypatch):
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "MAX_FILE_SIZE_MB", 10)
     env = setup_upload_env
     large_file = b"%PDF-1.4\n" + (b"A" * (11 * 1024 * 1024))
     response = client.post(

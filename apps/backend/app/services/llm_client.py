@@ -30,9 +30,18 @@ llm_progress: ContextVar[Callable[[int], None] | None] = ContextVar("llm_progres
 class LLMUnavailableError(Exception):
     """The language model could not produce a usable JSON answer."""
 
-    def __init__(self, message: str, *, retriable: bool = False, retry_after: float | None = None):
+    def __init__(
+        self,
+        message: str,
+        *,
+        retriable: bool = False,
+        retry_after: float | None = None,
+        too_large: bool = False,
+    ):
         super().__init__(message)
         self.retriable = retriable
+        # The prompt did not fit the model or its per-minute quota: a shorter prompt may succeed.
+        self.too_large = too_large
         # Seconds the provider asked us to wait (HTTP 429 Retry-After), if any.
         self.retry_after = retry_after
 
@@ -85,22 +94,26 @@ def _status_error(provider: str, res: httpx.Response) -> LLMUnavailableError:
     body = (res.text or "")[:300]
     retriable = code == 429 or code >= 500
     retry_after = _retry_after_seconds(res) if code == 429 else None
+    lowered = body.lower()
+    too_large = code == 413 or (
+        code == 400 and any(s in lowered for s in ("context_length", "context length", "too large", "reduce the length", "maximum context"))
+    )
     if code == 429:
         if retry_after is not None and retry_after > RATE_LIMIT_MAX_WAIT_SECONDS:
             retriable = False
             msg = f"{provider}: kuota model untuk hari ini habis (HTTP 429). Coba lagi nanti atau nilai secara manual."
         else:
             msg = f"{provider}: batas permintaan per menit tercapai (HTTP 429). Coba lagi sebentar lagi."
-    elif code == 413:
+    elif too_large:
         msg = (
-            f"{provider}: jawaban dan rubrik terlalu panjang untuk kuota model (HTTP 413). "
-            "Kecilkan LLM_MAX_PROMPT_TOKENS atau pakai model dengan kuota lebih besar."
+            f"{provider}: jawaban dan rubrik terlalu panjang untuk kuota model (HTTP {code}), "
+            "bahkan setelah dipersingkat. Kecilkan LLM_MAX_PROMPT_TOKENS atau pakai model dengan kuota lebih besar."
         )
     elif code in (401, 403):
         msg = f"{provider}: API key ditolak (HTTP {code}). Periksa konfigurasi."
     else:
         msg = f"{provider}: HTTP {code} — {body}"
-    return LLMUnavailableError(msg, retriable=retriable, retry_after=retry_after)
+    return LLMUnavailableError(msg, retriable=retriable, retry_after=retry_after, too_large=too_large)
 
 
 RATE_LIMIT_MAX_WAIT_SECONDS = 60.0
@@ -228,25 +241,42 @@ async def _chat_ollama(
     )
 
 
+# Groq accepts reasoning_effort only on its reasoning models; other models reject the field.
+_GROQ_REASONING_MODELS = ("openai/gpt-oss", "qwen/qwen3")
+
+
+def groq_reasoning_effort(model: str) -> str | None:
+    effort = (settings.GROQ_REASONING_EFFORT or "").strip().lower()
+    if not effort or not model.lower().startswith(_GROQ_REASONING_MODELS):
+        return None
+    return effort
+
+
 async def _chat_groq(client: httpx.AsyncClient, system: str, user: str) -> LLMResult:
     if not settings.GROQ_API_KEY or settings.GROQ_API_KEY.startswith("your-") or settings.GROQ_API_KEY.startswith("gsk_your"):
         raise LLMUnavailableError("GROQ_API_KEY belum dikonfigurasi.")
     model = settings.GROQ_MODEL
+    payload: dict[str, Any] = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": system},
+            {"role": "user", "content": user},
+        ],
+        "temperature": settings.LLM_TEMPERATURE,
+        "seed": settings.LLM_SEED,
+        "response_format": {"type": "json_object"},
+    }
+    effort = groq_reasoning_effort(model)
+    if effort:
+        payload["reasoning_effort"] = effort
+    url = f"{settings.GROQ_BASE_URL.rstrip('/')}/chat/completions"
+    headers = {"Authorization": f"Bearer {settings.GROQ_API_KEY}"}
     try:
-        res = await client.post(
-            f"{settings.GROQ_BASE_URL.rstrip('/')}/chat/completions",
-            headers={"Authorization": f"Bearer {settings.GROQ_API_KEY}"},
-            json={
-                "model": model,
-                "messages": [
-                    {"role": "system", "content": system},
-                    {"role": "user", "content": user},
-                ],
-                "temperature": settings.LLM_TEMPERATURE,
-                "seed": settings.LLM_SEED,
-                "response_format": {"type": "json_object"},
-            },
-        )
+        res = await client.post(url, headers=headers, json=payload)
+        if res.status_code == 400 and effort and "reasoning" in (res.text or "").lower():
+            # This model does not take reasoning_effort after all: ask again without it.
+            payload.pop("reasoning_effort", None)
+            res = await client.post(url, headers=headers, json=payload)
     except httpx.TimeoutException as exc:
         raise LLMUnavailableError("Groq tidak merespons tepat waktu.", retriable=True) from exc
     except httpx.HTTPError as exc:

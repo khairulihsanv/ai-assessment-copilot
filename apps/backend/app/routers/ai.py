@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from starlette.concurrency import run_in_threadpool
 
 from app.config import settings
 from app.models.models import User
@@ -41,7 +42,7 @@ async def extract_text_endpoint(
         )
 
     try:
-        text = extract_text_from_buffer(file_bytes, file_type)
+        text = await run_in_threadpool(extract_text_from_buffer, file_bytes, file_type)
         return {"success": True, "text": text}
     except Exception as e:
         raise HTTPException(
@@ -57,7 +58,7 @@ async def ai_status_endpoint(current_user: User = Depends(get_current_user)):
 
 
 @ai_router.post("/test")
-async def ai_test_endpoint(current_user: User = Depends(get_current_user)):
+def ai_test_endpoint(current_user: User = Depends(get_current_user)):
     return {
         "status": "ok",
         "provider": settings.LLM_PROVIDER,

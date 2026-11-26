@@ -53,7 +53,11 @@ export function useUploadProgress(): UseUploadProgressReturn {
               resolve(xhr.responseText);
             }
           } else {
-            let errorMsg = "Gagal mengunggah jawaban";
+            // 413 from the hosting platform itself (Vercel caps a request body at ~4.5MB): no JSON body.
+            let errorMsg =
+              xhr.status === 413
+                ? "File terlalu besar untuk server saat ini. Kompres PDF (mis. ukuran gambar diperkecil) lalu unggah lagi."
+                : "Gagal mengunggah jawaban";
             try {
               const parsed = JSON.parse(xhr.responseText);
               if (parsed.error) errorMsg = parsed.error;

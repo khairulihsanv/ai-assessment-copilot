@@ -27,7 +27,7 @@ documents_router = APIRouter(prefix="/document-versions", tags=["documents"])
 
 
 @documents_router.get("/{version_id}")
-async def get_document_version(
+def get_document_version(
     version_id: str,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -68,7 +68,7 @@ async def get_document_version(
 
 
 @documents_router.get("/{version_id}/download")
-async def download_document_version(
+def download_document_version(
     version_id: str,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),

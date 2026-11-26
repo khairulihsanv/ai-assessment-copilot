@@ -65,7 +65,7 @@ def extract_token(request: Request, creds: HTTPAuthorizationCredentials | None =
     return None
 
 
-async def get_current_user(
+def get_current_user(
     request: Request,
     creds: HTTPAuthorizationCredentials | None = Depends(security_bearer),
     db: Session = Depends(get_db),

@@ -19,9 +19,12 @@ export default async function RubricsPage({ params }: RubricsPageProps) {
 
   const { classId } = await params;
 
-  const classRes = await fetchFromBackend<{ id: string; name: string; dosenId: string }>(
-    `/classes/${classId}`,
-  );
+  // Both requests at once: each one is a round trip to the backend. The backend checks
+  // access on the rubric list itself, so starting it before the ownership check is safe.
+  const [classRes, rubricsRes] = await Promise.all([
+    fetchFromBackend<{ id: string; name: string; dosenId: string }>(`/classes/${classId}`),
+    fetchFromBackend<any[]>(`/classes/${classId}/rubrics`),
+  ]);
 
   if (!classRes.data) {
     notFound();
@@ -33,7 +36,6 @@ export default async function RubricsPage({ params }: RubricsPageProps) {
     redirect(`/classes/${classId}`);
   }
 
-  const rubricsRes = await fetchFromBackend<any[]>(`/classes/${classId}/rubrics`);
   const rubrics = rubricsRes.data || [];
 
   return (

@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { useUploadProgress } from "@/hooks/useUploadProgress";
-import { fileSizeToString, MAX_FILE_SIZE } from "@/shared/utils";
+import { fileSizeToString, MAX_FILE_SIZE, MAX_FILE_SIZE_MB } from "@/shared/utils";
 import { ScanSubmissionPanel } from "./scan-submission-panel";
 
 interface SubmissionUploaderProps {
@@ -66,7 +66,7 @@ export function SubmissionUploader({
 
   const validateAndSetFile = (file: File) => {
     if (file.size > MAX_FILE_SIZE) {
-      setErrorMessage(`Ukuran file terlalu besar (${fileSizeToString(file.size)}). Maksimal 10MB.`);
+      setErrorMessage(`Ukuran file terlalu besar (${fileSizeToString(file.size)}). Maksimal ${MAX_FILE_SIZE_MB}MB.`);
       return;
     }
 
@@ -280,7 +280,7 @@ export function SubmissionUploader({
                   <p className="text-xs text-muted-foreground mt-1">
                     Format didukung:{" "}
                     {allowedType === "ANY" ? "PDF (.pdf) atau Word (.docx)" : allowedType} •
-                    Maksimal 10MB
+                    Maksimal {MAX_FILE_SIZE_MB}MB
                   </p>
                 </button>
               ) : (
