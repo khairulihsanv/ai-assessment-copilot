@@ -39,6 +39,39 @@ export function signInternalToken(user?: { id?: string; role?: string }): string
   );
 }
 
+/** How long an upload ticket stays valid. It is checked when the upload starts, not when it ends. */
+export const UPLOAD_TICKET_SECONDS = 600;
+
+/**
+ * A short-lived token that lets the browser POST to exactly one backend path.
+ *
+ * Vercel caps a request body that passes through a function at about 4.5 MB, so large
+ * documents go straight to the backend. The browser never sees the session token: the
+ * backend accepts this ticket only on `path` (see get_upload_user in the backend).
+ */
+export function signUploadTicket(user: { id: string; role?: string }, path: string): string {
+  const secret = resolveAuthSecret();
+  if (!secret) {
+    throw new Error("INTERNAL_API_SECRET belum dikonfigurasi; tidak dapat menandatangani token unggah.");
+  }
+  const now = Math.floor(Date.now() / 1000);
+  return jwt.sign(
+    {
+      sub: String(user.id),
+      id: String(user.id),
+      role: user.role,
+      scope: "upload",
+      path,
+      iat: now,
+      exp: now + UPLOAD_TICKET_SECONDS,
+      iss: "dexa-backend",
+      aud: "dexa-client",
+    },
+    secret,
+    { algorithm: "HS256" },
+  );
+}
+
 /**
  * Forwards requests to the FastAPI backend.
  * Automatically injects the user's authentic dexa_session cookie as Bearer token

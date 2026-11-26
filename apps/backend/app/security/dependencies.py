@@ -65,6 +65,9 @@ def extract_token(request: Request, creds: HTTPAuthorizationCredentials | None =
     return None
 
 
+UPLOAD_SCOPE = "upload"
+
+
 def get_current_user(
     request: Request,
     creds: HTTPAuthorizationCredentials | None = Depends(security_bearer),
@@ -74,7 +77,31 @@ def get_current_user(
     Authenticate request via JWT token and resolve against database.
     Strictly rejects invalid signatures, expired tokens, invalid claims,
     and nonexistent users. Never fabricates dummy in-memory users.
+    Scoped tokens (see ``get_upload_user``) are refused here.
     """
+    return _authenticate(request, creds, db, allow_upload_scope=False)
+
+
+def get_upload_user(
+    request: Request,
+    creds: HTTPAuthorizationCredentials | None = Depends(security_bearer),
+    db: Session = Depends(get_db),
+) -> User:
+    """Like ``get_current_user``, but also accepts an upload ticket for this exact path.
+
+    Vercel caps a request body that passes through the frontend at about 4.5 MB, so the
+    browser uploads large files straight to the backend. It gets a short-lived ticket
+    (``scope: upload``, ``path``) from the frontend for that one upload, not its session.
+    """
+    return _authenticate(request, creds, db, allow_upload_scope=True)
+
+
+def _authenticate(
+    request: Request,
+    creds: HTTPAuthorizationCredentials | None,
+    db: Session,
+    allow_upload_scope: bool,
+) -> User:
     token = extract_token(request, creds)
     if not token:
         raise HTTPException(
@@ -90,6 +117,16 @@ def get_current_user(
             detail="Unauthorized: Invalid signature, expired token, or invalid issuer/audience",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+    scope = payload.get("scope")
+    if scope is not None:
+        # A ticket opens one upload endpoint and nothing else.
+        if not (allow_upload_scope and scope == UPLOAD_SCOPE and payload.get("path") == request.url.path):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token unggah tidak berlaku untuk permintaan ini",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
 
     user_id = payload.get("sub") or payload.get("id")
     if not user_id:

@@ -15,7 +15,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
-import { formatRelativeTime } from "@/shared/utils";
+import { dateTimeLocalToISO, formatRelativeTime, toDateTimeLocalValue } from "@/shared/utils";
 import { getErrorMessage } from "@/shared/utils/api-error";
 
 export interface ClassAssignmentPayload {
@@ -114,7 +114,7 @@ export function AssignmentsView({
   const [newDueDate, setNewDueDate] = useState(() => {
     const d = new Date();
     d.setDate(d.getDate() + 7);
-    return d.toISOString().slice(0, 16);
+    return toDateTimeLocalValue(d);
   });
   const [selectedRubricId, setSelectedRubricId] = useState("");
   const [isSubmittingTask, setIsSubmittingTask] = useState(false);
@@ -164,7 +164,7 @@ export function AssignmentsView({
         body: JSON.stringify({
           title: newTitle,
           instructions: newInstructions || "Tugas akademik terstruktur.",
-          dueDate: newDueDate,
+          dueDate: dateTimeLocalToISO(newDueDate),
           maxScore: Number(newMaxScore),
           rubricId: selectedRubricId || undefined,
           status: "PUBLISHED",

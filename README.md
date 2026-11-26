@@ -140,7 +140,7 @@ Sekali saja:
    ```
 
 7. Di Tailscale admin console → **Machines** → `dexa-backend` → **Disable key expiry**, supaya tidak perlu login ulang.
-8. Di Vercel → Settings → Environment Variables: `BACKEND_URL` = URL dari langkah 6, `INTERNAL_API_SECRET` sama dengan `.env`, `COOKIE_SECURE=true`. Lalu redeploy.
+8. Di Vercel → Settings → Environment Variables: `BACKEND_URL` dan `BACKEND_PUBLIC_URL` = URL dari langkah 6, `INTERNAL_API_SECRET` sama dengan `.env`, `COOKIE_SECURE=true`. Pastikan `CORS_ORIGINS` di `.env` memuat domain Vercel. Lalu redeploy.
 
 Setelah itu, cukup buka Docker Desktop dan tekan **Start** pada proyek `dexa-assessment`. URL-nya tetap sama.
 
@@ -154,6 +154,7 @@ Cloudflare Quick Tunnel tidak dipakai karena alamatnya berganti setiap kali diny
    - `BACKEND_URL`: URL backend, misalnya `https://dexa-backend.onrender.com`
    - `INTERNAL_API_SECRET`: sama persis dengan backend
    - `COOKIE_SECURE`: `true`
+   - `BACKEND_PUBLIC_URL`: URL publik backend (biasanya sama dengan `BACKEND_URL`). Fungsi Vercel hanya menerima body sekitar 4,5 MB, jadi berkas jawaban diunggah browser langsung ke backend dengan token unggah berumur 10 menit yang hanya berlaku untuk satu tugas. Backend harus mengizinkan domain Vercel di `CORS_ORIGINS`. Tanpa variabel ini, unggahan lewat Vercel dan berkas di atas ~4,5 MB ditolak.
 4. Deploy.
 
 Fungsi Vercel berhenti setelah 300 detik. Kalau draf AI lebih lama, draf tetap selesai di backend dan halaman review menyambung lagi setelah dimuat ulang.

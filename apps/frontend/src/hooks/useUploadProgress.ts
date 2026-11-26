@@ -1,11 +1,13 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { getErrorMessage } from "@/shared/utils/api-error";
 
 interface UploadOptions {
   url: string;
   body: FormData | Record<string, unknown>;
   isFormData?: boolean;
+  headers?: Record<string, string>;
 }
 
 interface UseUploadProgressReturn {
@@ -28,7 +30,7 @@ export function useUploadProgress(): UseUploadProgressReturn {
   }, []);
 
   const startUpload = useCallback(
-    ({ url, body, isFormData = true }: UploadOptions): Promise<unknown> => {
+    ({ url, body, isFormData = true, headers }: UploadOptions): Promise<unknown> => {
       return new Promise((resolve, reject) => {
         setUploading(true);
         setProgress(0);
@@ -59,8 +61,8 @@ export function useUploadProgress(): UseUploadProgressReturn {
                 ? "File terlalu besar untuk server saat ini. Kompres PDF (mis. ukuran gambar diperkecil) lalu unggah lagi."
                 : "Gagal mengunggah jawaban";
             try {
-              const parsed = JSON.parse(xhr.responseText);
-              if (parsed.error) errorMsg = parsed.error;
+              // BFF routes answer { error }, the backend itself (direct upload) { detail }.
+              errorMsg = getErrorMessage(JSON.parse(xhr.responseText), errorMsg);
             } catch {
               // use default
             }
@@ -83,6 +85,9 @@ export function useUploadProgress(): UseUploadProgressReturn {
         });
 
         xhr.open("POST", url, true);
+        for (const [name, value] of Object.entries(headers ?? {})) {
+          xhr.setRequestHeader(name, value);
+        }
 
         if (!isFormData) {
           xhr.setRequestHeader("Content-Type", "application/json");

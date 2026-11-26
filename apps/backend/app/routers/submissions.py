@@ -4,7 +4,7 @@ import hmac
 import inspect
 import json
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import (
@@ -35,7 +35,7 @@ from app.models.models import (
     User,
 )
 from app.schemas.submission_schemas import FinalizeSchema, RevertFinalizeSchema
-from app.security.dependencies import get_current_user
+from app.security.dependencies import get_current_user, get_upload_user
 from app.services import grading_jobs
 from app.services.embedding_service import generate_embedding_result
 from app.services.evaluator_service import (
@@ -58,7 +58,7 @@ from app.services.ocr_service import (
     max_pages,
     ocr_service,
 )
-from app.services.storage_service import storage
+from app.services.storage_service import content_disposition, storage
 
 logger = logging.getLogger(__name__)
 
@@ -373,7 +373,8 @@ async def submit_assignment(
     class_id: str,
     assignment_id: str,
     request: Request,
-    current_user: User = Depends(get_current_user),
+    # Large documents come straight from the browser with an upload ticket (Vercel body limit).
+    current_user: User = Depends(get_upload_user),
     db: Session = Depends(get_db),
 ):
     if current_user.role != Role.MAHASISWA:
@@ -398,7 +399,7 @@ async def submit_assignment(
     if assignment.status != AssignmentStatus.PUBLISHED:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Tugas tidak menerima pengumpulan")
 
-    now = datetime.now()
+    now = datetime.now(UTC)
     if now > assignment.dueDate and not assignment.allowLateSubmission:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tenggat waktu pengumpulan tugas ini telah berakhir")
 
@@ -1528,7 +1529,12 @@ def download_submission_file(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
 
     ver_id = versionId or sub.activeVersionId
-    ver = db.query(SubmissionVersion).filter(SubmissionVersion.id == ver_id).first()
+    # Access was checked against submission_id, so the version must belong to that submission.
+    ver = (
+        db.query(SubmissionVersion)
+        .filter(SubmissionVersion.id == ver_id, SubmissionVersion.submissionId == sub.id)
+        .first()
+    )
     if not ver or not ver.fileUrl:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File tidak ditemukan")
 
@@ -1538,7 +1544,7 @@ def download_submission_file(
     return Response(
         content=file_bytes,
         media_type=media_type,
-        headers={"Content-Disposition": f'attachment; filename="{ver.fileName or "jawaban"}"'},
+        headers={"Content-Disposition": content_disposition("attachment", ver.fileName or "jawaban")},
     )
 
 
@@ -1570,7 +1576,13 @@ def get_submission_page_image(
     ver_id = versionId or sub.activeVersionId
     page = (
         db.query(SubmissionPage)
-        .filter(SubmissionPage.submissionVersionId == ver_id, SubmissionPage.pageNumber == page_number)
+        .join(SubmissionVersion, SubmissionVersion.id == SubmissionPage.submissionVersionId)
+        .filter(
+            SubmissionPage.submissionVersionId == ver_id,
+            SubmissionPage.pageNumber == page_number,
+            # Same rule as the file download: never a page of another submission.
+            SubmissionVersion.submissionId == sub.id,
+        )
         .first()
     )
     if not page or not page.imageUrl:
@@ -1582,6 +1594,6 @@ def get_submission_page_image(
     return Response(
         content=file_bytes,
         media_type=media_type,
-        headers={"Content-Disposition": f'inline; filename="{page.imageName or f"page_{page_number}.jpg"}"'},
+        headers={"Content-Disposition": content_disposition("inline", page.imageName or f"page_{page_number}.jpg")},
     )
 

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -48,7 +48,7 @@ def approve_reference_set(
         )
 
     ref_set.approvedById = current_user.id
-    ref_set.approvedAt = datetime.now()
+    ref_set.approvedAt = datetime.now(UTC)
     db.commit()
 
     return {"success": True, "id": ref_set.id, "approvedAt": ref_set.approvedAt.isoformat()}

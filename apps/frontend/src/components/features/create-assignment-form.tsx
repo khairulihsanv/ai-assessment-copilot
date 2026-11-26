@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { dateTimeLocalToISO, toDateTimeLocalValue } from "@/shared/utils";
 import { getErrorMessage } from "@/shared/utils/api-error";
 
 interface RubricItem {
@@ -42,7 +43,7 @@ export function CreateAssignmentForm({ classId, className, rubrics }: CreateAssi
   const defaultDueDate = new Date();
   defaultDueDate.setDate(defaultDueDate.getDate() + 7);
   defaultDueDate.setHours(23, 59, 0, 0);
-  const formattedDefaultDue = defaultDueDate.toISOString().slice(0, 16);
+  const formattedDefaultDue = toDateTimeLocalValue(defaultDueDate);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -82,6 +83,7 @@ export function CreateAssignmentForm({ classId, className, rubrics }: CreateAssi
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
+          dueDate: dateTimeLocalToISO(formData.dueDate),
           maxScore: Number(formData.maxScore),
           rubricId: formData.rubricId || undefined,
         }),

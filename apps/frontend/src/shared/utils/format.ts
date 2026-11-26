@@ -72,6 +72,23 @@ export function generateEnrollmentKey(length = 8): string {
   return key;
 }
 
+/**
+ * Value for an <input type="datetime-local">: the wall-clock time where the browser is.
+ * `toISOString().slice(0, 16)` would show UTC instead (16.59 for a 23.59 deadline in WIB).
+ */
+export function toDateTimeLocalValue(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+/**
+ * A datetime-local value as an absolute moment ("…Z"). Sent to the backend, so a deadline
+ * of 23.59 WIB is enforced at 23.59 WIB and not at 23.59 on the server's clock.
+ */
+export function dateTimeLocalToISO(value: string): string {
+  return new Date(value).toISOString();
+}
+
 // Must match MAX_FILE_SIZE_MB on the backend. Lab reports with figures are often well over 10MB.
 export const MAX_FILE_SIZE_MB = 25;
 export const MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024;

@@ -1,6 +1,6 @@
 import hashlib
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import text
@@ -21,7 +21,7 @@ from app.services.embedding_service import (
     generate_embedding_result,
 )
 from app.services.extractor_service import extract_text_from_buffer
-from app.services.storage_service import storage
+from app.services.storage_service import content_disposition, storage
 
 documents_router = APIRouter(prefix="/document-versions", tags=["documents"])
 
@@ -94,7 +94,7 @@ def download_document_version(
     return Response(
         content=file_bytes,
         media_type=version.mimeType,
-        headers={"Content-Disposition": f'attachment; filename="{version.originalName or version.objectKey}"'},
+        headers={"Content-Disposition": content_disposition("attachment", version.originalName or version.objectKey)},
     )
 
 
@@ -228,8 +228,8 @@ async def approve_document_version(
     version.extractionStatus = DocumentStatus.APPROVED
     version.errorMessage = None
     version.approvedById = current_user.id
-    version.approvedAt = datetime.now()
-    version.indexedAt = datetime.now()
+    version.approvedAt = datetime.now(UTC)
+    version.indexedAt = datetime.now(UTC)
     version.activeIndexGeneration = "v1"
     db.commit()
 
