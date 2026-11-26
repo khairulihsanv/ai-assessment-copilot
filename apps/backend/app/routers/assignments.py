@@ -101,7 +101,7 @@ def process_document_version_background(db_session_factory, version_id: str):
 
 
 @assignments_router.get("/classes/{class_id}/assignments")
-async def list_assignments(
+def list_assignments(
     class_id: str,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -211,7 +211,7 @@ async def list_assignments(
 
 
 @assignments_router.post("/classes/{class_id}/assignments", status_code=status.HTTP_201_CREATED)
-async def create_assignment(
+def create_assignment(
     class_id: str,
     req: CreateAssignmentSchema,
     current_user: User = Depends(get_current_user),
@@ -273,7 +273,7 @@ async def create_assignment(
 
 
 @assignments_router.get("/classes/{class_id}/assignments/{assignment_id}")
-async def get_assignment_detail(
+def get_assignment_detail(
     class_id: str,
     assignment_id: str,
     current_user: User = Depends(get_current_user),
@@ -434,7 +434,7 @@ async def get_assignment_detail(
 
 
 @assignments_router.get("/classes/{class_id}/assignments/{assignment_id}/result")
-async def get_assignment_result(
+def get_assignment_result(
     class_id: str,
     assignment_id: str,
     current_user: User = Depends(get_current_user),
@@ -525,7 +525,7 @@ async def get_assignment_result(
 
 
 @assignments_router.patch("/classes/{class_id}/assignments/{assignment_id}")
-async def update_assignment(
+def update_assignment(
     class_id: str,
     assignment_id: str,
     req: UpdateAssignmentSchema,
@@ -593,7 +593,7 @@ async def update_assignment(
 
 
 @assignments_router.delete("/classes/{class_id}/assignments/{assignment_id}")
-async def delete_assignment(
+def delete_assignment(
     class_id: str,
     assignment_id: str,
     current_user: User = Depends(get_current_user),
@@ -713,7 +713,7 @@ async def upload_reference_document(
 
 
 @assignments_router.post("/classes/{class_id}/assignments/{assignment_id}/reference-sets", status_code=status.HTTP_201_CREATED)
-async def create_reference_set(
+def create_reference_set(
     class_id: str,
     assignment_id: str,
     payload: dict[str, Any],
@@ -779,7 +779,7 @@ async def create_reference_set(
 
 
 @assignments_router.get("/assignments-overview")
-async def get_assignments_overview(
+def get_assignments_overview(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):

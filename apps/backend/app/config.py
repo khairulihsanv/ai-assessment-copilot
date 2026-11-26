@@ -48,7 +48,11 @@ class Settings(BaseSettings):
 
     # File Storage
     STORAGE_DIR: str = "./storage"
-    MAX_FILE_SIZE_MB: int = 10
+    # One uploaded document (PDF/DOCX). Lab reports with figures are often well over 10 MB.
+    MAX_FILE_SIZE_MB: int = 25
+    # Photographed or scanned answer sheets: pages per submission and size of one page image.
+    SCAN_MAX_PAGES: int = 40
+    SCAN_MAX_IMAGE_MB: int = 10
 
     # AI & LLM Providers
     # Provider untuk menyusun DRAF penilaian. Default: Ollama lokal (data tidak keluar dari server).
@@ -76,6 +80,9 @@ class Settings(BaseSettings):
     GROQ_API_KEY: str = ""
     GROQ_BASE_URL: str = "https://api.groq.com/openai/v1"
     GROQ_MODEL: str = "openai/gpt-oss-120b"
+    # Reasoning models (gpt-oss, qwen3) spend hidden "thinking" tokens before answering. "low" keeps
+    # grading quality for rubric scoring while using far fewer tokens. Empty = provider default.
+    GROQ_REASONING_EFFORT: str = "low"
 
     GEMINI_API_KEY: str = ""
     GEMINI_BASE_URL: str = "https://generativelanguage.googleapis.com/v1beta"
@@ -83,9 +90,27 @@ class Settings(BaseSettings):
 
     EMBEDDING_API_KEY: str = ""
 
+    # OCR for photographed / scanned answers.
+    # rapidocr: local engine, fast, good for printed text, weak on handwriting.
+    # vision:   a vision model reads every page (best for handwriting, costs tokens once per page).
+    # auto:     rapidocr first; pages it reads poorly go to the vision model, if one is configured.
+    OCR_ENGINE: Literal["rapidocr", "vision", "auto"] = "auto"
+    OCR_VISION_PROVIDER: Literal["none", "groq", "ollama"] = "none"
+    GROQ_VISION_MODEL: str = "meta-llama/llama-4-scout-17b-16e-instruct"
+    OLLAMA_VISION_MODEL: str = "qwen2.5vl:7b"
+    # In auto mode, a page whose average rapidocr confidence is below this goes to the vision model.
+    OCR_VISION_MIN_CONFIDENCE: float = 0.85
+    # Pages are downscaled to this longest side before the vision model sees them (fewer tokens).
+    OCR_VISION_MAX_SIDE: int = 1600
+
     # Retrieval & privasi
     EVIDENCE_TOP_K: int = 3
-    STUDENT_TEXT_MAX_CHARS: int = 24000
+    # Safety cap on how much of one answer is read (about 30 000 words, a long thesis-size report).
+    # Long answers are not cut to fit the model: the most relevant passages per criterion are sent.
+    STUDENT_TEXT_MAX_CHARS: int = 200000
+    # Drop cover page, preface, table of contents, bibliography and repeated page headers from long
+    # reports before grading. They carry no rubric evidence and only cost tokens.
+    CLEAN_REPORT_BOILERPLATE: bool = True
     ANONYMIZE_STUDENT_DATA: bool = True
 
 

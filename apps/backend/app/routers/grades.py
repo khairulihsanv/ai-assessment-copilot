@@ -1,16 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload, load_only, selectinload
 
 from app.database import get_db
 from app.models.enums import Role
-from app.models.models import Assignment, Class, GradeRevision, Submission, User
+from app.models.models import Assignment, Class, EvaluationRun, GradeRevision, Submission, SubmissionVersion, User
 from app.security.dependencies import get_current_user
 
 grades_router = APIRouter(tags=["grades"])
 
 
 @grades_router.get("/grades")
-async def get_student_grades(
+def get_student_grades(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -53,7 +53,7 @@ async def get_student_grades(
 
 
 @grades_router.get("/grading-hub")
-async def get_grading_hub(
+def get_grading_hub(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -66,6 +66,21 @@ async def get_grading_hub(
         .join(Class, Class.id == Assignment.classId)
         .filter(Class.dosenId == current_user.id)
         .order_by(Submission.createdAt.desc())
+        # One query per relation instead of several per row, and only the columns this list shows:
+        # no answer text, no raw model output.
+        .options(
+            joinedload(Submission.user),
+            joinedload(Submission.assignment).joinedload(Assignment.class_),
+            joinedload(Submission.assignment).joinedload(Assignment.rubric),
+            selectinload(Submission.grades),
+            selectinload(Submission.evaluations).load_only(EvaluationRun.id, EvaluationRun.versionId),
+            selectinload(Submission.versions).load_only(
+                SubmissionVersion.id,
+                SubmissionVersion.versionNumber,
+                SubmissionVersion.type,
+                SubmissionVersion.submittedAt,
+            ),
+        )
         .all()
     )
 

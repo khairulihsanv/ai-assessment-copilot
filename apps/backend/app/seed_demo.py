@@ -12,7 +12,7 @@ Class enrollment key: DEMO01
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from app.database import SessionLocal
 from app.models.enums import AssignmentStatus, ClassRole, Role, SubmissionType
@@ -130,7 +130,7 @@ def seed_demo() -> None:
                     "terapkan 1NF–3NF pada contoh tabel akademik, dan bahas kapan denormalisasi masuk akal."
                 ),
                 submissionType=SubmissionType.ANY,
-                dueDate=datetime.now() + timedelta(days=30),
+                dueDate=datetime.now(UTC) + timedelta(days=30),
                 maxScore=100.0,
                 allowLateSubmission=True,
                 status=AssignmentStatus.PUBLISHED,

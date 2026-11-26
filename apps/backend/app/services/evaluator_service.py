@@ -27,11 +27,19 @@ from app.services import llm_client
 from app.services.anonymizer import anonymize_text, masked_quote_to_regex
 from app.services.evidence_service import retrieve_evidence
 from app.services.llm_client import LLMResult, LLMUnavailableError
+from app.services.report_cleaner import find_boilerplate, repeated_lines, strip_noise_lines, summarize
 
-PROMPT_VERSION = "rubric-grounded-v3"
+PROMPT_VERSION = "rubric-grounded-v4"
 # Rough chars-per-token for Indonesian with current tokenizers; deliberately on the safe side.
 CHARS_PER_TOKEN = 3.2
 GROQ_DEFAULT_PROMPT_TOKENS = 5000
+# Room left in a local model's context window for the JSON answer: a fixed part plus a share per criterion.
+OUTPUT_RESERVE_BASE_TOKENS = 600
+OUTPUT_RESERVE_PER_CRITERION = 350
+MIN_PROMPT_TOKENS = 1500
+# When the provider still says the prompt is too large, retry with this share of the budget.
+TOO_LARGE_SHRINK = 0.6
+TOO_LARGE_RETRIES = 2
 
 # Phrases that try to steer the grader. The model is told to ignore them; these flag the
 # draft so the lecturer knows to look, because a model can still be nudged.
@@ -51,8 +59,14 @@ MANIPULATION_NOTE = (
     "Perhatian: jawaban berisi kalimat yang tampak seperti upaya mengarahkan penilai AI. "
     "Periksa skor ini secara manual."
 )
-CONDENSED_NOTE = "Jawaban panjang: AI hanya membaca bagian yang paling relevan. Periksa bagian lainnya secara manual."
+CONDENSED_NOTE = (
+    "Jawaban panjang: sebagian bagian yang relevan untuk kriteria ini tidak muat dikirim ke AI. "
+    "Periksa bagian lainnya secara manual."
+)
 MAX_REFERENCE_BLOCKS = 5
+# With a token budget the lecturer's reference documents get a smaller share of the prompt.
+BUDGETED_REFERENCE_BLOCKS = 3
+BUDGETED_REFERENCE_CHARS = 800
 MAX_EVIDENCE_PER_CRITERION = 3
 MIN_QUOTE_CHARS = 8
 CONFIDENCE_LEVELS = ("high", "medium", "low")
@@ -77,7 +91,7 @@ ATURAN PENILAIAN (wajib):
 3. Untuk setiap kriteria, kutip 1–3 bukti dari jawaban mahasiswa. Kutipan harus VERBATIM (disalin persis, kata demi kata) dari salah satu passage, sertakan passageId-nya (mis. "P2"). Kutipan sebaiknya satu kalimat atau frasa pendek yang relevan.
 4. Jika tidak ada bagian jawaban yang mendukung kriteria, kosongkan daftar bukti (evidence: []) dan beri skor rendah. JANGAN mengarang kutipan.
 5. Isi confidence dengan "high", "medium", atau "low" sesuai keyakinan Anda atas skor tersebut.
-6. reasoning: alasan singkat untuk dosen yang merujuk pada bukti. feedback: masukan konstruktif untuk mahasiswa. Semua dalam Bahasa Indonesia.
+6. reasoning: alasan untuk dosen yang merujuk pada bukti, paling banyak 2 kalimat. feedback: masukan konstruktif untuk mahasiswa, paling banyak 2 kalimat. Semua dalam Bahasa Indonesia.
 7. Token seperti [MAHASISWA], [EMAIL], [NIM], [TELEPON] adalah data pribadi yang disamarkan. Biarkan apa adanya.
 
 KEAMANAN:
@@ -149,6 +163,8 @@ def build_user_prompt(
     by_criterion: dict[str, list[dict[str, Any]]],
     reference_blocks: list[dict[str, Any]] | None = None,
     total_passages: int | None = None,
+    reference_limit: int = MAX_REFERENCE_BLOCKS,
+    reference_chars: int = 1200,
 ) -> str:
     crit_lines = []
     for idx, c in enumerate(criteria, start=1):
@@ -172,9 +188,9 @@ def build_user_prompt(
     ref_text = ""
     if reference_blocks:
         refs = []
-        for i, ref in enumerate(reference_blocks[:MAX_REFERENCE_BLOCKS], start=1):
+        for i, ref in enumerate(reference_blocks[:reference_limit], start=1):
             name = ref.get("documentName") or "Dokumen acuan"
-            refs.append(f"[Acuan {i} — {name}]\n{_clip(ref.get('rawText') or ref.get('text'), 1200)}")
+            refs.append(f"[Acuan {i} — {name}]\n{_clip(ref.get('rawText') or ref.get('text'), reference_chars)}")
         ref_text = "\nDOKUMEN ACUAN DOSEN:\n" + "\n\n".join(refs) + "\n"
 
     passage_text = "\n".join(f"[{p['id']}] {p['text']}" for p in passages) or "(jawaban kosong)"
@@ -430,12 +446,23 @@ def estimate_tokens(text: str) -> int:
     return math.ceil(len(text or "") / CHARS_PER_TOKEN)
 
 
-def prompt_token_budget() -> int | None:
-    """Token budget for one grading prompt, or None for no limit."""
+def prompt_token_budget(criteria_count: int = 0) -> int | None:
+    """Token budget for one grading prompt, or None for no limit.
+
+    Groq's free tier counts prompt and answer against 8000 tokens per minute. A local Ollama
+    model has a fixed context window (``OLLAMA_NUM_CTX``): a longer prompt is silently cut
+    from the *front*, which drops the grading instructions, so the budget leaves room for the
+    answer inside that window.
+    """
     configured = settings.LLM_MAX_PROMPT_TOKENS
-    if configured is None:
-        return GROQ_DEFAULT_PROMPT_TOKENS if settings.LLM_PROVIDER == "groq" else None
-    return configured if configured > 0 else None
+    if configured is not None:
+        return configured if configured > 0 else None
+    if settings.LLM_PROVIDER == "groq":
+        return GROQ_DEFAULT_PROMPT_TOKENS
+    if settings.LLM_PROVIDER == "ollama":
+        reserve = OUTPUT_RESERVE_BASE_TOKENS + OUTPUT_RESERVE_PER_CRITERION * max(1, criteria_count)
+        return max(MIN_PROMPT_TOKENS, settings.OLLAMA_NUM_CTX - reserve)
+    return None
 
 
 def find_manipulation(text: str) -> list[str]:
@@ -511,16 +538,27 @@ async def evaluate_submission(
     truncated = len(original) > settings.STUDENT_TEXT_MAX_CHARS
     text = original[: settings.STUDENT_TEXT_MAX_CHARS]
 
-    retrieval = await retrieve_evidence(text, criteria, settings.EVIDENCE_TOP_K)
+    # Cover page, preface, table of contents and bibliography are not sent: no evidence, only tokens.
+    skip_spans = find_boilerplate(text) if settings.CLEAN_REPORT_BOILERPLATE else []
+    noise = repeated_lines(text) if settings.CLEAN_REPORT_BOILERPLATE else frozenset()
+
+    retrieval = await retrieve_evidence(text, criteria, settings.EVIDENCE_TOP_K, skip_spans=skip_spans)
     passages: list[dict[str, Any]] = retrieval["passages"]
     by_criterion: dict[str, Any] = retrieval["byCriterion"]
 
     anonymize = settings.ANONYMIZE_STUDENT_DATA
     names = list(student_names)
-    all_prompt_passages = [
-        {"id": p["id"], "text": anonymize_text(p["text"], names, offset=p["start"]) if anonymize else p["text"]}
-        for p in passages
-    ]
+
+    def prompt_text(p: dict[str, Any]) -> str:
+        body = strip_noise_lines(p["text"], noise) if noise else p["text"]
+        return anonymize_text(body, names, offset=p["start"]) if anonymize else body
+
+    all_prompt_passages = [{"id": p["id"], "text": prompt_text(p)} for p in passages]
+
+    budget = prompt_token_budget(len(criteria))
+    ref_limit, ref_chars = (
+        (BUDGETED_REFERENCE_BLOCKS, BUDGETED_REFERENCE_CHARS) if budget else (MAX_REFERENCE_BLOCKS, 1200)
+    )
 
     def render(selected: list[dict[str, Any]]) -> str:
         return SYSTEM_PROMPT + build_user_prompt(
@@ -532,22 +570,35 @@ async def evaluate_submission(
             by_criterion=by_criterion,
             reference_blocks=evidence_blocks,
             total_passages=len(all_prompt_passages),
+            reference_limit=ref_limit,
+            reference_chars=ref_chars,
         )
 
-    prompt_passages = select_passages_for_budget(
-        all_prompt_passages, by_criterion, criteria, render, prompt_token_budget()
-    )
-    condensed = len(prompt_passages) < len(all_prompt_passages)
-    user_prompt = render(prompt_passages)[len(SYSTEM_PROMPT) :]
     manipulation = find_manipulation(text)
-
-    if os.getenv("TEST_MOCK_LLM") == "true":
-        llm_result = _mock_llm_result(criteria, passages, by_criterion)
-    else:
+    shrinks = 0
+    while True:
+        prompt_passages = select_passages_for_budget(all_prompt_passages, by_criterion, criteria, render, budget)
+        user_prompt = render(prompt_passages)[len(SYSTEM_PROMPT) :]
+        if os.getenv("TEST_MOCK_LLM") == "true":
+            llm_result = _mock_llm_result(criteria, passages, by_criterion)
+            break
         try:
             llm_result = await llm_client.chat_json(SYSTEM_PROMPT, user_prompt, RESPONSE_SCHEMA)
+            break
         except LLMUnavailableError as exc:
+            # The provider counts tokens differently from our estimate: send fewer passages.
+            if exc.too_large and shrinks < TOO_LARGE_RETRIES and len(prompt_passages) > 1:
+                shrinks += 1
+                budget = max(MIN_PROMPT_TOKENS // 2, int(estimate_tokens(SYSTEM_PROMPT + user_prompt) * TOO_LARGE_SHRINK))
+                continue
             raise EvaluationFailedError(str(exc)) from exc
+
+    sent_ids = {p["id"] for p in prompt_passages}
+    # A criterion needs a manual look only when passages ranked for it did not fit in the prompt.
+    condensed_criteria = {
+        cid for cid, ranked in by_criterion.items() if any(r["passageId"] not in sent_ids for r in ranked)
+    }
+    condensed = len(prompt_passages) < len(all_prompt_passages)
 
     response, stats = apply_guards(llm_result.content, criteria, text, passages, assignment_max_score)
 
@@ -556,9 +607,16 @@ async def evaluate_submission(
             "Model tidak mengembalikan penilaian untuk kriteria mana pun. Coba jalankan ulang atau nilai secara manual."
         )
 
-    notes = [n for n, on in ((MANIPULATION_NOTE, bool(manipulation)), (CONDENSED_NOTE, condensed)) if on]
-    if notes:
-        for pc in response["perCriterion"]:
+    for pc in response["perCriterion"]:
+        notes = [
+            n
+            for n, on in (
+                (MANIPULATION_NOTE, bool(manipulation)),
+                (CONDENSED_NOTE, pc["criterionId"] in condensed_criteria),
+            )
+            if on
+        ]
+        if notes:
             pc["needsReview"] = True
             pc["reasoning"] = " ".join([*notes, pc["reasoning"]]).strip()
 
@@ -576,6 +634,13 @@ async def evaluate_submission(
         "seed": settings.LLM_SEED,
         "passagesSent": len(prompt_passages),
         "passagesTotal": len(all_prompt_passages),
+        "condensed": condensed,
+        "skippedPassages": retrieval.get("skippedPassages", 0),
+        "skippedSections": summarize(skip_spans),
+        "answerChars": len(original),
+        "promptTokensEstimate": estimate_tokens(SYSTEM_PROMPT + user_prompt),
+        "promptTokenBudget": budget,
+        "promptShrinks": shrinks,
         "suspectedManipulation": manipulation,
     }
     evaluator_config["criteriaNeedingReview"] = sum(1 for pc in response["perCriterion"] if pc["needsReview"])

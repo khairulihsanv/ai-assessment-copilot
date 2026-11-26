@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import func
@@ -25,7 +25,7 @@ OVERDUE_TASKS_KEPT_DAYS = 7
 
 
 @dashboard_router.get("")
-async def get_dashboard(
+def get_dashboard(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -166,7 +166,7 @@ async def get_dashboard(
         .filter(
             Enrollment.mahasiswaId == current_user.id,
             Assignment.status == AssignmentStatus.PUBLISHED,
-            Assignment.dueDate >= datetime.now() - timedelta(days=OVERDUE_TASKS_KEPT_DAYS),
+            Assignment.dueDate >= datetime.now(UTC) - timedelta(days=OVERDUE_TASKS_KEPT_DAYS),
         )
         .order_by(Assignment.dueDate.asc())
         .limit(UPCOMING_TASKS)

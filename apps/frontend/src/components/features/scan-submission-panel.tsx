@@ -43,6 +43,18 @@ export interface ScannedPageItem {
   status: "PENDING" | "SUCCESS" | "EMPTY" | "FAILED";
   confidence: number;
   error?: string | null;
+  /** Image already stored by the OCR step; the final submit sends this instead of the file. */
+  pageRef?: string | null;
+  /** "rapidocr", "pdf-text" or "vision:<model>". */
+  engine?: string | null;
+}
+
+interface OcrConfig {
+  engine: "rapidocr" | "vision" | "auto";
+  vision: boolean;
+  visionModel: string | null;
+  maxPages: number;
+  maxImageMb: number;
 }
 
 interface ScanSubmissionPanelProps {
@@ -52,8 +64,40 @@ interface ScanSubmissionPanelProps {
   onCancel?: () => void;
 }
 
-const MAX_PAGES = 15;
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const DEFAULT_MAX_PAGES = 40;
+// Originals may be large phone photos: they are shrunk in the browser before upload.
+const MAX_ORIGINAL_SIZE = 40 * 1024 * 1024;
+// Long side after shrinking. Enough for OCR of handwriting, small enough (~300–600 KB per page)
+// that uploads stay fast on mobile data and under the hosting request limit.
+const UPLOAD_MAX_SIDE = 2000;
+const UPLOAD_JPEG_QUALITY = 0.85;
+
+/** Shrink a photo to UPLOAD_MAX_SIDE and re-encode as JPEG, honouring EXIF rotation. */
+async function compressForUpload(source: Blob, name: string): Promise<File> {
+  try {
+    const bitmap = await createImageBitmap(source, { imageOrientation: "from-image" });
+    const scale = Math.min(1, UPLOAD_MAX_SIDE / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("canvas");
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, "image/jpeg", UPLOAD_JPEG_QUALITY),
+    );
+    if (!blob || blob.size >= source.size) throw new Error("no gain");
+    return new File([blob], name.replace(/\.[^.]+$/, "") + ".jpg", { type: "image/jpeg" });
+  } catch {
+    // Old browser or already small: send the original.
+    return source instanceof File
+      ? source
+      : new File([source], name, { type: source.type || "image/jpeg" });
+  }
+}
 
 export function ScanSubmissionPanel({
   classId,
@@ -79,6 +123,12 @@ export function ScanSubmissionPanel({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [previewZoom, setPreviewZoom] = useState<number>(1);
+  const [ocrProgress, setOcrProgress] = useState<{ done: number; total: number }>({
+    done: 0,
+    total: 0,
+  });
+  const [ocrConfig, setOcrConfig] = useState<OcrConfig | null>(null);
+  const maxPages = ocrConfig?.maxPages ?? DEFAULT_MAX_PAGES;
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -89,6 +139,19 @@ export function ScanSubmissionPanel({
     if (typeof window !== "undefined") {
       setIsSecureContext(window.isSecureContext);
     }
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/ocr/config")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: OcrConfig | null) => {
+        if (!cancelled && data && typeof data.maxPages === "number") setOcrConfig(data);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const stopCamera = React.useCallback(() => {
@@ -179,12 +242,11 @@ export function ScanSubmissionPanel({
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
     canvas.toBlob(
-      (blob) => {
-        if (!blob) return;
+      async (rawBlob) => {
+        if (!rawBlob) return;
         const pageNum = retakeTargetIndex !== null ? retakeTargetIndex + 1 : pages.length + 1;
-        const file = new File([blob], `scan_page_${pageNum}_${Date.now()}.jpg`, {
-          type: "image/jpeg",
-        });
+        const file = await compressForUpload(rawBlob, `scan_page_${pageNum}_${Date.now()}.jpg`);
+        const blob: Blob = file;
 
         const previewUrl = URL.createObjectURL(blob);
         const newPage: ScannedPageItem = {
@@ -226,10 +288,10 @@ export function ScanSubmissionPanel({
     );
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setErrorMessage(null);
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+    const files = e.target.files ? Array.from(e.target.files) : [];
+    if (files.length === 0) return;
 
     const newPages: ScannedPageItem[] = [];
     const validExtensions = [".jpg", ".jpeg", ".png", ".webp"];
@@ -237,13 +299,13 @@ export function ScanSubmissionPanel({
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       if (!file) continue;
-      if (pages.length + newPages.length >= MAX_PAGES) {
-        setErrorMessage(`Batas maksimum ${MAX_PAGES} halaman tercapai.`);
+      if (pages.length + newPages.length >= maxPages) {
+        setErrorMessage(`Batas maksimum ${maxPages} halaman tercapai.`);
         break;
       }
 
-      if (file.size > MAX_FILE_SIZE) {
-        setErrorMessage(`File ${file.name} melebihi batas 10MB.`);
+      if (file.size > MAX_ORIGINAL_SIZE) {
+        setErrorMessage(`File ${file.name} terlalu besar (maksimal 40MB sebelum dikompres).`);
         continue;
       }
 
@@ -256,12 +318,13 @@ export function ScanSubmissionPanel({
         continue;
       }
 
-      const previewUrl = URL.createObjectURL(file);
+      const compressed = await compressForUpload(file, file.name);
+      const previewUrl = URL.createObjectURL(compressed);
       const pageNum = pages.length + newPages.length + 1;
       newPages.push({
         id: `page_${Date.now()}_${i}_${Math.random().toString(36).substring(2, 7)}`,
         pageNumber: pageNum,
-        file,
+        file: compressed,
         previewUrl,
         rotation: 0,
         extractedText: "",
@@ -316,6 +379,8 @@ export function ScanSubmissionPanel({
             file: newFile,
             previewUrl: newPreviewUrl,
             rotation: (page.rotation + 90) % 360,
+            // The stored image is now outdated: upload the rotated one on submit.
+            pageRef: null,
           };
           return updated;
         });
@@ -371,52 +436,69 @@ export function ScanSubmissionPanel({
     setOcrLoading(true);
     setErrorMessage(null);
     setStep("PROCESSING");
+    setOcrProgress({ done: 0, total: pages.length });
 
-    const formData = new FormData();
-    pages.forEach((p, idx) => {
-      formData.append(`page_file_${idx + 1}`, p.file);
-    });
+    // One page per request: each upload stays small, a slow or unreadable page does not sink
+    // the others, and the student sees real progress instead of one long wait.
+    const snapshot = pages;
+    let failedPages = 0;
+    for (let idx = 0; idx < snapshot.length; idx++) {
+      const page = snapshot[idx];
+      if (!page) continue;
+      const formData = new FormData();
+      formData.append("pageNumber", String(page.pageNumber));
+      formData.append(`page_file_${page.pageNumber}`, page.file);
 
-    try {
-      const res = await fetch(
-        `/api/classes/${classId}/assignments/${assignmentId}/submissions/ocr-scan`,
-        {
-          method: "POST",
-          body: formData,
-        },
-      );
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(getErrorMessage(data, "Gagal memproses OCR pada gambar jawaban."));
+      let update: Partial<ScannedPageItem>;
+      try {
+        const res = await fetch(
+          `/api/classes/${classId}/assignments/${assignmentId}/submissions/ocr-scan`,
+          { method: "POST", body: formData },
+        );
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(getErrorMessage(data, "Gagal membaca halaman ini."));
+        }
+        const ocrPage = data.pages?.[0];
+        update = {
+          extractedText: ocrPage?.extractedText || "",
+          confirmedText: ocrPage?.extractedText || "",
+          status: ocrPage?.status || "SUCCESS",
+          confidence: ocrPage?.confidence || 0,
+          error: ocrPage?.error || null,
+          pageRef: ocrPage?.pageRef || null,
+          engine: ocrPage?.engine || null,
+        };
+      } catch (err: unknown) {
+        failedPages += 1;
+        update = {
+          status: "FAILED",
+          extractedText: "",
+          confirmedText: "",
+          pageRef: null,
+          error:
+            err instanceof Error
+              ? `${err.message} Ketik isi halaman ini secara manual.`
+              : "Halaman ini gagal dibaca. Ketik isinya secara manual.",
+        };
       }
+      setPages((prev) => prev.map((p) => (p.id === page.id ? { ...p, ...update } : p)));
+      setOcrProgress({ done: idx + 1, total: snapshot.length });
+    }
 
-      // Update pages with OCR results
-      setPages((prev) =>
-        prev.map((p, idx) => {
-          const ocrPage = data.pages?.[idx];
-          if (ocrPage) {
-            return {
-              ...p,
-              extractedText: ocrPage.extractedText || "",
-              confirmedText: ocrPage.extractedText || "",
-              status: ocrPage.status || "SUCCESS",
-              confidence: ocrPage.confidence || 0,
-              error: ocrPage.error || null,
-            };
-          }
-          return p;
-        }),
-      );
-
+    if (failedPages === snapshot.length) {
+      setErrorMessage("Semua halaman gagal dibaca. Periksa koneksi lalu coba lagi.");
+      setStep("CAPTURE");
+    } else {
+      if (failedPages > 0) {
+        setErrorMessage(
+          `${failedPages} halaman gagal dibaca. Ketik isinya secara manual sebelum mengumpulkan.`,
+        );
+      }
       setSelectedPageIndex(0);
       setStep("VERIFY");
-    } catch (err: unknown) {
-      setErrorMessage(err instanceof Error ? err.message : "Terjadi kesalahan saat memproses OCR.");
-      setStep("CAPTURE");
-    } finally {
-      setOcrLoading(false);
     }
+    setOcrLoading(false);
   };
 
   // Step 3: Confirm and Finalize Submission
@@ -448,9 +530,13 @@ export function ScanSubmissionPanel({
     }));
     formData.append("pages_meta", JSON.stringify(pagesMeta));
 
-    // Append image files
+    // Pages read in the OCR step are already stored: send only their reference.
     pages.forEach((p) => {
-      formData.append(`page_file_${p.pageNumber}`, p.file);
+      if (p.pageRef) {
+        formData.append(`page_ref_${p.pageNumber}`, p.pageRef);
+      } else {
+        formData.append(`page_file_${p.pageNumber}`, p.file);
+      }
     });
 
     try {
@@ -658,10 +744,10 @@ export function ScanSubmissionPanel({
             </span>
             <ul className="list-disc list-inside text-muted-foreground space-y-1">
               <li>
-                Maksimal <strong>{MAX_PAGES} halaman</strong> dalam satu pengumpulan.
+                Maksimal <strong>{maxPages} halaman</strong> dalam satu pengumpulan.
               </li>
               <li>
-                Ukuran per foto maksimal <strong>10MB</strong> (dimensi maksimal 4096px).
+                Foto otomatis diperkecil sebelum diunggah, jadi foto kamera HP langsung bisa dipakai.
               </li>
               <li>
                 Pastikan pencahayaan cukup dan foto tidak buram agar teks dapat dibaca oleh OCR
@@ -805,15 +891,21 @@ export function ScanSubmissionPanel({
           <Loader2 className="w-10 h-10 animate-spin text-primary mx-auto" />
           <div>
             <h5 className="font-bold text-foreground text-lg">
-              Mengekstraksi Teks dengan Mesin OCR Lokal...
+              Membaca halaman {Math.min(ocrProgress.done + 1, ocrProgress.total)} dari{" "}
+              {ocrProgress.total}…
             </h5>
             <p className="text-xs text-muted-foreground mt-1 max-w-md mx-auto">
-              Memproses {pages.length} halaman gambar. Teks dibaca langsung di server lokal tanpa
-              mengirim dokumen ke layanan pihak ketiga.
+              {ocrConfig?.vision
+                ? "Teks dibaca di server Dexa. Halaman yang sulit dibaca, misalnya tulisan tangan, " +
+                  "diteruskan ke model AI pembaca tulisan."
+                : "Teks dibaca di server Dexa tanpa mengirim foto ke layanan pihak ketiga."}
             </p>
           </div>
           <div className="max-w-xs mx-auto pt-2">
-            <Progress value={60} className="h-2" />
+            <Progress
+              value={ocrProgress.total ? Math.round((ocrProgress.done / ocrProgress.total) * 100) : 0}
+              className="h-2"
+            />
           </div>
         </div>
       )}
@@ -948,6 +1040,10 @@ export function ScanSubmissionPanel({
                 {activePage.status === "EMPTY" ? (
                   <span className="text-[10px] px-2 py-0.5 rounded-md bg-warning-bg text-warning-fg font-semibold">
                     Halaman Kosong / Tidak Terdeteksi
+                  </span>
+                ) : activePage.engine?.startsWith("vision") ? (
+                  <span className="text-[10px] font-mono text-muted-foreground">
+                    Dibaca model AI pembaca tulisan
                   </span>
                 ) : typeof activePage.confidence === "number" && activePage.confidence > 0 ? (
                   <span className="text-[10px] font-mono text-muted-foreground">

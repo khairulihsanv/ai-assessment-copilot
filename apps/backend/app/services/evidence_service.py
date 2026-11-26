@@ -22,6 +22,7 @@ from typing import Any
 
 from app.config import settings
 from app.services.embedding_service import cosine_similarity, generate_embeddings_batch
+from app.services.report_cleaner import Span, is_skipped
 
 logger = logging.getLogger(__name__)
 
@@ -182,19 +183,28 @@ def criterion_query(criterion: dict[str, Any]) -> str:
     return " ".join(p for p in parts if p).strip()
 
 
-async def retrieve_evidence(text: str, criteria: list[dict[str, Any]], top_k: int | None = None) -> dict[str, Any]:
+async def retrieve_evidence(
+    text: str,
+    criteria: list[dict[str, Any]],
+    top_k: int | None = None,
+    skip_spans: list[Span] | None = None,
+) -> dict[str, Any]:
     """Rank answer passages for every criterion.
 
-    Returns ``{"passages", "byCriterion", "mode", "embedModel"}``. ``byCriterion`` maps a
-    criterion id to its top-k ``{"passageId", "score", "cosine", "bm25"}`` entries.
+    Returns ``{"passages", "byCriterion", "mode", "embedModel", "skippedPassages"}``.
+    ``byCriterion`` maps a criterion id to its top-k ``{"passageId", "score", "cosine", "bm25"}``
+    entries. Passages inside ``skip_spans`` (cover, table of contents, bibliography…) are
+    neither embedded nor ranked; they keep their ids so offsets and ids stay stable.
     """
     k = top_k if top_k is not None else settings.EVIDENCE_TOP_K
-    passages = split_passages(text)
+    all_passages = split_passages(text)
+    passages = [p for p in all_passages if not (skip_spans and is_skipped(p.start, p.end, skip_spans))]
     result: dict[str, Any] = {
         "passages": [asdict(p) for p in passages],
         "byCriterion": {},
         "mode": "lexical",
         "embedModel": None,
+        "skippedPassages": len(all_passages) - len(passages),
     }
     if not passages or not criteria:
         return result

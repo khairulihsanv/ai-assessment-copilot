@@ -284,7 +284,10 @@ def test_blank_document_without_text_rejected(client, setup_upload_env):
     assert "tidak memuat teks" in response.text.lower()
 
 
-def test_file_too_large_rejected(client, setup_upload_env):
+def test_file_too_large_rejected(client, setup_upload_env, monkeypatch):
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "MAX_FILE_SIZE_MB", 10)
     env = setup_upload_env
     large_file = b"%PDF-1.4\n" + (b"A" * (11 * 1024 * 1024))
     response = client.post(
@@ -377,3 +380,107 @@ def test_unauthorized_student_cannot_submit(client, setup_upload_env):
     )
     assert response.status_code == 403
     assert "belum terdaftar" in response.text.lower()
+
+
+# --- Audit 2026-11-26 -------------------------------------------------------
+
+
+def _submit_pdf(client, env, token, filename="jawaban.pdf"):
+    response = client.post(
+        f"/classes/{env['class'].id}/assignments/{env['asg_any'].id}/submissions",
+        headers={"Authorization": f"Bearer {token}"},
+        files={"file": (filename, create_valid_pdf_bytes("Jawaban untuk uji unduhan"), "application/pdf")},
+    )
+    assert response.status_code == 201, response.text
+    return response.json()
+
+
+def test_file_download_refuses_version_of_another_submission(client, setup_upload_env, db_session):
+    env = setup_upload_env
+    db_session.add(Enrollment(classId=env["class"].id, mahasiswaId=env["mhs_other"].id, role=ClassRole.STUDENT))
+    db_session.commit()
+
+    mine = _submit_pdf(client, env, env["mhs_token"])
+    theirs = _submit_pdf(client, env, env["other_token"])
+    auth = {"Authorization": f"Bearer {env['mhs_token']}"}
+
+    own = client.get(f"/submissions/{mine['submissionId']}/file?versionId={mine['versionId']}", headers=auth)
+    assert own.status_code == 200
+
+    # Access is granted on the student's own submission id; the other student's version must not leak.
+    leaked = client.get(f"/submissions/{mine['submissionId']}/file?versionId={theirs['versionId']}", headers=auth)
+    assert leaked.status_code == 404
+
+    page = client.get(f"/submissions/{mine['submissionId']}/pages/1/image?versionId={theirs['versionId']}", headers=auth)
+    assert page.status_code == 404
+
+
+def test_file_download_with_non_latin1_name(client, setup_upload_env):
+    env = setup_upload_env
+    sub = _submit_pdf(client, env, env["mhs_token"], filename="Laporan – Bab 1 ✓.pdf")
+
+    response = client.get(
+        f"/submissions/{sub['submissionId']}/file",
+        headers={"Authorization": f"Bearer {env['mhs_token']}"},
+    )
+    assert response.status_code == 200
+    disposition = response.headers["content-disposition"]
+    assert disposition.startswith("attachment;")
+    assert "filename*=UTF-8''Laporan%20%E2%80%93%20Bab%201%20%E2%9C%93.pdf" in disposition
+
+
+def test_upload_ticket_opens_only_its_own_path(client, setup_upload_env):
+    env = setup_upload_env
+    path = f"/classes/{env['class'].id}/assignments/{env['asg_any'].id}/submissions"
+    ticket = create_access_token({"sub": env["mhs"].id, "role": "MAHASISWA", "scope": "upload", "path": path})
+    headers = {"Authorization": f"Bearer {ticket}"}
+
+    ok = client.post(path, headers=headers, files={"file": ("a.pdf", create_valid_pdf_bytes("Jawaban"), "application/pdf")})
+    assert ok.status_code == 201, ok.text
+
+    # Not a session: every other endpoint refuses it.
+    assert client.get("/auth/me", headers=headers).status_code == 401
+    assert client.get(path, headers=headers).status_code == 401  # list endpoint uses get_current_user
+
+    other_path = f"/classes/{env['class'].id}/assignments/{env['asg_pdf'].id}/submissions"
+    wrong = client.post(
+        other_path, headers=headers, files={"file": ("a.pdf", create_valid_pdf_bytes("Jawaban"), "application/pdf")}
+    )
+    assert wrong.status_code == 401
+
+
+def test_due_date_with_timezone_is_enforced_in_utc(client, setup_upload_env, db_session):
+    from datetime import UTC, timezone
+
+    env = setup_upload_env
+    wib = timezone(timedelta(hours=7))
+    # One hour ago, written as Jakarta wall-clock time. Stored without conversion it would read
+    # as seven hours in the future and the late answer would be accepted.
+    due = (datetime.now(UTC) - timedelta(hours=1)).astimezone(wib)
+    asg = Assignment(
+        classId=env["class"].id,
+        title="Tugas WIB",
+        instructions="Tenggat dalam WIB",
+        submissionType=SubmissionType.ANY,
+        status=AssignmentStatus.PUBLISHED,
+        dueDate=due,
+        allowLateSubmission=False,
+    )
+    db_session.add(asg)
+    db_session.commit()
+
+    response = client.post(
+        f"/classes/{env['class'].id}/assignments/{asg.id}/submissions",
+        headers={"Authorization": f"Bearer {env['mhs_token']}"},
+        files={"file": ("telat.pdf", create_valid_pdf_bytes("Jawaban telat"), "application/pdf")},
+    )
+    assert response.status_code == 400
+    assert "tenggat waktu" in response.text.lower()
+
+    detail = client.get(
+        f"/classes/{env['class'].id}/assignments/{asg.id}",
+        headers={"Authorization": f"Bearer {env['dosen_token']}"},
+    )
+    assert detail.status_code == 200
+    # Sent with an explicit offset, so a browser in any timezone shows the right local time.
+    assert detail.json()["dueDate"].endswith("+00:00")

@@ -1,4 +1,5 @@
 import uuid
+from datetime import UTC, datetime
 
 from sqlalchemy import (
     Boolean,
@@ -18,7 +19,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
-from sqlalchemy.types import JSON
+from sqlalchemy.types import JSON, TypeDecorator
 
 from app.database import Base
 from app.models.enums import (
@@ -36,6 +37,33 @@ from app.models.enums import (
 JsonType = JSON().with_variant(JSONB, "postgresql")
 
 
+class UTCDateTime(TypeDecorator):
+    """A moment in time, stored as naive UTC in a ``timestamp`` column (the Prisma convention).
+
+    Values read back carry ``tzinfo=UTC``, so ``isoformat()`` ends in ``+00:00`` and a browser
+    in Jakarta shows the right local time. An aware value is converted to UTC before it is
+    stored; a naive one is taken to be UTC already.
+    """
+
+    impl = DateTime
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        if value is not None and value.tzinfo is not None:
+            value = value.astimezone(UTC).replace(tzinfo=None)
+        return value
+
+    def process_result_value(self, value, dialect):
+        if value is not None and value.tzinfo is None:
+            value = value.replace(tzinfo=UTC)
+        return value
+
+
+def utc_now() -> datetime:
+    """The current moment, timezone-aware, for comparisons with UTCDateTime columns."""
+    return datetime.now(UTC)
+
+
 def generate_id() -> str:
     """Generate unique identifier compatible with string IDs in Prisma (cuid/uuid)."""
     return "c" + uuid.uuid4().hex[:24]
@@ -50,7 +78,7 @@ class User(Base):
     passwordHash = Column(String, nullable=False)
     role = Column(SQLEnum(Role, name="Role", create_type=False), nullable=False)
     avatarUrl = Column(String, nullable=True)
-    createdAt = Column(DateTime, default=func.now(), nullable=False)
+    createdAt = Column(UTCDateTime, default=func.now(), nullable=False)
 
     # Relationships
     owned_classes = relationship("Class", back_populates="dosen", cascade="all, delete-orphan")
@@ -70,7 +98,7 @@ class Class(Base):
     subject = Column(String, nullable=True)
     enrollmentKey = Column(String, unique=True, nullable=False, index=True)
     isArchived = Column(Boolean, default=False, nullable=False)
-    createdAt = Column(DateTime, default=func.now(), nullable=False)
+    createdAt = Column(UTCDateTime, default=func.now(), nullable=False)
 
     dosenId = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
 
@@ -86,7 +114,7 @@ class Enrollment(Base):
 
     id = Column(String, primary_key=True, default=generate_id)
     role = Column(SQLEnum(ClassRole, name="ClassRole", create_type=False), default=ClassRole.STUDENT, nullable=False)
-    joinedAt = Column(DateTime, default=func.now(), nullable=False)
+    joinedAt = Column(UTCDateTime, default=func.now(), nullable=False)
 
     classId = Column(String, ForeignKey("classes.id", ondelete="CASCADE"), nullable=False)
     mahasiswaId = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
@@ -104,7 +132,7 @@ class Rubric(Base):
 
     id = Column(String, primary_key=True, default=generate_id)
     title = Column(String, nullable=False)
-    createdAt = Column(DateTime, default=func.now(), nullable=False)
+    createdAt = Column(UTCDateTime, default=func.now(), nullable=False)
 
     classId = Column(String, ForeignKey("classes.id", ondelete="CASCADE"), nullable=False)
     createdById = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
@@ -143,12 +171,12 @@ class Assignment(Base):
     title = Column(String, nullable=False)
     instructions = Column(Text, nullable=False)
     submissionType = Column(SQLEnum(SubmissionType, name="SubmissionType", create_type=False), default=SubmissionType.ANY, nullable=False)
-    dueDate = Column(DateTime, nullable=False)
+    dueDate = Column(UTCDateTime, nullable=False)
     maxScore = Column(Float, default=100.0, nullable=False)
     allowLateSubmission = Column(Boolean, default=False, nullable=False)
     allowScan = Column(Boolean, default=True, nullable=False)
     status = Column(SQLEnum(AssignmentStatus, name="AssignmentStatus", create_type=False), default=AssignmentStatus.DRAFT, nullable=False)
-    createdAt = Column(DateTime, default=func.now(), nullable=False)
+    createdAt = Column(UTCDateTime, default=func.now(), nullable=False)
 
     classId = Column(String, ForeignKey("classes.id", ondelete="CASCADE"), nullable=False)
     rubricId = Column(String, ForeignKey("rubrics.id", ondelete="SET NULL"), nullable=True)
@@ -166,7 +194,7 @@ class Submission(Base):
     id = Column(String, primary_key=True, default=generate_id)
     assignmentId = Column(String, ForeignKey("assignments.id", ondelete="CASCADE"), nullable=False)
     mahasiswaId = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    createdAt = Column(DateTime, default=func.now(), nullable=False)
+    createdAt = Column(UTCDateTime, default=func.now(), nullable=False)
 
     activeVersionId = Column(String, nullable=True)
     releasedGradeId = Column(String, nullable=True)
@@ -207,7 +235,7 @@ class SubmissionVersion(Base):
     isEdited = Column(Boolean, default=False, nullable=False)
     ocrStatus = Column(String, default="NONE", nullable=False)
     pageCount = Column(Integer, default=1, nullable=False)
-    submittedAt = Column(DateTime, default=func.now(), nullable=False)
+    submittedAt = Column(UTCDateTime, default=func.now(), nullable=False)
 
     __table_args__ = (
         UniqueConstraint("submissionId", "versionNumber", name="submission_versions_submissionId_versionNumber_key"),
@@ -235,7 +263,7 @@ class SubmissionPage(Base):
     ocrStatus = Column(String, default="SUCCESS", nullable=False)
     ocrError = Column(Text, nullable=True)
     source = Column(String, default="IMAGE", nullable=False)
-    createdAt = Column(DateTime, default=func.now(), nullable=False)
+    createdAt = Column(UTCDateTime, default=func.now(), nullable=False)
 
     __table_args__ = (
         UniqueConstraint("submissionVersionId", "pageNumber", name="submission_pages_version_page_key"),
@@ -263,7 +291,7 @@ class EvaluationRun(Base):
     evaluatorConfig = Column(JsonType, nullable=True)
     evidence = Column(JsonType, nullable=True)
 
-    createdAt = Column(DateTime, default=func.now(), nullable=False)
+    createdAt = Column(UTCDateTime, default=func.now(), nullable=False)
     status = Column(String, default="COMPLETED", nullable=False)
     idempotencyKey = Column(String, unique=True, nullable=True)
 
@@ -285,7 +313,7 @@ class GradeRevision(Base):
     editedFromAI = Column(Boolean, default=False, nullable=False)
 
     gradedById = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    createdAt = Column(DateTime, default=func.now(), nullable=False)
+    createdAt = Column(UTCDateTime, default=func.now(), nullable=False)
 
     changeReason = Column(String, nullable=True)
     legacyProvenance = Column(String, nullable=True)
@@ -309,7 +337,7 @@ class Document(Base):
     assignmentId = Column(String, ForeignKey("assignments.id", ondelete="CASCADE"), nullable=False)
     ownerId = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     sourceType = Column(SQLEnum(SourceType, name="SourceType", create_type=False), nullable=False)
-    createdAt = Column(DateTime, default=func.now(), nullable=False)
+    createdAt = Column(UTCDateTime, default=func.now(), nullable=False)
 
     assignment = relationship("Assignment", back_populates="documents")
     owner = relationship("User", back_populates="owned_documents")
@@ -336,11 +364,11 @@ class DocumentVersion(Base):
     pageCount = Column(Integer, nullable=True)
     qualityFlags = Column(JsonType, nullable=True)
     activeIndexGeneration = Column(String, nullable=True)
-    indexedAt = Column(DateTime, nullable=True)
+    indexedAt = Column(UTCDateTime, nullable=True)
 
     approvedById = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
-    approvedAt = Column(DateTime, nullable=True)
-    createdAt = Column(DateTime, default=func.now(), nullable=False)
+    approvedAt = Column(UTCDateTime, nullable=True)
+    createdAt = Column(UTCDateTime, default=func.now(), nullable=False)
 
     __table_args__ = (
         UniqueConstraint("documentId", "versionNumber", name="document_versions_documentId_versionNumber_key"),
@@ -388,7 +416,7 @@ class ChunkEmbedding(Base):
     dimension = Column(Integer, nullable=False)
     embedding = Column(JsonType, nullable=True)  # Native pgvector mapped as vector column in raw SQL or fallback JSON
     state = Column(String, default="READY", nullable=False)
-    createdAt = Column(DateTime, default=func.now(), nullable=False)
+    createdAt = Column(UTCDateTime, default=func.now(), nullable=False)
 
     __table_args__ = (
         UniqueConstraint("chunkId", "indexGeneration", "model", name="chunk_embeddings_chunkId_indexGeneration_model_key"),
@@ -409,8 +437,8 @@ class EmbeddingCache(Base):
     dimension = Column(Integer, nullable=False)
     vectors = Column(JsonType, nullable=False)
     hits = Column(Integer, default=0, nullable=False)
-    createdAt = Column(DateTime, default=func.now(), nullable=False)
-    lastUsedAt = Column(DateTime, default=func.now(), nullable=False)
+    createdAt = Column(UTCDateTime, default=func.now(), nullable=False)
+    lastUsedAt = Column(UTCDateTime, default=func.now(), nullable=False)
 
     __table_args__ = (
         UniqueConstraint("scopeKey", "checksum", "model", "dimension", name="embedding_cache_scopeKey_checksum_model_dimension_key"),
@@ -434,13 +462,13 @@ class Job(Base):
     errorMessage = Column(String, nullable=True)
     attempts = Column(Integer, default=0, nullable=False)
     maxAttempts = Column(Integer, default=3, nullable=False)
-    runAfter = Column(DateTime, default=func.now(), nullable=False)
+    runAfter = Column(UTCDateTime, default=func.now(), nullable=False)
     leaseOwner = Column(String, nullable=True)
-    leaseExpiresAt = Column(DateTime, nullable=True)
-    heartbeatAt = Column(DateTime, nullable=True)
-    createdAt = Column(DateTime, default=func.now(), nullable=False)
-    startedAt = Column(DateTime, nullable=True)
-    finishedAt = Column(DateTime, nullable=True)
+    leaseExpiresAt = Column(UTCDateTime, nullable=True)
+    heartbeatAt = Column(UTCDateTime, nullable=True)
+    createdAt = Column(UTCDateTime, default=func.now(), nullable=False)
+    startedAt = Column(UTCDateTime, nullable=True)
+    finishedAt = Column(UTCDateTime, nullable=True)
 
     __table_args__ = (
         Index("jobs_status_runAfter_idx", "status", "runAfter"),
@@ -461,8 +489,8 @@ class ReferenceSetVersion(Base):
     manifestHash = Column(String, nullable=True)
 
     approvedById = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
-    approvedAt = Column(DateTime, nullable=True)
-    createdAt = Column(DateTime, default=func.now(), nullable=False)
+    approvedAt = Column(UTCDateTime, nullable=True)
+    createdAt = Column(UTCDateTime, default=func.now(), nullable=False)
 
     __table_args__ = (
         UniqueConstraint("assignmentId", "versionNumber", name="reference_set_versions_assignmentId_versionNumber_key"),
@@ -495,4 +523,4 @@ class EvaluatorConfigVersion(Base):
     retrievalConfig = Column(JsonType, nullable=False)
     parserVersion = Column(String, nullable=True)
     indexVersion = Column(String, nullable=True)
-    createdAt = Column(DateTime, default=func.now(), nullable=False)
+    createdAt = Column(UTCDateTime, default=func.now(), nullable=False)

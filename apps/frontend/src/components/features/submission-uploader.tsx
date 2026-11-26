@@ -8,8 +8,28 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { useUploadProgress } from "@/hooks/useUploadProgress";
-import { fileSizeToString, MAX_FILE_SIZE } from "@/shared/utils";
+import { fileSizeToString, MAX_FILE_SIZE, MAX_FILE_SIZE_MB } from "@/shared/utils";
+import { getErrorMessage } from "@/shared/utils/api-error";
 import { ScanSubmissionPanel } from "./scan-submission-panel";
+
+/** Where to upload a file directly, or null to go through the /api route (local setups). */
+async function getUploadTicket(
+  classId: string,
+  assignmentId: string,
+): Promise<{ url: string; token: string } | null> {
+  const res = await fetch("/api/upload-ticket", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ classId, assignmentId }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(getErrorMessage(data, "Gagal menyiapkan unggahan"));
+  }
+  return typeof data.url === "string" && typeof data.token === "string"
+    ? { url: data.url, token: data.token }
+    : null;
+}
 
 interface SubmissionUploaderProps {
   classId: string;
@@ -66,7 +86,7 @@ export function SubmissionUploader({
 
   const validateAndSetFile = (file: File) => {
     if (file.size > MAX_FILE_SIZE) {
-      setErrorMessage(`Ukuran file terlalu besar (${fileSizeToString(file.size)}). Maksimal 10MB.`);
+      setErrorMessage(`Ukuran file terlalu besar (${fileSizeToString(file.size)}). Maksimal ${MAX_FILE_SIZE_MB}MB.`);
       return;
     }
 
@@ -130,7 +150,19 @@ export function SubmissionUploader({
         const formData = new FormData();
         formData.append("file", selectedFile);
 
-        await startUpload({ url, body: formData, isFormData: true });
+        // In production the file goes straight to the backend: a Vercel function only
+        // accepts about 4.5 MB, while lab reports are allowed up to MAX_FILE_SIZE_MB.
+        const ticket = await getUploadTicket(classId, assignmentId);
+        if (ticket) {
+          await startUpload({
+            url: ticket.url,
+            body: formData,
+            isFormData: true,
+            headers: { Authorization: `Bearer ${ticket.token}` },
+          });
+        } else {
+          await startUpload({ url, body: formData, isFormData: true });
+        }
       } else {
         if (!textContent.trim()) {
           setErrorMessage("Teks jawaban tidak boleh kosong.");
@@ -280,7 +312,7 @@ export function SubmissionUploader({
                   <p className="text-xs text-muted-foreground mt-1">
                     Format didukung:{" "}
                     {allowedType === "ANY" ? "PDF (.pdf) atau Word (.docx)" : allowedType} •
-                    Maksimal 10MB
+                    Maksimal {MAX_FILE_SIZE_MB}MB
                   </p>
                 </button>
               ) : (

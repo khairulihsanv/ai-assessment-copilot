@@ -1,7 +1,19 @@
+import re
 import uuid
 from pathlib import Path
+from urllib.parse import quote
 
 from app.config import settings
+
+
+def content_disposition(disposition: str, filename: str) -> str:
+    """A Content-Disposition header that survives any file name.
+
+    Headers are sent as latin-1, so a name like "Laporan – Bab 1.pdf" would crash the
+    response. The plain ``filename`` gets an ASCII fallback, ``filename*`` the real name.
+    """
+    ascii_name = re.sub(r'[^\x20-\x7e]|["\\]', "_", filename).strip() or "file"
+    return f"{disposition}; filename=\"{ascii_name}\"; filename*=UTF-8''{quote(filename, safe='')}"
 
 
 class StorageService:

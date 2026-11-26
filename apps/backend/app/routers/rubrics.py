@@ -12,7 +12,7 @@ rubrics_router = APIRouter(tags=["rubrics"])
 
 
 @rubrics_router.get("/classes/{class_id}/rubrics")
-async def list_rubrics(
+def list_rubrics(
     class_id: str,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -130,7 +130,7 @@ async def create_rubric(
 
 
 @rubrics_router.get("/classes/{class_id}/rubrics/{rubric_id}")
-async def get_rubric_detail(
+def get_rubric_detail(
     class_id: str,
     rubric_id: str,
     current_user: User = Depends(get_current_user),
@@ -234,7 +234,7 @@ async def update_rubric(
 
 
 @rubrics_router.delete("/classes/{class_id}/rubrics/{rubric_id}")
-async def delete_rubric(
+def delete_rubric(
     class_id: str,
     rubric_id: str,
     current_user: User = Depends(get_current_user),
@@ -258,7 +258,7 @@ async def delete_rubric(
 
 
 @rubrics_router.get("/rubrics-hub")
-async def get_rubrics_hub(
+def get_rubrics_hub(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):

@@ -384,8 +384,11 @@ def test_oversized_file_rejected(client, scan_test_env):
     assert "melebihi batas 10mb" in res.text.lower()
 
 
-def test_max_page_limit_enforced(client, scan_test_env):
-    """Attempting to scan >15 pages is rejected with 400."""
+def test_max_page_limit_enforced(client, scan_test_env, monkeypatch):
+    """Attempting to scan more pages than SCAN_MAX_PAGES is rejected with 400."""
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "SCAN_MAX_PAGES", 15)
     env = scan_test_env
     img = create_test_image_bytes("Hal")
 
@@ -399,3 +402,181 @@ def test_max_page_limit_enforced(client, scan_test_env):
     )
     assert res.status_code == 400
     assert "maksimal 15 halaman" in res.text.lower()
+
+
+# ---------------------------------------------------------------------------
+# Scan pipeline: RapidOCR first, vision model for pages it reads poorly
+# ---------------------------------------------------------------------------
+
+
+def _rapid(confidence: float, text: str = "teks rapidocr", status: str = "SUCCESS") -> dict:
+    return {"status": status, "text": text, "lines": [], "confidence": confidence,
+            "width": 800, "height": 400, "error": None}
+
+
+@pytest.mark.asyncio
+async def test_auto_ocr_sends_poorly_read_page_to_vision_model(monkeypatch):
+    from app.config import settings
+    from app.services import scan_pipeline, vision_ocr
+
+    monkeypatch.setattr(settings, "OCR_ENGINE", "auto")
+    monkeypatch.setattr(settings, "OCR_VISION_PROVIDER", "groq")
+    monkeypatch.setattr(settings, "GROQ_API_KEY", "gsk-test")
+    monkeypatch.setattr(ocr_service, "ocr_image_bytes", lambda b, f="p.jpg": _rapid(0.42, "t3ks rus4k"))
+
+    async def fake_transcribe(image_bytes):
+        return vision_ocr.VisionTranscript("Normalisasi mengurangi redundansi.", "groq", "scout", 900, 40)
+
+    monkeypatch.setattr(vision_ocr, "transcribe", fake_transcribe)
+
+    result = await scan_pipeline.read_image(b"img")
+
+    assert result["text"] == "Normalisasi mengurangi redundansi."
+    assert result["engine"].startswith("vision:")
+    assert result["tokens"] == 940
+
+
+@pytest.mark.asyncio
+async def test_auto_ocr_keeps_good_rapidocr_read_without_spending_tokens(monkeypatch):
+    from app.config import settings
+    from app.services import scan_pipeline, vision_ocr
+
+    monkeypatch.setattr(settings, "OCR_ENGINE", "auto")
+    monkeypatch.setattr(settings, "OCR_VISION_PROVIDER", "groq")
+    monkeypatch.setattr(settings, "GROQ_API_KEY", "gsk-test")
+    monkeypatch.setattr(ocr_service, "ocr_image_bytes", lambda b, f="p.jpg": _rapid(0.97))
+    called = []
+
+    async def fake_transcribe(image_bytes):
+        called.append(1)
+        raise AssertionError("vision model should not be called")
+
+    monkeypatch.setattr(vision_ocr, "transcribe", fake_transcribe)
+
+    result = await scan_pipeline.read_image(b"img")
+
+    assert result["engine"] == "rapidocr"
+    assert result["tokens"] == 0
+    assert called == []
+
+
+@pytest.mark.asyncio
+async def test_vision_failure_falls_back_to_rapidocr_text(monkeypatch):
+    from app.config import settings
+    from app.services import scan_pipeline, vision_ocr
+
+    monkeypatch.setattr(settings, "OCR_ENGINE", "auto")
+    monkeypatch.setattr(settings, "OCR_VISION_PROVIDER", "ollama")
+    monkeypatch.setattr(ocr_service, "ocr_image_bytes", lambda b, f="p.jpg": _rapid(0.5, "teks samar"))
+
+    async def failing(image_bytes):
+        raise vision_ocr.VisionOCRError("Ollama mati")
+
+    monkeypatch.setattr(vision_ocr, "transcribe", failing)
+
+    result = await scan_pipeline.read_image(b"img")
+
+    assert result["text"] == "teks samar"
+    assert result["engine"] == "rapidocr"
+
+
+@pytest.mark.asyncio
+async def test_rejected_file_is_never_sent_to_vision_model(monkeypatch):
+    from app.config import settings
+    from app.services import scan_pipeline, vision_ocr
+
+    monkeypatch.setattr(settings, "OCR_ENGINE", "auto")
+    monkeypatch.setattr(settings, "OCR_VISION_PROVIDER", "ollama")
+
+    async def boom(image_bytes):
+        raise AssertionError("vision model should not see a rejected file")
+
+    monkeypatch.setattr(vision_ocr, "transcribe", boom)
+
+    result = await scan_pipeline.read_image(create_corrupted_image_bytes())
+
+    assert result["status"] == "FAILED"
+
+
+def test_vision_image_is_downscaled_before_sending():
+    from app.services.vision_ocr import prepare_image
+
+    big = io.BytesIO()
+    Image.new("RGB", (4000, 3000), "white").save(big, format="JPEG")
+    small = Image.open(io.BytesIO(prepare_image(big.getvalue(), max_side=1600)))
+    assert max(small.size) == 1600
+
+
+# ---------------------------------------------------------------------------
+# Page references: OCR preview stores the image, final submit sends only the reference
+# ---------------------------------------------------------------------------
+
+
+def test_page_ref_is_bound_to_student_and_assignment():
+    from app.routers.submissions import _page_ref, _resolve_page_ref
+
+    ref = _page_ref("mhs-1", "asg-1", "abc123.jpg")
+    assert _resolve_page_ref("mhs-1", "asg-1", ref) == "abc123.jpg"
+    assert _resolve_page_ref("mhs-2", "asg-1", ref) is None
+    assert _resolve_page_ref("mhs-1", "asg-2", ref) is None
+    assert _resolve_page_ref("mhs-1", "asg-1", "../etc/passwd:" + ref.split(":")[1]) is None
+    assert _resolve_page_ref("mhs-1", "asg-1", "abc123.jpg:forged") is None
+
+
+def test_scan_submit_with_page_refs_reuses_preview_images(client, scan_test_env, db_session):
+    env = scan_test_env
+    base = f"/classes/{env['class'].id}/assignments/{env['asg_scan'].id}/submissions"
+    auth = {"Authorization": f"Bearer {env['mhs_a_token']}"}
+
+    refs = []
+    for n in (1, 2):
+        preview = client.post(
+            f"{base}/ocr-scan",
+            headers=auth,
+            data={"pageNumber": str(n)},
+            files=[("files", (f"hal{n}.jpg", create_test_image_bytes(f"Lembar {n}"), "image/jpeg"))],
+        )
+        assert preview.status_code == 200, preview.text
+        page = preview.json()["pages"][0]
+        assert page["pageNumber"] == n
+        assert page["pageRef"]
+        refs.append(page["pageRef"])
+
+    pages_meta = [
+        {"pageNumber": n, "extractedText": f"ocr {n}", "confirmedText": f"jawaban halaman {n}", "status": "SUCCESS"}
+        for n in (1, 2)
+    ]
+    res = client.post(
+        base,
+        headers=auth,
+        data={
+            "isScanSubmission": "true",
+            "pages_meta": json.dumps(pages_meta),
+            "page_ref_1": refs[0],
+            "page_ref_2": refs[1],
+        },
+    )
+    assert res.status_code == 201, res.text
+
+    version = db_session.query(SubmissionVersion).filter(SubmissionVersion.id == res.json()["versionId"]).first()
+    pages = sorted(version.pages, key=lambda p: p.pageNumber)
+    assert [p.imageUrl for p in pages] == [r.split(":")[0] for r in refs]
+    assert "jawaban halaman 2" in version.content
+
+
+def test_scan_submit_rejects_page_ref_of_another_student(client, scan_test_env):
+    from app.routers.submissions import _page_ref
+
+    env = scan_test_env
+    forged = _page_ref(env["mhs_b"].id, env["asg_scan"].id, "someone-else.jpg")
+    res = client.post(
+        f"/classes/{env['class'].id}/assignments/{env['asg_scan'].id}/submissions",
+        headers={"Authorization": f"Bearer {env['mhs_a_token']}"},
+        data={
+            "isScanSubmission": "true",
+            "pages_meta": json.dumps([{"pageNumber": 1, "confirmedText": "x", "extractedText": "x"}]),
+            "page_ref_1": forged,
+        },
+    )
+    assert res.status_code == 400
+    assert "tidak valid" in res.text.lower()

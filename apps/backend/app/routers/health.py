@@ -9,13 +9,13 @@ health_router = APIRouter(tags=["health"])
 
 
 @health_router.get("/health")
-async def health_check():
+def health_check():
     """Liveness probe: verifies the HTTP API is accepting requests."""
     return {"status": "ok", "service": "dexa-assessment-fastapi"}
 
 
 @health_router.get("/health/ready")
-async def readiness_check(db: Session = Depends(get_db)):
+def readiness_check(db: Session = Depends(get_db)):
     """Readiness probe: verifies database connectivity without leaking configuration."""
     try:
         db.execute(text("SELECT 1"))

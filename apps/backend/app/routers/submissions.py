@@ -1,8 +1,10 @@
 import asyncio
+import hashlib
+import hmac
 import inspect
 import json
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import (
@@ -16,8 +18,10 @@ from fastapi import (
 )
 from fastapi.responses import StreamingResponse
 from sqlalchemy import text
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload, selectinload
+from starlette.concurrency import run_in_threadpool
 
+from app.config import settings
 from app.database import SessionLocal, get_db
 from app.models.enums import AssignmentStatus, ClassRole, Role, SubmissionType
 from app.models.models import (
@@ -31,7 +35,7 @@ from app.models.models import (
     User,
 )
 from app.schemas.submission_schemas import FinalizeSchema, RevertFinalizeSchema
-from app.security.dependencies import get_current_user
+from app.security.dependencies import get_current_user, get_upload_user
 from app.services import grading_jobs
 from app.services.embedding_service import generate_embedding_result
 from app.services.evaluator_service import (
@@ -43,24 +47,45 @@ from app.services.extractor_service import (
     CorruptDocumentError,
     EmptyExtractedTextError,
     InvalidFormatError,
+    extract_pages_from_pdf,
     extract_text_from_buffer,
 )
+from app.services import scan_pipeline
 from app.services.ocr_service import (
-    MAX_IMAGE_SIZE_BYTES,
-    MAX_PAGES_ALLOWED,
     InvalidImageFormatError,
     detect_image_format,
+    max_image_bytes,
+    max_pages,
     ocr_service,
 )
-from app.services.storage_service import storage
+from app.services.storage_service import content_disposition, storage
 
 logger = logging.getLogger(__name__)
 
 submissions_router = APIRouter(tags=["submissions"])
 
 
+def _page_ref(user_id: str, assignment_id: str, object_key: str) -> str:
+    """A page image stored at scan time, signed so only its owner can submit it for this assignment."""
+    sig = hmac.new(
+        settings.SECRET_KEY.encode(), f"{user_id}|{assignment_id}|{object_key}".encode(), hashlib.sha256
+    ).hexdigest()[:32]
+    return f"{object_key}:{sig}"
+
+
+def _resolve_page_ref(user_id: str, assignment_id: str, ref: str) -> str | None:
+    object_key, _, _sig = (ref or "").rpartition(":")
+    if not object_key or "/" in object_key or "\\" in object_key or ".." in object_key:
+        return None
+    return object_key if hmac.compare_digest(_page_ref(user_id, assignment_id, object_key), ref) else None
+
+
+def _max_upload_bytes() -> int:
+    return settings.MAX_FILE_SIZE_MB * 1024 * 1024
+
+
 @submissions_router.get("/classes/{class_id}/assignments/{assignment_id}/submissions")
-async def list_submissions(
+def list_submissions(
     class_id: str,
     assignment_id: str,
     current_user: User = Depends(get_current_user),
@@ -92,7 +117,23 @@ async def list_submissions(
     if not is_privileged:
         query = query.filter(Submission.mahasiswaId == current_user.id)
 
-    submissions = query.order_by(Submission.createdAt.desc()).all()
+    submissions = (
+        query.order_by(Submission.createdAt.desc())
+        .options(
+            joinedload(Submission.user),
+            selectinload(Submission.grades),
+            selectinload(Submission.versions).load_only(
+                SubmissionVersion.id,
+                SubmissionVersion.versionNumber,
+                SubmissionVersion.type,
+                SubmissionVersion.fileUrl,
+                SubmissionVersion.fileName,
+                SubmissionVersion.submittedAt,
+            ),
+            *([selectinload(Submission.evaluations)] if is_privileged else []),
+        )
+        .all()
+    )
 
     result = []
     for s in submissions:
@@ -209,20 +250,27 @@ async def ocr_scan_preview(
             detail="Tidak ada gambar atau dokumen yang diunggah untuk dipindai OCR.",
         )
 
-    if len(uploaded_files) > MAX_PAGES_ALLOWED:
+    if len(uploaded_files) > max_pages():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Maksimal {MAX_PAGES_ALLOWED} halaman yang dapat diproses sekaligus.",
+            detail=f"Maksimal {max_pages()} halaman yang dapat diproses sekaligus.",
         )
 
+    # The scan screen may send one page per request so each upload stays small; the page
+    # number it sends back keeps the numbering right.
+    try:
+        first_page_number = max(1, int(str(form.get("pageNumber") or "1")))
+    except ValueError:
+        first_page_number = 1
+
     # Validate file size and magic bytes upfront
+    file_bytes_list: list[bytes] = []
     for up_file in uploaded_files:
         f_bytes = await up_file.read()
-        await up_file.seek(0)
-        if len(f_bytes) > MAX_IMAGE_SIZE_BYTES:
+        if len(f_bytes) > max_image_bytes():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"File {getattr(up_file, 'filename', '')} melebihi batas 10MB per halaman.",
+                detail=f"File {getattr(up_file, 'filename', '')} melebihi batas {settings.SCAN_MAX_IMAGE_MB}MB per halaman.",
             )
         try:
             detect_image_format(f_bytes)
@@ -231,35 +279,41 @@ async def ocr_scan_preview(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"File {getattr(up_file, 'filename', '')} bukan gambar atau PDF yang valid.",
             )
+        file_bytes_list.append(f_bytes)
 
     pages_output: list[dict[str, Any]] = []
 
     first_name = (getattr(uploaded_files[0], "filename", "") or "").lower()
     if len(uploaded_files) == 1 and first_name.endswith(".pdf"):
-        pdf_bytes = await uploaded_files[0].read()
         try:
-            pdf_pages = ocr_service.process_pdf(pdf_bytes)
-            for p in pdf_pages:
-                pages_output.append({
-                    "pageNumber": p["pageNumber"],
-                    "filename": f"page_{p['pageNumber']}.jpg",
-                    "status": p["ocrStatus"],
-                    "extractedText": p["extractedText"],
-                    "confirmedText": p["confirmedText"],
-                    "confidence": p["confidence"],
-                    "width": p["width"],
-                    "height": p["height"],
-                    "source": p["source"],
-                    "error": p.get("error"),
-                })
+            pdf_pages = await scan_pipeline.read_pdf(file_bytes_list[0])
         except Exception as e:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        for p in pdf_pages:
+            pages_output.append({
+                "pageNumber": p["pageNumber"],
+                "filename": f"page_{p['pageNumber']}.jpg",
+                "status": p["ocrStatus"],
+                "extractedText": p["extractedText"],
+                "confirmedText": p["confirmedText"],
+                "confidence": p["confidence"],
+                "width": p["width"],
+                "height": p["height"],
+                "source": p["source"],
+                "engine": p.get("engine"),
+                "tokens": p.get("tokens", 0),
+                "error": p.get("error"),
+            })
     else:
-        for i, up_file in enumerate(uploaded_files):
-            page_num = i + 1
-            f_bytes = await up_file.read()
+        for i, (up_file, f_bytes) in enumerate(zip(uploaded_files, file_bytes_list)):
+            page_num = first_page_number + i
             fname = getattr(up_file, "filename", f"page_{page_num}.jpg")
-            res = ocr_service.ocr_image_bytes(f_bytes, fname)
+            res = await scan_pipeline.read_image(f_bytes, fname)
+            page_ref = None
+            if res.get("width"):
+                # Keep the image, so the final submission only has to send this reference.
+                key = await run_in_threadpool(storage.save_sync, f"scan_page_{page_num}.jpg", f_bytes)
+                page_ref = _page_ref(current_user.id, assignment_id, key)
             pages_output.append({
                 "pageNumber": page_num,
                 "filename": fname,
@@ -271,6 +325,9 @@ async def ocr_scan_preview(
                 "width": res["width"],
                 "height": res["height"],
                 "source": "IMAGE",
+                "engine": res.get("engine"),
+                "tokens": res.get("tokens", 0),
+                "pageRef": page_ref,
                 "error": res.get("error"),
             })
 
@@ -281,7 +338,34 @@ async def ocr_scan_preview(
         "totalPages": len(pages_output),
         "totalText": total_text,
         "pages": pages_output,
+        "ocr": scan_pipeline.engine_summary(),
     }
+
+
+@submissions_router.get("/ocr/config")
+def ocr_config(current_user: User = Depends(get_current_user)):
+    """Scan limits and how pages are read, for the scan screen."""
+    return scan_pipeline.engine_summary()
+
+
+async def _ocr_image_pages_of_text_pdf(file_bytes: bytes) -> tuple[str, list[dict[str, Any]]] | None:
+    """Text of every page, OCR included, when a PDF with a text layer also has image-only pages."""
+    try:
+        pages = await run_in_threadpool(extract_pages_from_pdf, file_bytes)
+    except Exception:
+        return None
+    blank = [p for p in pages if len((p.get("text") or "").strip()) < 20]
+    if not blank or len(pages) > max_pages():
+        return None
+    try:
+        pdf_pages = await scan_pipeline.read_pdf(file_bytes)
+    except Exception as exc:
+        logger.warning("OCR of image pages in a text PDF failed: %s", exc)
+        return None
+    if not any(p.get("source") == "PDF_IMAGE_PAGE" and (p.get("extractedText") or "").strip() for p in pdf_pages):
+        return None
+    text = "\n\n".join(p["extractedText"].strip() for p in pdf_pages if (p.get("extractedText") or "").strip())
+    return text, pdf_pages
 
 
 @submissions_router.post("/classes/{class_id}/assignments/{assignment_id}/submissions", status_code=status.HTTP_201_CREATED)
@@ -289,7 +373,8 @@ async def submit_assignment(
     class_id: str,
     assignment_id: str,
     request: Request,
-    current_user: User = Depends(get_current_user),
+    # Large documents come straight from the browser with an upload ticket (Vercel body limit).
+    current_user: User = Depends(get_upload_user),
     db: Session = Depends(get_db),
 ):
     if current_user.role != Role.MAHASISWA:
@@ -314,7 +399,7 @@ async def submit_assignment(
     if assignment.status != AssignmentStatus.PUBLISHED:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Tugas tidak menerima pengumpulan")
 
-    now = datetime.now()
+    now = datetime.now(UTC)
     if now > assignment.dueDate and not assignment.allowLateSubmission:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tenggat waktu pengumpulan tugas ini telah berakhir")
 
@@ -342,6 +427,8 @@ async def submit_assignment(
     is_scan_submission = False
     pages_meta: list[dict[str, Any]] | None = None
     page_files_map: dict[int, tuple[str, bytes]] = {}
+    # Pages already stored by the OCR preview: page number -> storage key (reused, not re-saved).
+    page_ref_keys: dict[int, str] = {}
     saved_page_keys: list[tuple[int, str, str, str, int, int]] = []
     scanned_pdf_pages: list[dict[str, Any]] | None = None
 
@@ -359,7 +446,27 @@ async def submit_assignment(
                         logger.warning(f"Error parsing pages_meta JSON: {pe}")
 
                 for key, val in form.multi_items():
-                    if key.startswith("page_file_") and hasattr(val, "read"):
+                    if key.startswith("page_ref_") and isinstance(val, str):
+                        try:
+                            p_num = int(key.replace("page_ref_", ""))
+                        except ValueError:
+                            continue
+                        object_key = _resolve_page_ref(current_user.id, assignment_id, val)
+                        if object_key is None:
+                            raise HTTPException(
+                                status_code=status.HTTP_400_BAD_REQUEST,
+                                detail=f"Referensi gambar halaman {p_num} tidak valid. Pindai ulang halaman tersebut.",
+                            )
+                        try:
+                            p_bytes = await run_in_threadpool(storage.get_sync, object_key)
+                        except FileNotFoundError:
+                            raise HTTPException(
+                                status_code=status.HTTP_400_BAD_REQUEST,
+                                detail=f"Gambar halaman {p_num} sudah tidak tersedia. Pindai ulang halaman tersebut.",
+                            )
+                        page_files_map[p_num] = (f"page_{p_num}.jpg", p_bytes)
+                        page_ref_keys[p_num] = object_key
+                    elif key.startswith("page_file_") and hasattr(val, "read"):
                         try:
                             p_num = int(key.replace("page_file_", ""))
                             f_name = getattr(val, "filename", f"page_{p_num}.jpg")
@@ -393,6 +500,8 @@ async def submit_assignment(
             raw_content = form.get("content")
             if isinstance(raw_content, str) and raw_content.strip():
                 content = raw_content.strip()
+        except HTTPException:
+            raise
         except Exception as e:
             logger.warning(f"Error parsing form data: {e}")
 
@@ -429,10 +538,10 @@ async def submit_assignment(
                 detail="Metadata halaman scan kosong atau tidak valid.",
             )
 
-        if len(pages_meta) > MAX_PAGES_ALLOWED:
+        if len(pages_meta) > max_pages():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Jumlah halaman scan ({len(pages_meta)}) melebihi batas maksimum {MAX_PAGES_ALLOWED} halaman.",
+                detail=f"Jumlah halaman scan ({len(pages_meta)}) melebihi batas maksimum {max_pages()} halaman.",
             )
 
         # Sort pages_meta by pageNumber
@@ -449,7 +558,7 @@ async def submit_assignment(
                 )
             img_b = page_files_map[p_num][1]
             try:
-                pil_img = ocr_service.validate_and_load_image(img_b)
+                pil_img = await run_in_threadpool(ocr_service.validate_and_load_image, img_b)
                 p["width"] = pil_img.width
                 p["height"] = pil_img.height
             except Exception as ve:
@@ -461,7 +570,7 @@ async def submit_assignment(
 
         # Combine page images into a single archival PDF document
         try:
-            combined_pdf_bytes = ocr_service.assemble_pdf_from_images(page_images_bytes)
+            combined_pdf_bytes = await run_in_threadpool(ocr_service.assemble_pdf_from_images, page_images_bytes)
         except Exception as ce:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -497,8 +606,7 @@ async def submit_assignment(
         for p in pages_meta:
             p_num = int(p.get("pageNumber", 0))
             orig_p_name, p_bytes = page_files_map[p_num]
-            p_ext = "jpg"
-            p_storage_key = storage.save_sync(f"page_{p_num}_{p_ext}", p_bytes)
+            p_storage_key = page_ref_keys.get(p_num) or storage.save_sync(f"page_{p_num}.jpg", p_bytes)
             saved_page_keys.append((p_num, p_storage_key, orig_p_name, "image/jpeg", p.get("width", 0), p.get("height", 0)))
 
     # PATH B: Single file upload (PDF or DOCX)
@@ -508,10 +616,10 @@ async def submit_assignment(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="File yang diunggah kosong",
             )
-        if len(file_bytes) > 10 * 1024 * 1024:
+        if len(file_bytes) > _max_upload_bytes():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Ukuran file melebihi batas maksimum 10MB",
+                detail=f"Ukuran file melebihi batas maksimum {settings.MAX_FILE_SIZE_MB}MB",
             )
 
         orig_lower = orig_filename.lower() if orig_filename else ""
@@ -538,12 +646,12 @@ async def submit_assignment(
 
         # Validate format and extract text BEFORE saving to storage
         try:
-            extracted_content = extract_text_from_buffer(file_bytes, sub_type.value)
+            extracted_content = await run_in_threadpool(extract_text_from_buffer, file_bytes, sub_type.value)
         except EmptyExtractedTextError:
             # Scanned PDF fallback: try OCR across PDF pages
             if sub_type == SubmissionType.PDF:
                 try:
-                    pdf_pages = ocr_service.process_pdf(file_bytes)
+                    pdf_pages = await scan_pipeline.read_pdf(file_bytes)
                     extracted_content = "\n\n".join(
                         p["extractedText"] for p in pdf_pages if p["extractedText"]
                     ).strip()
@@ -572,6 +680,16 @@ async def submit_assignment(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Dokumen tidak memuat teks yang dapat diekstrak atau dinilai",
             )
+
+        # A typed report with some scanned pages (handwritten working, signed sheets, appendices):
+        # the text layer misses those pages, so read them with OCR too.
+        if sub_type == SubmissionType.PDF and scanned_pdf_pages is None:
+            mixed = await _ocr_image_pages_of_text_pdf(file_bytes)
+            if mixed is not None:
+                extracted_content, scanned_pdf_pages = mixed
+                raw_ocr_text = extracted_content
+                ocr_status_val = "SUCCESS"
+                page_count_val = len(scanned_pdf_pages)
 
         saved_obj_key = storage.save_sync(orig_filename or "document.pdf", file_bytes)
         file_url = saved_obj_key
@@ -700,7 +818,9 @@ async def submit_assignment(
         db.rollback()
         if saved_obj_key:
             storage.delete_sync(saved_obj_key)
-        for _, p_key, _, _, _, _ in saved_page_keys:
+        for p_num, p_key, _, _, _, _ in saved_page_keys:
+            if page_ref_keys.get(p_num) == p_key:
+                continue  # stored by the OCR preview: keep it so the student can simply retry
             try:
                 storage.delete_sync(p_key)
             except Exception:
@@ -723,7 +843,7 @@ async def submit_assignment(
 
 
 @submissions_router.get("/submissions/{submission_id}")
-async def get_submission_detail(
+def get_submission_detail(
     submission_id: str,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -988,19 +1108,36 @@ def _load_gradable_submission(submission_id: str, current_user: User, db: Sessio
     return _GradingContext(sub, active_ver)
 
 
+def _reference_query(ctx: _GradingContext) -> str:
+    """What to look up in the lecturer's reference documents: the rubric, not the answer.
+
+    The start of a long report is its cover page and preface, which says nothing about which
+    reference passages matter. The rubric does, and it is the same for every student.
+    """
+    parts = [ctx.title]
+    for c in ctx.criteria:
+        parts.extend(str(c.get(k) or "") for k in ("label", "description", "expectedAnswer", "answerKey"))
+    query = " ".join(p for p in parts if p).strip()
+    return query or ctx.content
+
+
 async def _reference_evidence(ctx: _GradingContext) -> list[dict[str, Any]]:
     """Top chunks from the lecturer's approved reference documents (optional context)."""
     try:
-        emb = await generate_embedding_result(ctx.content)
-        with SessionLocal() as query_db:
-            return retrieve_relevant_chunks(
-                db=query_db,
-                assignment_id=ctx.assignment_id,
-                query_vector=emb.vector,
-                model=emb.model,
-                dimension=emb.dimension,
-                top_k=5,
-            )
+        emb = await generate_embedding_result(_reference_query(ctx))
+
+        def query() -> list[dict[str, Any]]:
+            with SessionLocal() as query_db:
+                return retrieve_relevant_chunks(
+                    db=query_db,
+                    assignment_id=ctx.assignment_id,
+                    query_vector=emb.vector,
+                    model=emb.model,
+                    dimension=emb.dimension,
+                    top_k=5,
+                )
+
+        return await run_in_threadpool(query)
     except Exception as e:
         logger.warning(f"Could not retrieve reference document evidence: {e}")
         return []
@@ -1103,7 +1240,7 @@ async def _draft_job(ctx: _GradingContext, job: grading_jobs.GradingJob) -> dict
     job.set_step(3, "Model membaca jawaban dan rubrik…", 40)
     result = await _run_evaluation(ctx, reference_blocks)
     job.set_step(4, "Menyimpan draf untuk ditinjau dosen…", 90)
-    return _save_evaluation(ctx, result, reference_blocks)
+    return await run_in_threadpool(_save_evaluation, ctx, result, reference_blocks)
 
 
 @submissions_router.get("/submissions/{submission_id}/grade/stream")
@@ -1201,7 +1338,7 @@ async def grade_job_cancel(
 
 
 @submissions_router.post("/submissions/{submission_id}/finalize")
-async def finalize_grade(
+def finalize_grade(
     submission_id: str,
     req: FinalizeSchema,
     current_user: User = Depends(get_current_user),
@@ -1335,7 +1472,7 @@ async def finalize_grade(
 
 
 @submissions_router.post("/submissions/{submission_id}/revert-finalize")
-async def revert_finalize_grade(
+def revert_finalize_grade(
     submission_id: str,
     req: RevertFinalizeSchema,
     current_user: User = Depends(get_current_user),
@@ -1368,7 +1505,7 @@ async def revert_finalize_grade(
 
 
 @submissions_router.get("/submissions/{submission_id}/file")
-async def download_submission_file(
+def download_submission_file(
     submission_id: str,
     versionId: str | None = None,
     current_user: User = Depends(get_current_user),
@@ -1392,7 +1529,12 @@ async def download_submission_file(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
 
     ver_id = versionId or sub.activeVersionId
-    ver = db.query(SubmissionVersion).filter(SubmissionVersion.id == ver_id).first()
+    # Access was checked against submission_id, so the version must belong to that submission.
+    ver = (
+        db.query(SubmissionVersion)
+        .filter(SubmissionVersion.id == ver_id, SubmissionVersion.submissionId == sub.id)
+        .first()
+    )
     if not ver or not ver.fileUrl:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File tidak ditemukan")
 
@@ -1402,12 +1544,12 @@ async def download_submission_file(
     return Response(
         content=file_bytes,
         media_type=media_type,
-        headers={"Content-Disposition": f'attachment; filename="{ver.fileName or "jawaban"}"'},
+        headers={"Content-Disposition": content_disposition("attachment", ver.fileName or "jawaban")},
     )
 
 
 @submissions_router.get("/submissions/{submission_id}/pages/{page_number}/image")
-async def get_submission_page_image(
+def get_submission_page_image(
     submission_id: str,
     page_number: int,
     versionId: str | None = None,
@@ -1434,7 +1576,13 @@ async def get_submission_page_image(
     ver_id = versionId or sub.activeVersionId
     page = (
         db.query(SubmissionPage)
-        .filter(SubmissionPage.submissionVersionId == ver_id, SubmissionPage.pageNumber == page_number)
+        .join(SubmissionVersion, SubmissionVersion.id == SubmissionPage.submissionVersionId)
+        .filter(
+            SubmissionPage.submissionVersionId == ver_id,
+            SubmissionPage.pageNumber == page_number,
+            # Same rule as the file download: never a page of another submission.
+            SubmissionVersion.submissionId == sub.id,
+        )
         .first()
     )
     if not page or not page.imageUrl:
@@ -1446,6 +1594,6 @@ async def get_submission_page_image(
     return Response(
         content=file_bytes,
         media_type=media_type,
-        headers={"Content-Disposition": f'inline; filename="{page.imageName or f"page_{page_number}.jpg"}"'},
+        headers={"Content-Disposition": content_disposition("inline", page.imageName or f"page_{page_number}.jpg")},
     )
 

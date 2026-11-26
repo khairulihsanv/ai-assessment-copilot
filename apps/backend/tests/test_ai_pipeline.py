@@ -690,16 +690,25 @@ async def test_long_answer_is_cut_to_the_prompt_budget(monkeypatch):
     # The passage that answers the rubric survives the cut.
     assert "Normalisasi bertujuan mengurangi redundansi data." in captured["user"]
     assert "Jawaban panjang" in captured["user"]
-    assert all(pc["needsReview"] for pc in result["response"]["perCriterion"])
+    assert cfg["condensed"] is True
+    # Only criteria whose own ranked passages were cut carry the long-answer note.
+    for pc in result["response"]["perCriterion"]:
+        assert ("Jawaban panjang" in pc["reasoning"]) == pc["needsReview"]
 
 
-def test_groq_has_a_default_budget_and_ollama_does_not(monkeypatch):
+def test_default_budgets_follow_the_provider(monkeypatch):
     from app.services.evaluator_service import prompt_token_budget
 
     monkeypatch.setattr(settings, "LLM_MAX_PROMPT_TOKENS", None)
     monkeypatch.setattr(settings, "LLM_PROVIDER", "groq")
     assert prompt_token_budget() == 5000
+    # Ollama: what is left of the context window after room for the JSON answer.
     monkeypatch.setattr(settings, "LLM_PROVIDER", "ollama")
+    monkeypatch.setattr(settings, "OLLAMA_NUM_CTX", 8192)
+    assert prompt_token_budget(4) == 8192 - 600 - 4 * 350
+    monkeypatch.setattr(settings, "OLLAMA_NUM_CTX", 2048)
+    assert prompt_token_budget(10) == 1500
+    monkeypatch.setattr(settings, "LLM_PROVIDER", "gemini")
     assert prompt_token_budget() is None
     monkeypatch.setattr(settings, "LLM_MAX_PROMPT_TOKENS", 0)
     monkeypatch.setattr(settings, "LLM_PROVIDER", "groq")
@@ -717,7 +726,11 @@ def test_rate_limit_errors_explain_themselves():
 
     too_large = llm_client._status_error("Groq", httpx.Response(413, text="Request too large"))
     assert too_large.retriable is False
+    assert too_large.too_large is True
     assert "terlalu panjang" in str(too_large)
+
+    context = llm_client._status_error("Groq", httpx.Response(400, text='{"code":"context_length_exceeded"}'))
+    assert context.too_large is True
 
 
 @pytest.mark.asyncio
@@ -808,3 +821,96 @@ def test_released_grade_locks_resubmission_until_withdrawn(client, graded_env):
 
     reopened = client.post(url, headers=mhs, json={"content": "Versi baru setelah dibuka kembali oleh dosen."})
     assert reopened.status_code == 201, reopened.text
+
+
+# ---------------------------------------------------------------------------
+# Long reports (laporan, laprak, tugas besar): nothing is refused for its length
+# ---------------------------------------------------------------------------
+
+REPORT_COVER = (
+    "LAPORAN PRAKTIKUM BASIS DATA\nMODUL 3: NORMALISASI\n\nDisusun oleh:\nBagas Pratama\nNIM K3519001\n"
+    "PROGRAM STUDI INFORMATIKA\nFAKULTAS TEKNIK\nUNIVERSITAS CONTOH\n\n"
+    "KATA PENGANTAR\nPuji syukur kami panjatkan atas selesainya laporan ini. Terima kasih kepada asisten praktikum.\n\n"
+    "DAFTAR ISI\nKATA PENGANTAR ........ i\nBAB I PENDAHULUAN ........ 1\nDAFTAR PUSTAKA ........ 12\n\n"
+    "BAB I PENDAHULUAN\n"
+)
+REPORT_BODY = "\n\n".join(
+    f"Laporan Praktikum Basis Data\nBagian {i}: Normalisasi bertujuan mengurangi redundansi data. "
+    "Bentuk normal kedua menghapus ketergantungan parsial pada kunci komposit sehingga anomali update hilang."
+    for i in range(60)
+)
+REPORT_BIBLIOGRAPHY = (
+    "\n\nDAFTAR PUSTAKA\nElmasri, R., & Navathe, S. (2016). Fundamentals of Database Systems. Pearson.\n"
+    "Date, C. J. (2004). An Introduction to Database Systems. Addison-Wesley.\n"
+)
+REPORT = REPORT_COVER + REPORT_BODY + REPORT_BIBLIOGRAPHY
+
+
+@pytest.mark.asyncio
+async def test_long_report_is_graded_and_boilerplate_is_not_sent(monkeypatch):
+    monkeypatch.setenv("TEST_MOCK_LLM", "false")
+    monkeypatch.setattr(settings, "LLM_PROVIDER", "groq")
+    monkeypatch.setattr(settings, "LLM_MAX_PROMPT_TOKENS", None)
+    captured: dict = {}
+    monkeypatch.setattr(llm_client, "chat_json", _fake_llm(captured))
+
+    result = await evaluate_submission("Laporan", "x", 100.0, CRITERIA, REPORT, student_names=["Bagas Pratama"])
+
+    cfg = result["evaluatorConfig"]
+    labels = {s["label"] for s in cfg["skippedSections"]}
+    assert {"Halaman sampul", "Kata pengantar / lembar pengesahan", "Daftar isi", "Daftar pustaka"} <= labels
+    assert "Elmasri" not in captured["user"]
+    assert "Puji syukur" not in captured["user"]
+    # Running headers repeated on every page are not sent either.
+    assert "Laporan Praktikum Basis Data\n" not in captured["user"]
+    assert cfg["promptTokensEstimate"] <= 5000
+    assert cfg["truncated"] is False
+    assert result["status"] == "COMPLETED"
+
+
+@pytest.mark.asyncio
+async def test_text_past_the_old_24000_char_cut_still_reaches_retrieval(monkeypatch):
+    monkeypatch.setenv("TEST_MOCK_LLM", "false")
+    monkeypatch.setattr(settings, "LLM_MAX_PROMPT_TOKENS", 3000)
+    captured: dict = {}
+    monkeypatch.setattr(llm_client, "chat_json", _fake_llm(captured))
+    filler = "\n\n".join(f"Paragraf {i} tentang sejarah komputer pribadi dan perangkat kerasnya." * 3 for i in range(200))
+    tail = "\n\nKesimpulan: bentuk normal kedua menghapus ketergantungan parsial pada kunci komposit."
+    answer = filler + tail
+    assert len(answer) > 24000
+
+    result = await evaluate_submission("Esai", "x", 100.0, CRITERIA, answer)
+
+    assert "ketergantungan parsial pada kunci komposit" in captured["user"]
+    assert result["evaluatorConfig"]["truncated"] is False
+
+
+@pytest.mark.asyncio
+async def test_prompt_too_large_for_provider_is_retried_shorter(monkeypatch):
+    monkeypatch.setenv("TEST_MOCK_LLM", "false")
+    monkeypatch.setattr(settings, "LLM_PROVIDER", "groq")
+    monkeypatch.setattr(settings, "LLM_MAX_PROMPT_TOKENS", None)
+    prompts: list[str] = []
+    ok = _fake_llm({})
+
+    async def picky(system, user, schema=None):
+        prompts.append(user)
+        if len(prompts) == 1:
+            raise llm_client.LLMUnavailableError("Groq: HTTP 413", too_large=True)
+        return await ok(system, user, schema)
+
+    monkeypatch.setattr(llm_client, "chat_json", picky)
+
+    result = await evaluate_submission("Laporan", "x", 100.0, CRITERIA, REPORT)
+
+    assert len(prompts) == 2
+    assert len(prompts[1]) < len(prompts[0])
+    assert result["evaluatorConfig"]["promptShrinks"] == 1
+
+
+def test_groq_reasoning_effort_only_for_reasoning_models(monkeypatch):
+    monkeypatch.setattr(settings, "GROQ_REASONING_EFFORT", "low")
+    assert llm_client.groq_reasoning_effort("openai/gpt-oss-120b") == "low"
+    assert llm_client.groq_reasoning_effort("llama-3.1-8b-instant") is None
+    monkeypatch.setattr(settings, "GROQ_REASONING_EFFORT", "")
+    assert llm_client.groq_reasoning_effort("openai/gpt-oss-120b") is None

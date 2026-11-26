@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -12,7 +12,7 @@ reference_sets_router = APIRouter(prefix="/reference-sets", tags=["reference-set
 
 
 @reference_sets_router.post("/{ref_set_id}/approve")
-async def approve_reference_set(
+def approve_reference_set(
     ref_set_id: str,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -48,7 +48,7 @@ async def approve_reference_set(
         )
 
     ref_set.approvedById = current_user.id
-    ref_set.approvedAt = datetime.now()
+    ref_set.approvedAt = datetime.now(UTC)
     db.commit()
 
     return {"success": True, "id": ref_set.id, "approvedAt": ref_set.approvedAt.isoformat()}

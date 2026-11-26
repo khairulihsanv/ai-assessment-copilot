@@ -115,7 +115,18 @@ def _extract_vectors(data: Any) -> list[list[Any]] | None:
     return None
 
 
+EMBED_BATCH_SIZE = 64
+
+
 async def _ollama_embed_batch(texts: list[str]) -> list[list[float]]:
+    """Embed in slices so a long report does not become one request that outlives the timeout."""
+    vectors: list[list[float]] = []
+    for i in range(0, len(texts), EMBED_BATCH_SIZE):
+        vectors.extend(await _ollama_embed_slice(texts[i : i + EMBED_BATCH_SIZE]))
+    return vectors
+
+
+async def _ollama_embed_slice(texts: list[str]) -> list[list[float]]:
     """Call Ollama's batch /api/embed, falling back to legacy /api/embeddings on 404."""
     model = settings.OLLAMA_EMBED_MODEL
     base = settings.OLLAMA_BASE_URL.rstrip("/")
