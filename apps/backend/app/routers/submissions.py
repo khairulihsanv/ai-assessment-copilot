@@ -131,7 +131,22 @@ def list_submissions(
                 SubmissionVersion.fileName,
                 SubmissionVersion.submittedAt,
             ),
-            *([selectinload(Submission.evaluations)] if is_privileged else []),
+            # Only what the list shows: the raw model output and retrieval data stay in the database.
+            *(
+                [
+                    selectinload(Submission.evaluations).load_only(
+                        EvaluationRun.id,
+                        EvaluationRun.versionId,
+                        EvaluationRun.perCriterionScore,
+                        EvaluationRun.suggestedTotalScore,
+                        EvaluationRun.suggestedFeedback,
+                        EvaluationRun.status,
+                        EvaluationRun.createdAt,
+                    )
+                ]
+                if is_privileged
+                else []
+            ),
         )
         .all()
     )
@@ -158,7 +173,6 @@ def list_submissions(
                 evals_data.append({
                     "id": ev.id,
                     "versionId": ev.versionId,
-                    "rawModelOutput": ev.rawModelOutput,
                     "perCriterionScore": ev.perCriterionScore,
                     "suggestedTotalScore": ev.suggestedTotalScore,
                     "suggestedFeedback": ev.suggestedFeedback,

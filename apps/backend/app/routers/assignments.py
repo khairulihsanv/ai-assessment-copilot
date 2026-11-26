@@ -330,7 +330,7 @@ def get_assignment_detail(
                 evals_data.append({
                     "id": ev.id,
                     "versionId": ev.versionId,
-                    "rawModelOutput": ev.rawModelOutput,
+                    # No rawModelOutput: nothing shows it, and it was most of this response.
                     "perCriterionScore": ev.perCriterionScore,
                     "suggestedTotalScore": ev.suggestedTotalScore,
                     "suggestedFeedback": ev.suggestedFeedback,

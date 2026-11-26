@@ -1,22 +1,25 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { QueryProvider } from "@/components/query-provider";
 import { ThemeInitializer } from "@/components/theme-initializer";
 import { cn } from "@/shared/utils";
 
-const inter = Inter({
-  subsets: ["latin"],
+// Self-hosted variable fonts (latin subset, SIL OFL 1.1, see fonts/*-OFL.txt). next/font/google
+// downloads from Google at build time, and Google started answering CI/Vercel builders with
+// font URLs next/font cannot parse, which failed the production build.
+const inter = localFont({
+  src: "./fonts/inter-latin-wght-normal.woff2",
   variable: "--font-inter",
   display: "swap",
-  weight: ["400", "500", "600", "700"],
+  weight: "100 900",
 });
 
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
+const jetbrainsMono = localFont({
+  src: "./fonts/jetbrains-mono-latin-wght-normal.woff2",
   variable: "--font-mono",
   display: "swap",
-  weight: ["400", "500"],
+  weight: "100 800",
 });
 
 export const metadata: Metadata = {

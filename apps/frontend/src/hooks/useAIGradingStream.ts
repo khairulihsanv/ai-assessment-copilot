@@ -24,6 +24,9 @@ interface UseAIGradingStreamReturn {
 }
 
 const CANCELLED = "Dibatalkan oleh dosen. Draf AI tidak disimpan.";
+// A long draft can outlive one connection (Vercel ends a function after 300 seconds).
+const MAX_RECONNECTS = 5;
+const RECONNECT_DELAY_MS = 2000;
 const DISCONNECTED =
   "Koneksi ke server terputus. Draf tetap diproses di server, muat ulang halaman untuk melihat hasilnya.";
 
@@ -124,7 +127,8 @@ export function useAIGradingStream(): UseAIGradingStreamReturn {
       }
 
       return new Promise((resolve, reject) => {
-        const url = `/api/submissions/${submissionId}/grade/stream${options?.attach ? "?attach=1" : ""}`;
+        const base = `/api/submissions/${submissionId}/grade/stream`;
+        const url = `${base}${options?.attach ? "?attach=1" : ""}`;
         submissionRef.current = submissionId;
         setGrading(true);
         setError(null);
@@ -136,10 +140,6 @@ export function useAIGradingStream(): UseAIGradingStreamReturn {
         });
         rejectCurrentRef.current = reject;
 
-        let opened = false;
-        const eventSource = new EventSource(url);
-        eventSourceRef.current = eventSource;
-
         const fail = (message: string) => {
           closeStream();
           setGrading(false);
@@ -150,55 +150,73 @@ export function useAIGradingStream(): UseAIGradingStreamReturn {
           rejectFn?.(new Error(message));
         };
 
-        eventSource.onopen = () => {
-          opened = true;
+        const connect = (streamUrl: string, reconnectsLeft: number) => {
+          let opened = false;
+          const eventSource = new EventSource(streamUrl);
+          eventSourceRef.current = eventSource;
+
+          eventSource.onopen = () => {
+            opened = true;
+          };
+
+          eventSource.addEventListener("status", (e: MessageEvent) => {
+            opened = true;
+            try {
+              setCurrentStep(JSON.parse(e.data) as GradingStep);
+            } catch {
+              // ignore malformed progress frames
+            }
+          });
+
+          eventSource.addEventListener("done", (e: MessageEvent) => {
+            closeStream();
+            rejectCurrentRef.current = null;
+            setGrading(false);
+            setCurrentStep(null);
+            try {
+              resolve(JSON.parse(e.data));
+            } catch {
+              resolve(null);
+            }
+          });
+
+          // Two kinds of "error": a server-sent `event: error` frame (has data),
+          // or a transport failure (no data). EventSource must never reconnect by itself:
+          // that would request the start URL again and begin a second draft.
+          eventSource.addEventListener("error", (e: Event) => {
+            const data = (e as MessageEvent).data;
+            if (typeof data === "string" && data) {
+              let message = "Draf AI tidak dapat dibuat.";
+              try {
+                message = getErrorMessage(JSON.parse(data), message);
+              } catch {
+                // keep default
+              }
+              fail(message);
+              return;
+            }
+
+            if (eventSourceRef.current !== eventSource) return; // already handled or cancelled
+            eventSource.close();
+            eventSourceRef.current = null;
+            if (!opened) {
+              void probeStreamError(streamUrl).then(fail);
+              return;
+            }
+            // The connection dropped mid-draft (a long read hits the hosting time limit, or the
+            // network blinks). The draft keeps running on the server: follow it again, never restart it.
+            if (reconnectsLeft <= 0) {
+              fail(DISCONNECTED);
+              return;
+            }
+            setTimeout(() => {
+              if (rejectCurrentRef.current !== reject) return; // cancelled meanwhile
+              connect(`${base}?attach=1`, reconnectsLeft - 1);
+            }, RECONNECT_DELAY_MS);
+          });
         };
 
-        eventSource.addEventListener("status", (e: MessageEvent) => {
-          opened = true;
-          try {
-            setCurrentStep(JSON.parse(e.data) as GradingStep);
-          } catch {
-            // ignore malformed progress frames
-          }
-        });
-
-        eventSource.addEventListener("done", (e: MessageEvent) => {
-          closeStream();
-          rejectCurrentRef.current = null;
-          setGrading(false);
-          setCurrentStep(null);
-          try {
-            resolve(JSON.parse(e.data));
-          } catch {
-            resolve(null);
-          }
-        });
-
-        // Two kinds of "error": a server-sent `event: error` frame (has data),
-        // or a transport failure (no data). Never let EventSource auto-reconnect:
-        // a reconnect would start a second grading run.
-        eventSource.addEventListener("error", (e: Event) => {
-          const data = (e as MessageEvent).data;
-          if (typeof data === "string" && data) {
-            let message = "Draf AI tidak dapat dibuat.";
-            try {
-              message = getErrorMessage(JSON.parse(data), message);
-            } catch {
-              // keep default
-            }
-            fail(message);
-            return;
-          }
-
-          if (eventSourceRef.current !== eventSource) return; // already handled or cancelled
-          eventSource.close();
-          if (opened) {
-            fail(DISCONNECTED);
-          } else {
-            void probeStreamError(url).then(fail);
-          }
-        });
+        connect(url, MAX_RECONNECTS);
       });
     },
     [closeStream],
