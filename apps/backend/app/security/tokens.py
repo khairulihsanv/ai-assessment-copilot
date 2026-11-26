@@ -5,6 +5,10 @@ import jwt
 
 from app.config import settings
 
+# Tokens are signed on Vercel and checked here, on another machine with its own clock. A laptop
+# or WSL clock a second behind made PyJWT reject fresh tokens as "issued in the future" (iat).
+CLOCK_SKEW_LEEWAY_SECONDS = 60
+
 
 def create_access_token(data: dict[str, Any], expires_delta: timedelta | None = None) -> str:
     """
@@ -50,6 +54,7 @@ def decode_access_token(token: str) -> dict[str, Any] | None:
             algorithms=[settings.ALGORITHM],
             issuer=settings.JWT_ISSUER,
             audience=settings.JWT_AUDIENCE,
+            leeway=CLOCK_SKEW_LEEWAY_SECONDS,
             options={
                 "verify_signature": True,
                 "verify_exp": True,
